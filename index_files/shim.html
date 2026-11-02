@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<!-- saved from url=(0133)blob:https://6chzsy6iw7v9ge80ochbo17nk68k434gcwlbtzdhqdojqfnmxv-h1008167276.scf.usercontent.goog/4ca8ff77-ac1a-4d00-8a67-dc7fbc48c94c -->
+<html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script data-bard-client-injected="true">(function(firebaseConfig, initialAuthToken, appId) {
+        window.__firebase_config = firebaseConfig;
+        window.__initial_auth_token = initialAuthToken;
+        window.__app_id = appId;
+            })("\n{\n  \"apiKey\": \"AIzaSyCqyCcs2R2e7AegGjvFAwG98wlamtbHvZY\",\n  \"authDomain\": \"bard-frontend.firebaseapp.com\",\n  \"projectId\": \"bard-frontend\",\n  \"storageBucket\": \"bard-frontend.firebasestorage.app\",\n  \"messagingSenderId\": \"175205271074\",\n  \"appId\": \"1:175205271074:web:2b7bd4d34d33bf38e6ec7b\"\n}\n","eyJhbGciOiJSUzI1NiIsImtpZCI6IjExNjRiNzdiNDMzZDdhMDAyMWI4NjE4YjhjYTU3ZTMyZGI5MWUxMTMiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJmaXJlYmFzZS1hZG1pbnNkay1mYnN2Y0BiYXJkLWZyb250ZW5kLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiYXVkIjoiaHR0cHM6Ly9pZGVudGl0eXRvb2xraXQuZ29vZ2xlYXBpcy5jb20vZ29vZ2xlLmlkZW50aXR5LmlkZW50aXR5dG9vbGtpdC52MS5JZGVudGl0eVRvb2xraXQiLCJ1aWQiOiIwMzMzMjY3ODc5NjA0MTU4Mzg3MCIsImlzcyI6ImZpcmViYXNlLWFkbWluc2RrLWZic3ZjQGJhcmQtZnJvbnRlbmQuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJjbGFpbXMiOnsiYXBwSWQiOiJjX2NjMzI0ZGVjNTA5OTg5NzlfaW5kZXgtdjIuaHRtbC0zMjgifSwiZXhwIjoxNzkzNjE1NzY0LCJpYXQiOjE3OTM2MTIxNjQsImFsZyI6IlJTMjU2In0.TmyldjWW8va0fT89vteQwQIdalhUP83VByXf8B5de9yZK11HhmYfG8SUzR0LMDBTetdCNc6FEX8Tpa1j4JN-3ksP-1_3MnGtHtEj2DPoG8PtzWoJjgzzo5vofaN2x-cR5LAb1VVf-ujlBesiGutTLJqA-amyn-KCtR5oOY9ojAfKE8L5JhmUz57U5R7fRqjkwR5ahZvZXjlzAWJ5vUhflEQtA5wIqIyWhEquqx3I_xGFCV4B83wZtZaJFLKW1DstvwF0kSWXqHCEZ_vJV2uUMpGoYbbGpxHDGmv4f3IYdhCZc6tjxFLd8X2N5SE_J0xEC4ydQALBVWT4AFBxk3AvBw","c_cc324dec50998979_index-v2.html-328")</script><script data-bard-client-injected="true">
+  document.addEventListener('input', (event) => {
+    if (event.target && (event.target.isContentEditable || event.target.hasAttribute('contenteditable'))) {
+      const clonedDoc = document.cloneNode(true);
+      const injectedScripts = clonedDoc.querySelectorAll('[data-bard-client-injected="true"]');
+      injectedScripts.forEach(el => el.remove());
+      window.parent.postMessage({
+        type: 'inlineEdit',
+        html: '<!DOCTYPE html>\n' + clonedDoc.documentElement.outerHTML
+      }, '*');
+    }
+  });
+</script><script data-bard-client-injected="true">(function(){'use strict';window.addEventListener("message",a=>{a.data&&a.data.type==="SUPPLEMENTAL_DATA_UPDATE"&&window.dispatchEvent(new CustomEvent("supplementaldataupdate",{detail:a.data.data}))});}).call(this);
+</script><script data-bard-client-injected="true">(function() {
+  const SCROLL_KEYS = new Set([
+    'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+    ' ', 'Spacebar', 'PageUp', 'PageDown', 'Home', 'End',
+  ]);
+  const HORIZONTAL_KEYS = new Set(['ArrowLeft', 'ArrowRight']);
+
+  function isTextEntryTarget(target) {
+    if (!target) return false;
+    const tagName = target.tagName;
+    return tagName === 'INPUT' || tagName === 'TEXTAREA' ||
+        tagName === 'SELECT' || target.isContentEditable === true;
+  }
+
+  // An element absorbs the key only if it both overflows on the axis being
+  // scrolled and is configured to scroll on that axis. The cheap dimension
+  // test runs first because getComputedStyle forces a style recalc, and this
+  // runs on every keypress. Each axis is read from its own longhand: the
+  // 'overflow' shorthand serializes as two values when the axes differ, which
+  // is the common 'overflow-x: hidden; overflow-y: auto' pane.
+  function canScroll(node, horizontal) {
+    const overflows = horizontal ? node.scrollWidth > node.clientWidth
+                                 : node.scrollHeight > node.clientHeight;
+    if (!overflows) return false;
+    const style = window.getComputedStyle(node);
+    const overflow = horizontal ? style.overflowX : style.overflowY;
+    return overflow === 'auto' || overflow === 'scroll';
+  }
+
+  // Walks up from the event target so nested scrollers keep their behavior.
+  // <body> is included because pages that pin the root height make it the
+  // scroll container.
+  function hasScrollableAncestor(target, horizontal) {
+    let node = target;
+    while (node && node !== document.documentElement) {
+      if (canScroll(node, horizontal)) return true;
+      node = node.parentElement;
+    }
+    return false;
+  }
+
+  function rootCanScroll(horizontal) {
+    const scroller = document.scrollingElement || document.documentElement;
+    if (!scroller) return false;
+    // Tolerate a pixel of rounding so subpixel layouts do not look scrollable.
+    return horizontal ? scroller.scrollWidth > window.innerWidth + 1
+                      : scroller.scrollHeight > window.innerHeight + 1;
+  }
+
+  window.addEventListener('keydown', function(event) {
+    if (!SCROLL_KEYS.has(event.key)) return;
+    if (event.defaultPrevented) return;
+    // Alt and Meta turn arrows into browser history navigation, and Ctrl is
+    // reserved for shortcuts, so none of them are scroll intent.
+    if (event.altKey || event.metaKey || event.ctrlKey) return;
+
+    const target = event.target;
+    if (isTextEntryTarget(target)) return;
+
+    // Anything that can still absorb the scroll gets to keep it.
+    const horizontal = HORIZONTAL_KEYS.has(event.key);
+    if (rootCanScroll(horizontal)) return;
+    if (hasScrollableAncestor(target, horizontal)) return;
+
+    event.preventDefault();
+  }, {capture: true, passive: false});
+})();</script><script data-bard-client-injected="true">(function() {
+  // Ensure this script is executed only once
+  if (window.firebaseAuthBridgeScriptLoaded) {
+    return;
+  }
+  window.firebaseAuthBridgeScriptLoaded = true;
+
+  let nextTokenPromiseId = 0;
+
+  // Stores { resolve, reject } for ongoing token requests
+  const pendingTokenPromises = {};
+
+  // Listen for messages from the Host Application
+  window.addEventListener('message', function(event) {
+
+    const messageData = event.data;
+
+  if (messageData && messageData.type === 'RESOLVE_NEW_FIREBASE_TOKEN') {
+      const { success, token, error, promiseId } = messageData ?? {};
+      if (pendingTokenPromises[promiseId]) {
+        if (success) {
+          pendingTokenPromises[promiseId].resolve(token);
+        } else {
+          pendingTokenPromises[promiseId].reject(new Error(error || 'Token refresh failed from host.'));
+        }
+        delete pendingTokenPromises[promiseId];
+      }
+    }
+  });
+
+  // Expose a function for the Generated App to request a new Firebase token
+  window.requestNewFirebaseToken = function() {
+    const currentPromiseId = nextTokenPromiseId++;
+    const promise = new Promise((resolve, reject) => {
+      pendingTokenPromises[currentPromiseId] = { resolve, reject };
+    });
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'REQUEST_NEW_FIREBASE_TOKEN',
+        promiseId: currentPromiseId
+      }, '*');
+    } else {
+      pendingTokenPromises[currentPromiseId].reject(new Error('No parent window to request token from.'));
+      delete pendingTokenPromises[currentPromiseId];
+    }
+    return promise;
+  };
+})();</script><script data-bard-client-injected="true">
+let realOriginalGetUserMedia = null;
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+  realOriginalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+}
+
+(function() {
+  if (navigator.mediaDevices && navigator.mediaDevices.__proto__) {
+    try {
+      Object.defineProperty(navigator.mediaDevices.__proto__, 'getUserMedia', {
+        get: function() {
+          return undefined; // Or throw an error
+        },
+        configurable: false
+      });
+    } catch (error) {
+      console.error("Error defining prototype getter:", error);
+    }
+  }
+})();
+
+(function() {
+  const pendingMediaResolvers = {};
+  let nextMediaPromiseId = 0;
+
+  function requestMediaPermissions(constraints) {
+    const mediaPromiseId = nextMediaPromiseId++;
+    const promise = new Promise((resolve, reject) => {
+      pendingMediaResolvers[mediaPromiseId] = (granted) => {
+        delete pendingMediaResolvers[mediaPromiseId];
+        resolve(granted);
+      };
+    });
+
+    window.parent.postMessage({
+      type: 'requestMediaPermission',
+      constraints: constraints,
+      promiseId: mediaPromiseId,
+    }, '*');
+
+    return promise;
+  }
+
+  let originalGetUserMedia = realOriginalGetUserMedia;
+
+  function interceptGetUserMedia() {
+    if (navigator.mediaDevices) {
+      Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+        value: function(constraints) {
+          return requestMediaPermissions(constraints).then((granted) => {
+            if (granted) {
+              if (originalGetUserMedia) {
+                return originalGetUserMedia(constraints);
+              } else {
+                throw new Error("Original getUserMedia not available.");
+              }
+            } else {
+              throw new DOMException('Permission denied', 'NotAllowedError');
+            }
+          });
+        },
+        writable: false,
+        configurable: false
+      });
+    }
+  }
+
+  interceptGetUserMedia();
+
+  const observer = new MutationObserver(function(mutationsList, observer) {
+    for (const mutation of mutationsList) {
+      if (mutation.type === 'reconfigured' && mutation.name === 'getUserMedia' && mutation.object === navigator.mediaDevices) {
+        interceptGetUserMedia();
+      } else if (mutation.type === 'attributes' && mutation.attributeName === 'getUserMedia' && mutation.target === navigator.mediaDevices) {
+        interceptGetUserMedia();
+      } else if (mutation.type === 'childList' && mutation.addedNodes) {
+        mutation.addedNodes.forEach(node => {
+          if (node === navigator.mediaDevices) {
+            interceptGetUserMedia();
+          }
+        });
+      }
+    }
+  });
+
+  function interceptSpeechRecognition() {
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+      return;
+    }
+
+    const OriginalSpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    const SpeechRecognitionWrapper = function(...args) {
+      const recognizer = new OriginalSpeechRecognition(...args);
+      const originalStart = recognizer.start.bind(recognizer);
+
+      recognizer.start = function() {
+        requestMediaPermissions({ audio: true }).then(granted => {
+          if (granted) {
+            originalStart();
+          } else {
+            const errorEvent = new SpeechRecognitionErrorEvent('error');
+            errorEvent.error = 'not-allowed'; // This is the standard error for permission denial.
+            recognizer.dispatchEvent(errorEvent);
+          }
+        });
+      };
+
+      return recognizer;
+    };
+
+    SpeechRecognitionWrapper.prototype = OriginalSpeechRecognition.prototype;
+    SpeechRecognitionWrapper.prototype.constructor = SpeechRecognitionWrapper;
+
+    if (window.SpeechRecognition) {
+      window.SpeechRecognition = SpeechRecognitionWrapper;
+    }
+    if (window.webkitSpeechRecognition) {
+      window.webkitSpeechRecognition = SpeechRecognitionWrapper;
+    }
+  }
+
+  interceptSpeechRecognition();
+
+  window.addEventListener('message', function(event) {
+    if (event.data) {
+      if (event.data.type === 'resolveMediaPermission') {
+        const { promiseId, granted } = event.data;
+        if (pendingMediaResolvers[promiseId]) {
+          pendingMediaResolvers[promiseId](granted);
+        }
+      }
+    }
+  });
+
+})();</script><script ws-interception-config="{&quot;parentOrigin&quot;:&quot;https://gemini.google.com&quot;,&quot;proxiedDomains&quot;:[]}" data-bard-client-injected="true">(function(){'use strict';var u=typeof Object.defineProperties=="function"?Object.defineProperty:function(b,d,e){if(b==Array.prototype||b==Object.prototype)return b;b[d]=e.value;return b};function v(b){b=["object"==typeof globalThis&&globalThis,b,"object"==typeof window&&window,"object"==typeof self&&self,"object"==typeof global&&global];for(var d=0;d<b.length;++d){var e=b[d];if(e&&e.Math==Math)return e}throw Error("Cannot find global object");}var w=v(this);
+function y(b,d){if(d)a:{var e=w;b=b.split(".");for(var h=0;h<b.length-1;h++){var k=b[h];if(!(k in e))break a;e=e[k]}b=b[b.length-1];h=e[b];d=d(h);d!=h&&d!=null&&u(e,b,{configurable:!0,writable:!0,value:d})}}function z(b){function d(h){return b.next(h)}function e(h){return b.throw(h)}return new Promise(function(h,k){function m(n){n.done?h(n.value):Promise.resolve(n.value).then(d,e).then(m,k)}m(b.next())})}y("globalThis",function(b){return b||w});/*
+
+ Copyright The Closure Library Authors.
+ SPDX-License-Identifier: Apache-2.0
+*/
+function A(b,d){function e(){}e.prototype=d.prototype;b.j=d.prototype;b.prototype=new e;b.prototype.constructor=b;b.h=function(h,k,m){for(var n=Array(arguments.length-2),p=2;p<arguments.length;p++)n[p-2]=arguments[p];return d.prototype[k].apply(h,n)}};function B(b,d,e="*"){function h(a){if(typeof a==="string")return F.encode(a).buffer;if(a instanceof ArrayBuffer)return a.slice(0);if(ArrayBuffer.isView(a))return a.buffer.slice(a.byteOffset,a.byteOffset+a.byteLength);throw Error("Invalid data type");}function k(a){a=h(a);var f={type:"send",data:new Uint8Array(a)},g;(g=r)==null||g.postMessage(f,[a])}function m(){if(!r)throw Error("Data port not captured yet.");r.onmessage=a=>{if(a.data.type==="message"){a=new MessageEvent("message",{data:G.decode(a.data.data)});
+let f;(f=c.onmessage)==null||f.call(c,a);c.dispatchEvent(a)}}}function n(){if(!t)throw Error("Control port not captured yet.");t.onmessage=a=>{switch(a.data.type){case "open":l=1;var f=new Event("open"),g;(g=c.onopen)==null||g.call(c,f);c.dispatchEvent(f);q.forEach(H=>{k(H)});q=[];break;case "close":g=a.data;l=3;g=new CloseEvent("close",{code:g.code,reason:g.reason,wasClean:g.wasClean});(f=c.onclose)==null||f.call(c,g);c.dispatchEvent(g);break;case "error":l=3;f=new Event("error");let x;(x=c.onerror)==
+null||x.call(c,f);c.dispatchEvent(f)}}}function p(a){return z(function*(){var f=new MessageChannel;t=f.port1;var g=new MessageChannel;r=g.port1;n();m();window.parent.postMessage({type:"websocket_open",portOrdering:["control","data"],url:b,protocols:a||[],connectionId:I},e,[f.port2,g.port2])}())}var c=Reflect.construct(EventTarget,[],new.target);c.CONNECTING=0;c.OPEN=1;c.CLOSING=2;c.CLOSED=3;c.url=b;c.binaryType="arraybuffer";c.protocol="";c.i="";var l=0,t=null,r=null,q=[],F=new TextEncoder,G=new TextDecoder;
+c.onopen=null;c.onmessage=null;c.onclose=null;c.onerror=null;Object.defineProperty(c,"readyState",{get:()=>l,enumerable:!0,configurable:!0});Object.defineProperty(c,"bufferedAmount",{get:()=>{var a=0;q.forEach(f=>{a+=typeof f==="string"?f.length:f.byteLength});return a},enumerable:!0,configurable:!0});var I=function(){var a;return((a=globalThis.crypto)==null?0:a.randomUUID)?globalThis.crypto.randomUUID():"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,f=>{var g=Math.random()*16|0;return(f===
+"x"?g:g&3|8).toString(16)})}();c.send=a=>{if(l===1)a instanceof Blob?a.arrayBuffer().then(f=>{k(f)}):k(a);else if(l===0)if(typeof a==="string")q.push(a);else if(a instanceof ArrayBuffer||ArrayBuffer.isView(a))q.push(h(a));else throw Error("Sending Blob is not supported before the connection is open.");else console.debug("WebSocket send called in CLOSING or CLOSED state; ignored.")};c.close=(a=1E3,f="")=>{if(l!==2&&l!==3){l=2;a={type:"close",code:a,reason:f,wasClean:a===1E3};var g;(g=t)==null||g.postMessage(a)}};
+Promise.resolve().then(()=>p(d));return c}A(B,EventTarget);var C=document.currentScript,D=C==null?void 0:C.getAttribute("ws-interception-config");if(!D)throw Error("WebSocket Interceptor: Missing ws-interception-config attribute in the script tag.");var E=JSON.parse(D);if(!E.parentOrigin||typeof E.parentOrigin!=="string")throw Error("WebSocket Interceptor: Invalid parentOrigin in ws-interception-config");
+(function(b){var d=Object.getOwnPropertyDescriptor(window,"WebSocket");if(!d||d.writable||d.configurable)d=Object.assign(function(e,h){try{let k=(new URL(e)).hostname;if(b.proxiedDomains.some(m=>k===m||k.endsWith(`.${m}`)))return new B(e,h,b.parentOrigin)}catch(k){throw window.parent.postMessage({type:"websocket_blocked",url:e,reason:"blocked_invalid_url"},b.parentOrigin),new DOMException(`WebSocket connection to '${e}' is not allowed in Canvas.`,"SecurityError");}window.parent.postMessage({type:"websocket_blocked",
+url:e,reason:"blocked_domain_not_allowlisted"},b.parentOrigin);throw new DOMException(`WebSocket connection to '${e}' is not allowed in Canvas.`,"SecurityError");},{CONNECTING:0,OPEN:1,CLOSING:2,CLOSED:3}),Object.defineProperty(window,"WebSocket",{value:d,writable:!1,configurable:!1})})({proxiedDomains:E.proxiedDomains||[],parentOrigin:E.parentOrigin});}).call(this);
+</script><script data-bard-client-injected="true">((function(modelInformation) {
+  const originalFetch = window.fetch;
+  // TODO: b/421908508 - Move these out of the script and match all generative AI model calls.
+  let googleLlmBaseApiUrls = [
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':streamGenerateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predict',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predictLongRunning',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageEditModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageTransformModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predict',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predictLongRunning',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.ttsModelName + ':generateContent',
+  ];
+  modelInformation.deprecatedTextModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+    );
+  });
+  modelInformation.deprecatedImageModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':predict',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':predictLongRunning',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+  modelInformation.deprecatedGenerateImageModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+  modelInformation.deprecatedImageTransformModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+
+  const pendingFetchResolvers = {};
+  let nextPromiseId = 0;
+
+  function handleStringInput(input, optionsArgument) {
+    const actualUrl = input;
+    const fetchCallArgs = [actualUrl, optionsArgument];
+    const effectiveOptions = optionsArgument || {};
+    const bodyForApiKeyCheck = effectiveOptions.body;
+    const bodyForPostMessage = effectiveOptions.body;
+    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
+  }
+
+  function handleRequestInput(input, optionsArgument) {
+    const actualUrl = input.url;
+    const fetchCallArgs = [input, optionsArgument];
+    const effectiveOptions = { method: input.method, headers: new Headers(input.headers) };
+    let bodyForApiKeyCheck;
+    let bodyForPostMessage;
+
+    if (optionsArgument) {
+      if (optionsArgument.method) effectiveOptions.method = optionsArgument.method;
+      if (optionsArgument.headers) effectiveOptions.headers = new Headers(optionsArgument.headers);
+      if ('body' in optionsArgument) {
+        bodyForApiKeyCheck = optionsArgument.body;
+        bodyForPostMessage = optionsArgument.body;
+      } else {
+        bodyForApiKeyCheck = undefined;
+        bodyForPostMessage = input.body;
+      }
+    } else {
+      bodyForApiKeyCheck = undefined;
+      bodyForPostMessage = input.body;
+    }
+    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
+  }
+
+  window.fetch = function(input, optionsArgument) {
+    let actualUrl;
+    let fetchCallArgs;
+    let effectiveOptions = {};
+    let bodyForApiKeyCheck;
+    let bodyForPostMessage;
+
+    if (typeof input === 'string') {
+      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleStringInput(input, optionsArgument));
+    } else if (input instanceof Request) {
+      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleRequestInput(input, optionsArgument));
+    } else {
+      return originalFetch.apply(window, [input, optionsArgument]);
+    }
+
+    effectiveOptions.method = effectiveOptions.method || 'GET';
+    if (!effectiveOptions.headers) {
+      effectiveOptions.headers = new Headers();
+    }
+
+
+    if (typeof actualUrl === 'string' && googleLlmBaseApiUrls.some((url) => actualUrl.startsWith(url))) {
+      let apiKeyIsNull = true;
+
+      const regex = new RegExp("models/([^:]+)");
+      const modelNameMatch = actualUrl.match(regex);
+      const modelName = modelNameMatch ? modelNameMatch[1] : 'unspecified';
+
+
+      try {
+        const urlObject = new URL(actualUrl);  // Use URL object for robust parsing
+        const apiKeyParam = urlObject.searchParams.get('key');
+        if (apiKeyParam) {
+          apiKeyIsNull = false;
+        }
+      } catch (e) {
+        // Continue checks even if URL parsing fails
+      }
+
+      if (apiKeyIsNull && effectiveOptions.headers) {
+        const h = new Headers(effectiveOptions.headers);
+        const apiKeyHeaderValue = h.get('X-API-Key') || h.get('x-api-key');
+        if (apiKeyHeaderValue) {
+          apiKeyIsNull = false;
+          return originalFetch.apply(window, fetchCallArgs);
+        }
+      }
+
+      if (apiKeyIsNull && effectiveOptions.method && ['POST', 'PUT', 'PATCH'].includes(effectiveOptions.method.toUpperCase()) && typeof bodyForApiKeyCheck === 'string') {
+        try {
+          const bodyData = JSON.parse(bodyForApiKeyCheck);
+          if (bodyData && bodyData.apiKey) {
+            apiKeyIsNull = false;
+            return originalFetch.apply(window, fetchCallArgs);
+          }
+        } catch (e) {
+          // Ignore JSON parsing errors
+        }
+      }
+
+      if(apiKeyIsNull) {
+        const promiseId = nextPromiseId++;
+        const promise = new Promise((resolve) => {
+          pendingFetchResolvers[promiseId] = (resolvedResponse) => {
+            delete pendingFetchResolvers[promiseId];
+            resolve(resolvedResponse);
+          };
+        });
+
+        let serializedBodyForPostMessage;
+        if (typeof bodyForPostMessage === 'string' || bodyForPostMessage == null) {
+            serializedBodyForPostMessage = bodyForPostMessage;
+        } else if (bodyForPostMessage instanceof ReadableStream) {
+            serializedBodyForPostMessage = null;
+        } else {
+            try {
+                serializedBodyForPostMessage = JSON.stringify(bodyForPostMessage);
+            } catch (e) {
+                serializedBodyForPostMessage = null;
+            }
+        }
+
+        const messageOptions = {
+            method: effectiveOptions.method,
+            headers: Object.fromEntries(new Headers(effectiveOptions.headers).entries()),
+            body: serializedBodyForPostMessage
+        };
+
+        window.parent.postMessage({
+          type: 'requestFetch',
+          url: actualUrl,
+          modelName: modelName,
+          options: messageOptions,
+          promiseId: promiseId,
+        }, '*');
+
+        return promise;
+      }
+      return originalFetch.apply(window, fetchCallArgs);
+    }
+    return originalFetch.apply(window, fetchCallArgs);
+  };
+
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'resolveFetch') {
+      const { promiseId, response } = event.data;
+      if (pendingFetchResolvers[promiseId]) {
+        try {
+          const reconstructedResponse = new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: new Headers(response.headers),
+          });
+          pendingFetchResolvers[promiseId](reconstructedResponse);
+        } catch (error) {
+          pendingFetchResolvers[promiseId](new Response(null, { status: 500, statusText: "Interceptor Response Reconstruction Error" }));
+        }
+      }
+    }
+  });
+
+}))({"textModelName":"gemini-3-flash-preview","imageModelName":"imagen-4.0-generate-001","imageEditModelName":"gemini-3.1-flash-image","imageTransformModelName":"gemini-3-pro-image","videoModelName":"veo-2.0-generate-001","ttsModelName":"gemini-2.5-flash-preview-tts","deprecatedTextModelNames":["gemini-2.0-flash","gemini-2.5-flash","gemini-2.5-flash-preview-04-17","gemini-2.5-flash-preview-05-20","gemini-2.5-flash-preview-09-2025"],"deprecatedImageModelNames":["imagen-3.0-generate-001","imagen-3.0-generate-002"],"deprecatedGenerateImageModelNames":["gemini-2.5-flash-image-preview","gemini-2.5-flash-image","gemini-3.1-flash-image-preview"],"deprecatedImageTransformModelNames":["gemini-3-pro-image-preview-11-2025"]})</script><script data-bard-client-injected="true">(function() {
+  function normalizeSlug(str) {
+    try {
+      return str
+        .trim()
+        .toLowerCase()
+        .replace(/[^p{L}p{N}s_-]/gu, '')
+        .replace(/s+/g, '-');
+    } catch (e) {
+      return str
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9s_-]/g, '')
+        .replace(/s+/g, '-');
+    }
+  }
+
+  function findTargetElement(hash) {
+    if (!hash || hash === '#') {
+      return null;
+    }
+    const rawId = hash.startsWith('#') ? hash.slice(1) : hash;
+    let decodedId = rawId;
+    try {
+      decodedId = decodeURIComponent(rawId);
+    } catch (e) {
+      // Ignore URI malformed errors.
+    }
+
+    // 1. Direct ID match (raw and decoded).
+    let target = document.getElementById(rawId) || document.getElementById(decodedId);
+    if (target) {
+      return target;
+    }
+
+    // 2. Name attribute match (<a name="...">).
+    try {
+      if (typeof CSS !== 'undefined' && CSS.escape) {
+        target =
+          document.querySelector('[name="' + CSS.escape(rawId) + '"]') ||
+          document.querySelector('[name="' + CSS.escape(decodedId) + '"]');
+      } else {
+        const namedElements = document.getElementsByName(rawId);
+        if (namedElements && namedElements.length > 0) {
+          return namedElements[0];
+        }
+      }
+    } catch (e) {
+      // Ignore querySelector syntax errors.
+    }
+    if (target) {
+      return target;
+    }
+
+    // 3. Match heading text by slug (for Markdown TOCs where headings lack explicit IDs).
+    const targetSlug = normalizeSlug(decodedId);
+    if (targetSlug) {
+      for (const heading of document.querySelectorAll('h1, h2, h3, h4, h5, h6')) {
+        if (normalizeSlug(heading.textContent || '') === targetSlug) {
+          return heading;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  document.addEventListener('click', function(event) {
+    const target = event.target;
+    const anchor = target && typeof target.closest === 'function' ? target.closest('a') : null;
+    if (!anchor) {
+      return;
+    }
+
+    const href = anchor.getAttribute('href');
+    if (
+      !href ||
+      href.trim().toLowerCase().startsWith('javascript:') ||
+      anchor.hasAttribute('download')
+    ) {
+      return;
+    }
+
+    // Check if the link is an in-page hash / anchor link.
+    if (href.startsWith('#')) {
+      event.preventDefault();
+      const targetElement = findTargetElement(href);
+      if (targetElement) {
+        targetElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+      }
+      return;
+    }
+
+    // Check if the URL has the same origin/pathname but with a hash.
+    try {
+      const url = new URL(anchor.href, window.location.href);
+      if (
+        url.hash &&
+        url.origin === window.location.origin &&
+        url.pathname === window.location.pathname
+      ) {
+        event.preventDefault();
+        const targetElement = findTargetElement(url.hash);
+        if (targetElement) {
+          targetElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+        return;
+      }
+    } catch (e) {
+      // Fall through if URL parsing fails.
+    }
+
+    // For all external or full navigation links, prevent iframe-level navigation
+    // (which breaks in AGSA WebView or sandboxed iframes) and ensure they open
+    // safely in a new tab/window.
+    if (anchor.target !== '_blank') {
+      event.preventDefault();
+      window.open(anchor.href, '_blank', 'noopener,noreferrer');
+    }
+  }, {capture: true});
+})();</script><script data-bard-client-injected="true">(function(){'use strict';function a(){window.parent.postMessage({type:"interaction"},"*")}window.addEventListener("click",a,{capture:!0,passive:!0});window.addEventListener("touchstart",a,{capture:!0,passive:!0});window.addEventListener("keydown",a,{capture:!0,passive:!0});}).call(this);
+</script><script data-bard-client-injected="true">(function() {
+  const originalConsoleLog = console.log;
+  const originalConsoleError = console.error;
+
+    /**
+   * Normalizes an error event or a promise rejection reason into a structured error object.
+   * @param {*} errorEventOrReason The error object or reason.
+   * @return {object} Structured error data { message, name, stack }.
+   */
+  function getErrorObject(errorEventOrReason) {
+    if (errorEventOrReason instanceof Error) {
+      return {
+        message: errorEventOrReason.message,
+        name: errorEventOrReason.name,
+        stack: errorEventOrReason.stack,
+      };
+    }
+    // Fallback for non-Error objects.
+    try {
+      return {
+        message: JSON.stringify(errorEventOrReason),
+        name: 'UnknownErrorType',
+        stack: null,
+      };
+    } catch (e) {
+      return {
+        message: String(errorEventOrReason),
+        name: 'UnknownErrorTypeNonStringifiable',
+        stack: null,
+      };
+    }
+  }
+
+  /**
+   * Converts an array of arguments (from log/error) into a single string.
+   * Handles Error objects specially to include their message and stack.
+   * @param {Array<*>} args - Arguments passed to console methods.
+   * @return {string} A string representation of the arguments.
+   */
+  function stringifyArgs(args) {
+    return args
+      .map((arg) => {
+        if (arg instanceof Error) {
+          const {message, stack} = arg;
+          return `Error: ${message}${stack ? ('\nStack: ' + stack) : ''}`;
+        }
+        if (typeof arg === 'object' && arg !== null) {
+          try {
+            return JSON.stringify(arg);
+          } catch (error) {
+            return '[Circular Object]';
+          }
+        } else {
+          return String(arg);
+        }
+      })
+      .join(' ');
+  }
+
+  console.log = function(...args) {
+    const logString = stringifyArgs(args);
+    window.parent.postMessage({ type: 'log', message: logString }, '*');
+    originalConsoleLog.apply(console, args);
+  };
+
+  console.error = function(...args) {
+    let errorData;
+    if (args.length > 0 && args[0] instanceof Error) {
+      const err = args[0];
+      // If the first arg is an Error, capture its details.
+      errorData = {
+        type: 'error',
+        source: 'CONSOLE_ERROR',
+        ...getErrorObject(err),
+        rawArgsString: stringifyArgs(args.slice(1)),
+        timestamp: new Date().toISOString(),
+      };
+    } else {
+      // If not an Error object, treat all args as a general error message.
+      errorData = {
+        type: 'error',
+        source: 'CONSOLE_ERROR',
+        message: stringifyArgs(args),
+        name: 'ConsoleLoggedError',
+        stack: null,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    window.parent.postMessage(errorData, '*');
+    originalConsoleError.apply(console, args);
+  };
+
+  // Listen for global unhandled synchronous errors.
+  window.addEventListener('error', function(event) {
+    const errorDetails = event.error ? getErrorObject(event.error) : {
+      message: event.message,
+      name: 'GlobalError',
+      stack: null,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+    };
+
+    window.parent.postMessage({
+      type: 'error',
+      source: 'global',
+      ...errorDetails,
+      message: errorDetails.message || event.message,
+      timestamp: new Date().toISOString(),
+    }, '*');
+  });
+
+  // Listen for unhandled promise rejections (asynchronous errors).
+  window.addEventListener('unhandledrejection', function(event) {
+    const errorDetails = getErrorObject(event.reason);
+
+    window.parent.postMessage({
+      type: 'error',
+      source: 'unhandledrejection',
+      ...errorDetails,
+      message: errorDetails.message || 'Unhandled Promise Rejection',
+      timestamp: new Date().toISOString(),
+    }, '*');
+  });
+
+})();</script>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>臺北大巨蛋巡檢系統 V2 (Taipei Dome Inspection V2)</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com/"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Swiper.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" crossorigin="anonymous"></script>
+  <!-- Supabase JS Client v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+
+  <script>
+    // 1. Supabase 雲端專案正式設定
+    const SUPABASE_URL = 'https://pmwnnkemklbeuzupdvlq.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'sb_publishable_XFUvaEUIqj8KKmVAgjpMqA_XpEyI1';
+
+    // 早期宣告全域 onMapLoaded 避開 inline onload 早於 JS 載入時觸發 ReferenceError
+    window.onMapLoaded = function() {
+      if (typeof window.resetMapView === 'function') window.resetMapView();
+      if (typeof window.renderPins === 'function') window.renderPins();
+    };
+
+    let supabaseClient = null;
+    let isSupabaseConfigured = false;
+
+    // 啟動 Supabase Client 串接
+    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+      try {
+        if (window.supabase) {
+          supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          isSupabaseConfigured = true;
+        }
+      } catch (e) {
+        console.warn("Supabase init notice:", e);
+      }
+    }
+
+    // 2. 地圖圖資設定
+    window.maps = [
+      {
+        id: 'map-b2-b1',
+        name: 'B2 / B1層 專有共用區分圖',
+        url: 'https://raw.githubusercontent.com/Bond-Taipei-Dome/TaipeiDome-maps/main/taipeidome-map-b2%26b1.jpg'
+      },
+      {
+        id: 'map-l1-l5',
+        name: 'L1 ~ L5層 專有共用區分圖',
+        url: 'https://raw.githubusercontent.com/Bond-Taipei-Dome/TaipeiDome-maps/main/taipeidome-map-L1toL5.jpg'
+      }
+    ];
+
+    // 預設示範點位 (作為備份)
+    const defaultDemoPins = [
+      {
+        id: 'demo-pin-1',
+        mapId: 'map-b2-b1',
+        x: 48.5,
+        y: 42.0,
+        title: 'B2 專有區消防栓標註檢查',
+        department: '機電營修組',
+        restoreDate: '2026-05-20',
+        actualRestoreDate: null,
+        restoreMethod: '進行壓力測試與閥門排氣作業',
+        description: '現場巡檢確認圖冊對應位置，點位已與 4K 高畫質圖面精準對齊。',
+        status: 'PENDING',
+        images: ['https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=800&auto=format&fit=crop'],
+        createdDate: '2026-11-02'
+      }
+    ];
+
+    const localSaved = localStorage.getItem('taipei_dome_pins_v2');
+    window.pins = localSaved ? JSON.parse(localSaved) : defaultDemoPins;
+    window.currentMapId = 'map-b2-b1';
+  </script>
+
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* 未修復 (紅色) 動態脈衝效果 */
+    @keyframes pulse-ring-red {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.4); opacity: 0.3; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .pin-pulse-red { animation: pulse-ring-red 2s infinite ease-in-out; }
+
+    /* 已修復 (綠色) 脈衝效果 */
+    @keyframes pulse-ring-green {
+      0% { transform: scale(0.95); opacity: 0.6; }
+      50% { transform: scale(1.2); opacity: 0.2; }
+      100% { transform: scale(0.95); opacity: 0.6; }
+    }
+    .pin-pulse-green { animation: pulse-ring-green 2.5s infinite ease-in-out; }
+
+    .swiper-slide img { width: 100%; height: 260px; object-fit: cover; border-radius: 0.75rem; }
+
+    /* 60fps 平移縮放優化 */
+    #mapContainer {
+      will-change: transform;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      touch-action: none;
+    }
+  </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0px}.bottom-6{bottom:1.5rem}.left-1\/2{left:50%}.right-4{right:1rem}.top-0{top:0px}.top-4{top:1rem}.z-30{z-index:30}.z-40{z-index:40}.z-50{z-index:50}.mb-1{margin-bottom:0.25rem}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.ml-auto{margin-left:auto}.mr-1\.5{margin-right:0.375rem}.mt-2{margin-top:0.5rem}.block{display:block}.inline-block{display:inline-block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-10{height:2.5rem}.h-2{height:0.5rem}.max-h-\[92vh\]{max-height:92vh}.min-h-\[550px\]{min-height:550px}.min-h-screen{min-height:100vh}.w-10{width:2.5rem}.w-2{width:0.5rem}.w-full{width:100%}.max-w-lg{max-width:32rem}.max-w-none{max-width:none}.max-w-sm{max-width:24rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.-translate-x-1\/2{--tw-translate-x:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.scale-75{--tw-scale-x:.75;--tw-scale-y:.75;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes bounce{0%, 100%{transform:translateY(-25%);animation-timing-function:cubic-bezier(0.8,0,1,1)}50%{transform:none;animation-timing-function:cubic-bezier(0,0,0.2,1)}}.animate-bounce{animation:bounce 1s infinite}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite}.cursor-grab{cursor:grab}.select-none{-webkit-user-select:none;user-select:none}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-col{flex-direction:column}.items-start{align-items:flex-start}.items-end{align-items:flex-end}.items-center{align-items:center}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.space-x-2 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(0.5rem * var(--tw-space-x-reverse));margin-left:calc(0.5rem * calc(1 - var(--tw-space-x-reverse)))}.space-x-2\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(0.625rem * var(--tw-space-x-reverse));margin-left:calc(0.625rem * calc(1 - var(--tw-space-x-reverse)))}.space-x-3 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(0.75rem * var(--tw-space-x-reverse));margin-left:calc(0.75rem * calc(1 - var(--tw-space-x-reverse)))}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.overflow-x-hidden{overflow-x:hidden}.rounded{border-radius:0.25rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-xl{border-radius:0.75rem}.rounded-t-2xl{border-top-left-radius:1rem;border-top-right-radius:1rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-amber-500\/20{border-color:rgb(245 158 11 / 0.2)}.border-blue-500\/30{border-color:rgb(59 130 246 / 0.3)}.border-slate-600{--tw-border-opacity:1;border-color:rgb(71 85 105 / var(--tw-border-opacity, 1))}.border-slate-700{--tw-border-opacity:1;border-color:rgb(51 65 85 / var(--tw-border-opacity, 1))}.border-slate-700\/40{border-color:rgb(51 65 85 / 0.4)}.bg-amber-500{--tw-bg-opacity:1;background-color:rgb(245 158 11 / var(--tw-bg-opacity, 1))}.bg-amber-500\/10{background-color:rgb(245 158 11 / 0.1)}.bg-black\/75{background-color:rgb(0 0 0 / 0.75)}.bg-black\/80{background-color:rgb(0 0 0 / 0.8)}.bg-black\/85{background-color:rgb(0 0 0 / 0.85)}.bg-blue-400{--tw-bg-opacity:1;background-color:rgb(96 165 250 / var(--tw-bg-opacity, 1))}.bg-blue-500\/20{background-color:rgb(59 130 246 / 0.2)}.bg-blue-600{--tw-bg-opacity:1;background-color:rgb(37 99 235 / var(--tw-bg-opacity, 1))}.bg-blue-600\/20{background-color:rgb(37 99 235 / 0.2)}.bg-blue-600\/30{background-color:rgb(37 99 235 / 0.3)}.bg-slate-700{--tw-bg-opacity:1;background-color:rgb(51 65 85 / var(--tw-bg-opacity, 1))}.bg-slate-700\/80{background-color:rgb(51 65 85 / 0.8)}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(30 41 59 / var(--tw-bg-opacity, 1))}.bg-slate-800\/80{background-color:rgb(30 41 59 / 0.8)}.bg-slate-800\/90{background-color:rgb(30 41 59 / 0.9)}.bg-slate-800\/95{background-color:rgb(30 41 59 / 0.95)}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.bg-slate-900\/40{background-color:rgb(15 23 42 / 0.4)}.bg-slate-900\/60{background-color:rgb(15 23 42 / 0.6)}.bg-slate-950{--tw-bg-opacity:1;background-color:rgb(2 6 23 / var(--tw-bg-opacity, 1))}.bg-gradient-to-tr{background-image:linear-gradient(to top right, var(--tw-gradient-stops))}.from-blue-600{--tw-gradient-from:#2563eb var(--tw-gradient-from-position);--tw-gradient-to:rgb(37 99 235 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.to-indigo-600{--tw-gradient-to:#4f46e5 var(--tw-gradient-to-position)}.p-0{padding:0px}.p-1{padding:0.25rem}.p-2{padding:0.5rem}.p-3{padding:0.75rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.px-1\.5{padding-left:0.375rem;padding-right:0.375rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-3\.5{padding-left:0.875rem;padding-right:0.875rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}.pt-3{padding-top:0.75rem}.font-sans{font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"}.text-\[11px\]{font-size:11px}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-normal{font-weight:400}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-wider{letter-spacing:0.05em}.\!text-white\/80{color:rgb(255 255 255 / 0.8) !important}.text-amber-300{--tw-text-opacity:1;color:rgb(252 211 77 / var(--tw-text-opacity, 1))}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36 / var(--tw-text-opacity, 1))}.text-amber-400\/80{color:rgb(251 191 36 / 0.8)}.text-blue-300{--tw-text-opacity:1;color:rgb(147 197 253 / var(--tw-text-opacity, 1))}.text-blue-400{--tw-text-opacity:1;color:rgb(96 165 250 / var(--tw-text-opacity, 1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.text-indigo-400{--tw-text-opacity:1;color:rgb(129 140 248 / var(--tw-text-opacity, 1))}.text-rose-400{--tw-text-opacity:1;color:rgb(251 113 133 / var(--tw-text-opacity, 1))}.text-rose-500{--tw-text-opacity:1;color:rgb(244 63 94 / var(--tw-text-opacity, 1))}.text-slate-100{--tw-text-opacity:1;color:rgb(241 245 249 / var(--tw-text-opacity, 1))}.text-slate-200{--tw-text-opacity:1;color:rgb(226 232 240 / var(--tw-text-opacity, 1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-950{--tw-text-opacity:1;color:rgb(2 6 23 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.opacity-0{opacity:0}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-inner{--tw-shadow:inset 0 2px 4px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:inset 0 2px 4px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.backdrop-blur{--tw-backdrop-blur:blur(8px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-300{transition-duration:300ms}.duration-75{transition-duration:75ms}.ease-out{transition-timing-function:cubic-bezier(0, 0, 0.2, 1)}.hover\:bg-blue-500:hover{--tw-bg-opacity:1;background-color:rgb(59 130 246 / var(--tw-bg-opacity, 1))}.hover\:bg-rose-500\/20:hover{background-color:rgb(244 63 94 / 0.2)}.hover\:bg-slate-600:hover{--tw-bg-opacity:1;background-color:rgb(71 85 105 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-700:hover{--tw-bg-opacity:1;background-color:rgb(51 65 85 / var(--tw-bg-opacity, 1))}.hover\:text-amber-300:hover{--tw-text-opacity:1;color:rgb(252 211 77 / var(--tw-text-opacity, 1))}.hover\:text-white:hover{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.focus\:border-blue-500:focus{--tw-border-opacity:1;border-color:rgb(59 130 246 / var(--tw-border-opacity, 1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.active\:scale-95:active{--tw-scale-x:.95;--tw-scale-y:.95;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.active\:cursor-grabbing:active{cursor:grabbing}@media (min-width: 640px){.sm\:items-center{align-items:center}.sm\:rounded-2xl{border-radius:1rem}.sm\:p-4{padding:1rem}.sm\:text-sm{font-size:0.875rem;line-height:1.25rem}}@media (min-width: 768px){.md\:text-base{font-size:1rem;line-height:1.5rem}}</style></head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+  <!-- 頂部導覽列 -->
+  <header class="bg-slate-800/95 backdrop-blur border-b border-slate-700 px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-lg">
+    <div class="flex items-center space-x-2.5">
+      <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 p-2 rounded-xl shadow-md">
+        <i class="fa-solid fa-building-circle-check text-white text-base"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-sm md:text-base leading-tight">臺北大巨蛋巡檢系統 <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">V2</span></h1>
+        <p class="text-[11px] text-slate-400" id="roleBadge">
+          <span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-1.5 animate-pulse"></span>訪客模式 (唯讀)
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <button onclick="fetchPinsFromSupabase()" class="bg-slate-700/80 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center transition border border-slate-600">
+        <i class="fa-solid fa-rotate mr-1.5 text-blue-400"></i>重新整理
+      </button>
+      <button onclick="openLoginModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-md transition flex items-center">
+        <i class="fa-solid fa-user-lock mr-1.5"></i>切換權限
+      </button>
+    </div>
+  </header>
+
+  <!-- 未設定 Supabase 警告提示標籤 -->
+  <div id="supabaseWarningBanner" class="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex justify-between items-center text-xs text-amber-300">
+    <div class="flex items-center space-x-2">
+      <i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i>
+      <span>目前運行於「本地離線模式」。請於程式碼 `index-v2.html` 填入正確的 Supabase URL 及 Key 以連線雲端資料庫。</span>
+    </div>
+    <button onclick="document.getElementById('supabaseWarningBanner').remove()" class="text-amber-400/80 hover:text-amber-300"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <!-- 圖面切換頁籤 -->
+  <nav class="bg-slate-800/80 border-b border-slate-700 px-4 py-2 flex items-center space-x-2 overflow-x-auto no-scrollbar z-30 shadow-inner">
+    <span class="text-xs text-slate-400 shrink-0 font-semibold"><i class="fa-solid fa-layer-group mr-1.5 text-indigo-400"></i>區域圖資:</span>
+    <div id="mapTabs" class="flex space-x-2"></div>
+  </nav>
+
+  <!-- 主互動地圖視窗 -->
+  <main class="relative flex-1 w-full bg-slate-950 overflow-hidden flex items-center justify-center min-h-[550px]" id="viewport">
+    <div id="addPinTip" class="hidden absolute top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-950 px-4 py-1.5 rounded-full text-xs font-bold shadow-2xl z-30 pointer-events-none flex items-center animate-bounce">
+      <i class="fa-solid fa-crosshairs mr-1.5"></i>點擊地圖任意位置以記錄損壞點位
+    </div>
+
+    <div id="mapContainer" class="relative inline-block transition-transform duration-75 ease-out cursor-grab active:cursor-grabbing select-none" style="transform-origin: 0 0;">
+      <img id="mapImage" src="https://placehold.co/2400x1400/1e293b/cbd5e1?text=Map+Loading+Error" alt="台北大巨蛋平面圖" class="max-w-none block shadow-2xl rounded" onload="onMapLoaded()" onerror="this.src='https://placehold.co/2400x1400/1e293b/cbd5e1?text=Map+Loading+Error'">
+      <div id="pinsLayer" class="absolute inset-0"></div>
+    </div>
+
+    <!-- 縮放與控制按鈕 -->
+    <div class="absolute bottom-6 right-4 flex flex-col space-y-2 z-30">
+      <button onclick="zoomMap(1.2)" class="w-10 h-10 bg-slate-800/90 hover:bg-slate-700 text-slate-200 rounded-full shadow-xl border border-slate-600 flex items-center justify-center active:scale-95 transition">
+        <i class="fa-solid fa-plus text-sm"></i>
+      </button>
+      <button onclick="zoomMap(0.8)" class="w-10 h-10 bg-slate-800/90 hover:bg-slate-700 text-slate-200 rounded-full shadow-xl border border-slate-600 flex items-center justify-center active:scale-95 transition">
+        <i class="fa-solid fa-minus text-sm"></i>
+      </button>
+      <button onclick="resetMapView()" class="w-10 h-10 bg-slate-800/90 hover:bg-slate-700 text-slate-200 rounded-full shadow-xl border border-slate-600 flex items-center justify-center active:scale-95 transition">
+        <i class="fa-solid fa-compress text-sm"></i>
+      </button>
+    </div>
+  </main>
+
+  <!-- 登入驗證 Modal -->
+  <div id="loginModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
+      <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      <div class="flex items-center space-x-2.5 mb-3">
+        <div class="bg-blue-600/20 text-blue-400 p-2 rounded-xl"><i class="fa-solid fa-shield-halved text-lg"></i></div>
+        <h3 class="text-base font-bold text-white">身分權限解鎖</h3>
+      </div>
+      <p class="text-xs text-slate-400 mb-4">請輸入授權密碼以切換為管理員身分：</p>
+      
+      <form onsubmit="handleLoginSubmit(event)">
+        <div class="mb-4">
+          <input type="password" id="loginPassword" required="" placeholder="請輸入密碼" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition">
+        </div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl shadow-lg text-xs transition">解鎖權限</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 新增/編輯點位 Modal -->
+  <div id="pinEditModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/90">
+        <h3 id="pinModalTitle" class="font-bold text-white text-base">新增損壞紀錄</h3>
+        <button onclick="closeModal('pinEditModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="pinForm" onsubmit="handleSavePin(event)" class="p-5 overflow-y-auto space-y-4 text-sm flex-1">
+        <input type="hidden" id="editPinId">
+        <input type="hidden" id="editPinX">
+        <input type="hidden" id="editPinY">
+
+        <div>
+          <label class="block text-xs text-slate-300 font-medium mb-1">事件 / 損壞名稱 <span class="text-rose-500">*</span></label>
+          <input type="text" id="pinTitleInput" required="" placeholder="例如：地坪破損 / 欄杆鬆動 / 門片損壞" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-300 font-medium mb-1">責任單位 <span class="text-rose-500">*</span> <span class="text-slate-400 font-normal">(自由輸入)</span></label>
+          <input type="text" id="pinDeptInput" required="" placeholder="例如：機電營修組 / 營建處 / 廠商A" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-300 font-medium mb-1">預計復原日期</label>
+            <input type="date" id="pinDateInput" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 font-medium mb-1">實際復原日期 <span class="text-emerald-400 font-normal">(有值即標註為已修復)</span></label>
+            <input type="date" id="pinActualDateInput" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-300 font-medium mb-1">處置方式說明</label>
+          <textarea id="pinMethodInput" rows="2" placeholder="維修計畫與處置步驟..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-300 font-medium mb-1">詳細描述 <span class="text-slate-400 font-normal">(長描述)</span></label>
+          <textarea id="pinDescInput" rows="3" placeholder="現況詳細補充說明..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-300 font-medium mb-1">現場照片 <span class="text-slate-400 font-normal">(最多 5 張，上傳至 Supabase Storage)</span></label>
+          <input type="file" id="imageFileInput" accept="image/*" multiple="" onchange="onImagesSelected(event)" class="hidden">
+          <button type="button" onclick="document.getElementById('imageFileInput').click()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3.5 py-2 rounded-xl text-xs font-medium border border-slate-600 transition flex items-center">
+            <i class="fa-solid fa-camera mr-1.5 text-blue-400"></i>選擇 / 拍攝現場照片
+          </button>
+          <div id="imagePreviewStrip" class="flex space-x-2 overflow-x-auto py-2 mt-2"></div>
+        </div>
+
+        <div class="pt-3 flex justify-end space-x-2 border-t border-slate-700">
+          <button type="button" onclick="closeModal('pinEditModal')" class="px-4 py-2 bg-slate-700 text-slate-300 rounded-xl text-xs font-medium">取消</button>
+          <button type="submit" id="savePinBtn" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-xs shadow-md flex items-center">
+            <span>儲存點位</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 點位詳細檢視 Modal -->
+  <div id="pinViewModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-700 flex justify-between items-start bg-slate-800/90">
+        <div>
+          <div class="flex items-center space-x-2 mb-1">
+            <span id="viewStatusBadge" class="inline-block text-[11px] px-2.5 py-0.5 rounded-full font-bold"></span>
+            <span id="viewDeptBadge" class="inline-block bg-blue-600/30 text-blue-300 border border-blue-500/30 text-[11px] px-2.5 py-0.5 rounded-full font-medium"></span>
+          </div>
+          <h3 id="viewTitleText" class="text-lg font-bold text-white"></h3>
+        </div>
+        <button onclick="closeModal('pinViewModal')" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm flex-1">
+        <div id="swiperWrapperBox" class="swiper w-full rounded-xl overflow-hidden bg-slate-900 border border-slate-700">
+          <div class="swiper-wrapper" id="viewPhotosContainer"></div>
+          <div class="swiper-pagination"></div>
+          <div class="swiper-button-next !text-white/80 scale-75"></div>
+          <div class="swiper-button-prev !text-white/80 scale-75"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 bg-slate-900/60 p-3 rounded-xl border border-slate-700">
+          <div><span class="text-slate-400 text-[11px] block">預計復原日</span><span id="viewDateText" class="font-medium text-amber-400"></span></div>
+          <div><span class="text-slate-400 text-[11px] block">實際復原日</span><span id="viewActualDateText" class="font-medium text-emerald-400"></span></div>
+        </div>
+        <div>
+          <h4 class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider mb-1">處置方式說明</h4>
+          <p id="viewMethodText" class="text-slate-200 bg-slate-900/40 p-3 rounded-xl border border-slate-700/40 leading-relaxed"></p>
+        </div>
+        <div>
+          <h4 class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider mb-1">詳細描述</h4>
+          <p id="viewDescText" class="text-slate-300 bg-slate-900/40 p-3 rounded-xl border border-slate-700/40 leading-relaxed"></p>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-slate-700 bg-slate-800 flex justify-between items-center">
+        <button id="deletePinBtn" onclick="deleteActivePin()" class="hidden text-rose-400 hover:bg-rose-500/20 px-3 py-2 rounded-xl text-xs font-semibold transition"><i class="fa-solid fa-trash-can mr-1.5"></i>刪除紀錄</button>
+        <button id="editPinBtn" onclick="editActivePin()" class="hidden bg-slate-700 hover:bg-slate-600 text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold ml-auto transition"><i class="fa-solid fa-pen-to-square mr-1.5"></i>編輯內容</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 訊息 -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-700 text-white px-5 py-3 rounded-2xl shadow-2xl z-50 flex items-center space-x-3 transition-all duration-300 opacity-0 pointer-events-none">
+    <i id="toastIcon" class="fa-solid fa-circle-info text-blue-400 text-lg"></i>
+    <span id="toastMsg" class="text-xs font-medium"></span>
+  </div>
+
+  <script>
+    // P1 & P2: 透過 Supabase JS SDK 讀取 Pins (含 Fail-Safe 降級機制)
+    async function fetchPinsFromSupabase() {
+      if (!isSupabaseConfigured || !supabaseClient) {
+        console.warn("Supabase 未配置真實端點，使用本地點位資料庫。");
+        renderPins();
+        showToast('目前使用本地離線點位', 'info');
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabaseClient.from('pins').select('*');
+        if (error) throw error;
+
+        window.pins = (data || []).map(p => ({
+          id: p.id,
+          mapId: p.map_id,
+          x: p.x,
+          y: p.y,
+          title: p.title,
+          department: p.department,
+          restoreDate: p.restore_date,
+          actualRestoreDate: p.actual_restore_date,
+          restoreMethod: p.restore_method,
+          description: p.description,
+          status: p.status,
+          images: p.images || [],
+          createdDate: p.created_at
+        }));
+
+        localStorage.setItem('taipei_dome_pins_v2', JSON.stringify(window.pins));
+        renderPins();
+        showToast('與 Supabase 雲端資料同步完成', 'success');
+      } catch (err) {
+        console.warn("Supabase 讀取失敗，自動退回本地快取:", err.message || err);
+        renderPins();
+        showToast('雲端連線失敗，自動載入本地資料', 'info');
+      }
+    }
+
+    // P3 & P4: 渲染點位 (未修復: 紅色, 已修復: 綠色)
+    function renderPins() {
+      const layer = document.getElementById('pinsLayer');
+      if (!layer) return;
+      layer.innerHTML = '';
+      if (!window.currentMapId) return;
+
+      const list = (window.pins || []).filter(p => p.mapId === window.currentMapId);
+      list.forEach(pin => {
+        const isRepaired = !!pin.actualRestoreDate; // 條件: actual_restore_date 有值即為已修復
+        
+        const el = document.createElement('div');
+        el.className = 'absolute z-20 cursor-pointer group -translate-x-1/2 -translate-y-full';
+        el.style.left = `${pin.x}%`;
+        el.style.top = `${pin.y}%`;
+
+        // P4: 動態選擇顏色樣式 (紅色未修復 vs 綠色已修復)
+        const pulseClass = isRepaired ? 'bg-emerald-500/40 pin-pulse-green' : 'bg-rose-500/40 pin-pulse-red';
+        const badgeBg = isRepaired 
+          ? 'bg-gradient-to-tr from-emerald-600 to-green-500' 
+          : 'bg-gradient-to-tr from-rose-600 to-red-500';
+        const iconClass = isRepaired ? 'fa-check' : 'fa-triangle-exclamation';
+
+        el.innerHTML = `
+          <div class="relative flex flex-col items-center">
+            <div class="absolute -inset-2 rounded-full ${pulseClass} pointer-events-none"></div>
+            <div class="relative ${badgeBg} text-white w-9 h-9 rounded-full shadow-2xl border-2 border-white flex items-center justify-center transition-transform group-hover:scale-125">
+              <i class="fa-solid ${iconClass} text-sm drop-shadow"></i>
+            </div>
+            <div class="mt-1 whitespace-nowrap bg-slate-900/95 text-white text-[11px] font-bold px-2 py-0.5 rounded-md shadow-xl border border-slate-700 pointer-events-none">
+              ${pin.title}
+            </div>
+          </div>
+        `;
+        el.onclick = (e) => { e.stopPropagation(); openPinViewModal(pin.id); };
+        layer.appendChild(el);
+      });
+    }
+
+    // P5: 照片上傳至 Supabase Storage (photos bucket)
+    async function uploadImagesToStorage(files) {
+      if (!isSupabaseConfigured || !supabaseClient) return [];
+      const uploadedUrls = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        const filePath = `pin_photos/${fileName}`;
+
+        try {
+          const { error } = await supabaseClient.storage.from('photos').upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+          if (error) throw error;
+
+          const { data: publicUrlData } = supabaseClient.storage.from('photos').getPublicUrl(filePath);
+          if (publicUrlData?.publicUrl) {
+            uploadedUrls.push(publicUrlData.publicUrl);
+          }
+        } catch (uploadErr) {
+          console.error("Storage Upload Error:", uploadErr);
+        }
+      }
+      return uploadedUrls;
+    }
+
+    // P2: 新增/修改點位寫入 (支援本地與 Supabase 雙軌)
+    async function handleSavePin(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('savePinBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-1.5"></i>儲存中...`;
+
+      const id = document.getElementById('editPinId').value || `pin-${Date.now()}`;
+      const title = document.getElementById('pinTitleInput').value.trim();
+      const department = document.getElementById('pinDeptInput').value.trim();
+      const restoreDate = document.getElementById('pinDateInput').value || null;
+      const actualRestoreDate = document.getElementById('pinActualDateInput').value || null;
+      const restoreMethod = document.getElementById('pinMethodInput').value.trim();
+      const description = document.getElementById('pinDescInput').value.trim();
+      const x = parseFloat(document.getElementById('editPinX').value);
+      const y = parseFloat(document.getElementById('editPinY').value);
+
+      // 上傳新選取的照片
+      let newUploadedUrls = [];
+      if (pendingImageFiles.length > 0 && isSupabaseConfigured) {
+        newUploadedUrls = await uploadImagesToStorage(pendingImageFiles);
+      }
+      const finalImages = [...currentUploadedImageUrls, ...newUploadedUrls].slice(0, 5);
+
+      const localPinObj = {
+        id,
+        mapId: window.currentMapId,
+        x, y,
+        title, department,
+        restoreDate,
+        actualRestoreDate,
+        restoreMethod, description,
+        status: actualRestoreDate ? 'COMPLETED' : 'PENDING',
+        images: finalImages,
+        createdDate: new Date().toISOString().split('T')[0]
+      };
+
+      // 1. 寫入本地存儲
+      const existingIdx = window.pins.findIndex(p => p.id === id);
+      if (existingIdx >= 0) window.pins[existingIdx] = localPinObj;
+      else window.pins.push(localPinObj);
+      localStorage.setItem('taipei_dome_pins_v2', JSON.stringify(window.pins));
+
+      // 2. 若 Supabase 連線正常則發送至雲端
+      if (isSupabaseConfigured && supabaseClient) {
+        const pinPayload = {
+          title, department,
+          map_id: window.currentMapId,
+          x, y,
+          restore_date: restoreDate,
+          actual_restore_date: actualRestoreDate,
+          restore_method: restoreMethod,
+          description,
+          status: actualRestoreDate ? 'COMPLETED' : 'PENDING',
+          images: finalImages
+        };
+
+        try {
+          const isExistingInDb = document.getElementById('editPinId').value;
+          if (isExistingInDb) {
+            await supabaseClient.from('pins').update(pinPayload).eq('id', id);
+          } else {
+            await supabaseClient.from('pins').insert([pinPayload]);
+          }
+        } catch (err) {
+          console.warn("Supabase 儲存警告:", err);
+        }
+      }
+
+      closeModal('pinEditModal');
+      renderPins();
+      showToast('損壞紀錄儲存成功！', 'success');
+
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = `<span>儲存點位</span>`;
+    }
+
+    // P2: 刪除點位
+    async function deleteActivePin() {
+      if (!viewingPinId || !confirm('確定要刪除此筆巡檢紀錄嗎？')) return;
+      
+      // 1. 本地刪除
+      window.pins = window.pins.filter(p => p.id !== viewingPinId);
+      localStorage.setItem('taipei_dome_pins_v2', JSON.stringify(window.pins));
+
+      // 2. 雲端刪除
+      if (isSupabaseConfigured && supabaseClient) {
+        try {
+          await supabaseClient.from('pins').delete().eq('id', viewingPinId);
+        } catch (err) {
+          console.warn("Supabase 刪除警告:", err);
+        }
+      }
+
+      closeModal('pinViewModal');
+      renderPins();
+      showToast('已成功刪除點位', 'info');
+    }
+      try {
+        const { data, error } = await supabaseClient.from('pins').select('*');
+        if (error) throw error;
+
+        window.pins = (data || []).map(p => ({
+          id: p.id,
+          mapId: p.map_id,
+          x: p.x,
+          y: p.y,
+          title: p.title,
+          department: p.department,
+          restoreDate: p.restore_date,
+          actualRestoreDate: p.actual_restore_date,
+          restoreMethod: p.restore_method,
+          description: p.description,
+          status: p.status,
+          images: p.images || [],
+          createdDate: p.created_at
+        }));
+
+        renderPins();
+        showToast('與 Supabase 雲端資料同步完成', 'success');
+      } catch (err) {
+        console.error("Fetch Pins Error:", err);
+        showToast('讀取雲端點位失敗', 'error');
+      }
+    }
+
+    // P3 & P4: 渲染點位 (未修復: 紅色, 已修復: 綠色)
+    function renderPins() {
+      const layer = document.getElementById('pinsLayer');
+      if (!layer) return;
+      layer.innerHTML = '';
+      if (!window.currentMapId) return;
+
+      const list = (window.pins || []).filter(p => p.mapId === window.currentMapId);
+      list.forEach(pin => {
+        const isRepaired = !!pin.actualRestoreDate; // 條件: actual_restore_date 有值即為已修復
+        
+        const el = document.createElement('div');
+        el.className = 'absolute z-20 cursor-pointer group -translate-x-1/2 -translate-y-full';
+        el.style.left = `${pin.x}%`;
+        el.style.top = `${pin.y}%`;
+
+        // P4: 動態選擇顏色樣式 (紅色未修復 vs 綠色已修復)
+        const pulseClass = isRepaired ? 'bg-emerald-500/40 pin-pulse-green' : 'bg-rose-500/40 pin-pulse-red';
+        const badgeBg = isRepaired 
+          ? 'bg-gradient-to-tr from-emerald-600 to-green-500' 
+          : 'bg-gradient-to-tr from-rose-600 to-red-500';
+        const iconClass = isRepaired ? 'fa-check' : 'fa-triangle-exclamation';
+
+        el.innerHTML = `
+          <div class="relative flex flex-col items-center">
+            <div class="absolute -inset-2 rounded-full ${pulseClass} pointer-events-none"></div>
+            <div class="relative ${badgeBg} text-white w-9 h-9 rounded-full shadow-2xl border-2 border-white flex items-center justify-center transition-transform group-hover:scale-125">
+              <i class="fa-solid ${iconClass} text-sm drop-shadow"></i>
+            </div>
+            <div class="mt-1 whitespace-nowrap bg-slate-900/95 text-white text-[11px] font-bold px-2 py-0.5 rounded-md shadow-xl border border-slate-700 pointer-events-none">
+              ${pin.title}
+            </div>
+          </div>
+        `;
+        el.onclick = (e) => { e.stopPropagation(); openPinViewModal(pin.id); };
+        layer.appendChild(el);
+      });
+    }
+
+    // P5: 照片上傳至 Supabase Storage (photos bucket)
+    async function uploadImagesToStorage(files) {
+      if (!supabaseClient) return [];
+      const uploadedUrls = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        const filePath = `pin_photos/${fileName}`;
+
+        try {
+          const { error } = await supabaseClient.storage.from('photos').upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+          if (error) throw error;
+
+          const { data: publicUrlData } = supabaseClient.storage.from('photos').getPublicUrl(filePath);
+          if (publicUrlData?.publicUrl) {
+            uploadedUrls.push(publicUrlData.publicUrl);
+          }
+        } catch (uploadErr) {
+          console.error("Storage Upload Error:", uploadErr);
+        }
+      }
+      return uploadedUrls;
+    }
+
+    // P2: 新增/修改點位寫入 Supabase
+    async function handleSavePin(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('savePinBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-1.5"></i>儲存中...`;
+
+      const id = document.getElementById('editPinId').value || undefined;
+      const title = document.getElementById('pinTitleInput').value.trim();
+      const department = document.getElementById('pinDeptInput').value.trim();
+      const restoreDate = document.getElementById('pinDateInput').value || null;
+      const actualRestoreDate = document.getElementById('pinActualDateInput').value || null;
+      const restoreMethod = document.getElementById('pinMethodInput').value.trim();
+      const description = document.getElementById('pinDescInput').value.trim();
+      const x = parseFloat(document.getElementById('editPinX').value);
+      const y = parseFloat(document.getElementById('editPinY').value);
+
+      // 上傳新選取的照片
+      let newUploadedUrls = [];
+      if (pendingImageFiles.length > 0) {
+        newUploadedUrls = await uploadImagesToStorage(pendingImageFiles);
+      }
+      const finalImages = [...currentUploadedImageUrls, ...newUploadedUrls].slice(0, 5);
+
+      const pinPayload = {
+        title,
+        department,
+        map_id: window.currentMapId,
+        x,
+        y,
+        restore_date: restoreDate,
+        actual_restore_date: actualRestoreDate,
+        restore_method: restoreMethod,
+        description,
+        status: actualRestoreDate ? 'COMPLETED' : 'PENDING',
+        images: finalImages
+      };
+
+      try {
+        if (id) {
+          const { error } = await supabaseClient.from('pins').update(pinPayload).eq('id', id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabaseClient.from('pins').insert([pinPayload]);
+          if (error) throw error;
+        }
+
+        closeModal('pinEditModal');
+        await fetchPinsFromSupabase();
+        showToast('損壞紀錄儲存成功！', 'success');
+      } catch (err) {
+        console.error("Save Pin Error:", err);
+        showToast('儲存失敗，請檢查資料庫 Policy 設定', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = `<span>儲存點位</span>`;
+      }
+    }
+
+    // P2: 刪除點位
+    async function deleteActivePin() {
+      if (!viewingPinId || !confirm('確定要刪除此筆巡檢紀錄嗎？')) return;
+      try {
+        const { error } = await supabaseClient.from('pins').delete().eq('id', viewingPinId);
+        if (error) throw error;
+
+        closeModal('pinViewModal');
+        await fetchPinsFromSupabase();
+        showToast('已成功刪除點位', 'info');
+      } catch (err) {
+        console.error("Delete Pin Error:", err);
+        showToast('刪除失敗', 'error');
+      }
+    }
+
+    // P7: 權限切換
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('loginPassword').value.trim();
+      const badge = document.getElementById('roleBadge');
+
+      if (pwd === 'admin') {
+        currentRole = ROLES.ADMIN;
+        badge.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1.5"></span>巡檢管理員 (可新增/修改)`;
+        showToast('已解鎖：巡檢管理員', 'success');
+      } else if (pwd === 'superadmin') {
+        currentRole = ROLES.SUPERADMIN;
+        badge.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-purple-400 mr-1.5 animate-pulse"></span>超級管理員 (可新增/修改/刪除)`;
+        showToast('已解鎖：超級管理員', 'success');
+      } else {
+        currentRole = ROLES.VISITOR;
+        showToast('密碼錯誤，維持訪客身分', 'error');
+      }
+      closeModal('loginModal');
+      document.getElementById('loginPassword').value = '';
+      renderPins();
+    }
+
+    // 介面圖層與選單控制
+    function renderMapTabs() {
+      const tabs = document.getElementById('mapTabs');
+      if (!tabs) return;
+      tabs.innerHTML = '';
+      (window.maps || []).forEach(m => {
+        const active = m.id === window.currentMapId;
+        const btn = document.createElement('button');
+        btn.className = `px-3.5 py-1 rounded-full text-xs font-medium transition ${active ? 'bg-blue-600 text-white shadow-md font-semibold' : 'bg-slate-700/60 hover:bg-slate-700 text-slate-300'}`;
+        btn.innerText = m.name;
+        btn.onclick = () => switchMap(m.id);
+        tabs.appendChild(btn);
+      });
+    }
+
+    function switchMap(mapId) {
+      window.currentMapId = mapId;
+      renderMapTabs();
+      loadMap(mapId);
+    }
+
+    function loadMap(mapId) {
+      const target = (window.maps || []).find(m => m.id === mapId) || window.maps[0];
+      if (target && mapImg) {
+        window.currentMapId = target.id;
+        mapImg.src = target.url;
+      }
+      renderPins();
+    }
+
+    // 重新關聯實作函式
+    window.onMapLoaded = function onMapLoaded() { 
+      resetMapView(); 
+      renderPins(); 
+    };
+
+    function openAddPinModal(x, y) {
+      document.getElementById('pinForm').reset();
+      document.getElementById('editPinId').value = '';
+      document.getElementById('editPinX').value = x;
+      document.getElementById('editPinY').value = y;
+      document.getElementById('pinModalTitle').innerText = '新增損壞紀錄';
+      pendingImageFiles = [];
+      currentUploadedImageUrls = [];
+      document.getElementById('imagePreviewStrip').innerHTML = '';
+      document.getElementById('pinEditModal').classList.remove('hidden');
+    }
+
+    function onImagesSelected(e) {
+      const files = Array.from(e.target.files);
+      files.forEach(f => {
+        if (pendingImageFiles.length + currentUploadedImageUrls.length < 5) {
+          pendingImageFiles.push(f);
+        }
+      });
+      renderImagePreview();
+    }
+
+    function renderImagePreview() {
+      const strip = document.getElementById('imagePreviewStrip');
+      if (!strip) return;
+      strip.innerHTML = '';
+
+      currentUploadedImageUrls.forEach(url => {
+        const div = document.createElement('div');
+        div.className = 'relative shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-slate-600';
+        div.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+        strip.appendChild(div);
+      });
+
+      pendingImageFiles.forEach(file => {
+        const div = document.createElement('div');
+        div.className = 'relative shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-blue-500/80';
+        const src = URL.createObjectURL(file);
+        div.innerHTML = `<img src="${src}" class="w-full h-full object-cover">`;
+        strip.appendChild(div);
+      });
+    }
+
+    // P6: 點位詳細 Modal
+    function openPinViewModal(id) {
+      const pin = window.pins.find(p => p.id === id);
+      if (!pin) return;
+      viewingPinId = id;
+
+      const isRepaired = !!pin.actualRestoreDate;
+
+      document.getElementById('viewTitleText').innerText = pin.title;
+      document.getElementById('viewDeptBadge').innerText = `責任單位：${pin.department}`;
+      
+      const statusBadge = document.getElementById('viewStatusBadge');
+      if (isRepaired) {
+        statusBadge.className = 'inline-block text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+        statusBadge.innerText = '已修復';
+      } else {
+        statusBadge.className = 'inline-block text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30';
+        statusBadge.innerText = '未修復';
+      }
+
+      document.getElementById('viewDateText').innerText = pin.restoreDate || '未設定';
+      document.getElementById('viewActualDateText').innerText = pin.actualRestoreDate || '尚未復原';
+      document.getElementById('viewMethodText').innerText = pin.restoreMethod || '無';
+      document.getElementById('viewDescText').innerText = pin.description || '無';
+
+      document.getElementById('editPinBtn').classList.toggle('hidden', currentRole === ROLES.VISITOR);
+      document.getElementById('deletePinBtn').classList.toggle('hidden', currentRole !== ROLES.SUPERADMIN);
+
+      const wrapper = document.getElementById('viewPhotosContainer');
+      wrapper.innerHTML = '';
+      const photos = pin.images && pin.images.length > 0 ? pin.images : ['https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=800&auto=format&fit=crop'];
+      photos.forEach(src => {
+        const slide = document.createElement('div');
+        slide.className = 'swiper-slide';
+        slide.innerHTML = `<img src="${src}">`;
+        wrapper.appendChild(slide);
+      });
+
+      if (swiperInstance) swiperInstance.destroy();
+      swiperInstance = new Swiper('#swiperWrapperBox', {
+        pagination: { el: '.swiper-pagination', clickable: true },
+        navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' }
+      });
+      document.getElementById('pinViewModal').classList.remove('hidden');
+    }
+
+    function editActivePin() {
+      const pin = window.pins.find(p => p.id === viewingPinId);
+      if (!pin) return;
+      closeModal('pinViewModal');
+      document.getElementById('editPinId').value = pin.id;
+      document.getElementById('editPinX').value = pin.x;
+      document.getElementById('editPinY').value = pin.y;
+      document.getElementById('pinTitleInput').value = pin.title;
+      document.getElementById('pinDeptInput').value = pin.department;
+      document.getElementById('pinDateInput').value = pin.restoreDate || '';
+      document.getElementById('pinActualDateInput').value = pin.actualRestoreDate || '';
+      document.getElementById('pinMethodInput').value = pin.restoreMethod || '';
+      document.getElementById('pinDescInput').value = pin.description || '';
+      document.getElementById('pinModalTitle').innerText = '編輯損壞紀錄';
+      pendingImageFiles = [];
+      currentUploadedImageUrls = pin.images ? [...pin.images] : [];
+      renderImagePreview();
+      document.getElementById('pinEditModal').classList.remove('hidden');
+    }
+
+    // 互動控制 Engine
+    function setupInteractions() {
+      if (!viewport || !container) return;
+      let isMoved = false;
+
+      const getTouchDistance = (e) => {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        return Math.hypot(dx, dy);
+      };
+
+      const startPan = (cx, cy) => {
+        isDragging = true;
+        isMoved = false;
+        startX = cx - panX;
+        startY = cy - panY;
+      };
+
+      const movePan = (cx, cy) => {
+        if (!isDragging) return;
+        const nextPanX = cx - startX;
+        const nextPanY = cy - startY;
+
+        if (Math.abs(nextPanX - panX) > 2 || Math.abs(nextPanY - panY) > 2) {
+          isMoved = true;
+        }
+
+        panX = nextPanX;
+        panY = nextPanY;
+        requestUpdateTransform();
+      };
+
+      const endPan = () => {
+        isDragging = false;
+        initialTouchDistance = 0;
+      };
+
+      viewport.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        startPan(e.clientX, e.clientY);
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (isDragging) movePan(e.clientX, e.clientY);
+      });
+
+      window.addEventListener('mouseup', endPan);
+
+      viewport.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          startPan(e.touches[0].clientX, e.touches[0].clientY);
+        } else if (e.touches.length === 2) {
+          isDragging = false;
+          initialTouchDistance = getTouchDistance(e);
+          initialScale = scale;
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1 && isDragging) {
+          movePan(e.touches[0].clientX, e.touches[0].clientY);
+        } else if (e.touches.length === 2 && initialTouchDistance > 0) {
+          const currentDistance = getTouchDistance(e);
+          const zoomFactor = currentDistance / initialTouchDistance;
+          scale = Math.min(Math.max(0.4, initialScale * zoomFactor), 5);
+          requestUpdateTransform();
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchend', endPan);
+
+      container.onclick = (e) => {
+        if (isMoved || currentRole === ROLES.VISITOR) {
+          if (currentRole === ROLES.VISITOR && !isMoved) {
+            showToast('請先切換至管理員身分以標註損壞', 'info');
+          }
+          return;
+        }
+        const rect = container.getBoundingClientRect();
+        const px = (((e.clientX - rect.left) / rect.width) * 100).toFixed(1);
+        const py = (((e.clientY - rect.top) / rect.height) * 100).toFixed(1);
+        openAddPinModal(px, py);
+      };
+
+      viewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = e.deltaY < 0 ? 1.12 : 0.88;
+        zoomMap(zoomFactor);
+      }, { passive: false });
+    }
+
+    function requestUpdateTransform() {
+      if (!isTransformPending && container) {
+        isTransformPending = true;
+        requestAnimationFrame(() => {
+          container.style.transform = `translate3d(${panX}px, ${panY}px, 0px) scale(${scale})`;
+          isTransformPending = false;
+        });
+      }
+    }
+
+    function zoomMap(f) {
+      scale = Math.min(Math.max(0.4, scale * f), 5);
+      requestUpdateTransform();
+    }
+
+    function resetMapView() {
+      scale = 1; panX = 0; panY = 0;
+      requestUpdateTransform();
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    }
+
+    function openLoginModal() {
+      document.getElementById('loginModal').classList.remove('hidden');
+    }
+
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      document.getElementById('toastMsg').innerText = msg;
+      const icon = document.getElementById('toastIcon');
+      icon.className = type === 'success' ? 'fa-solid fa-circle-check text-emerald-400 text-lg' : 'fa-solid fa-circle-info text-blue-400 text-lg';
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => toast.classList.add('opacity-0', 'pointer-events-none'), 3000);
+    }
+
+    // 將所有 HTML 事件處理函式掛載至全域 window，徹底防止 ReferenceError
+    window.openLoginModal = openLoginModal;
+    window.closeModal = closeModal;
+    window.fetchPinsFromSupabase = fetchPinsFromSupabase;
+    window.handleLoginSubmit = handleLoginSubmit;
+    window.handleSavePin = handleSavePin;
+    window.deleteActivePin = deleteActivePin;
+    window.editActivePin = editActivePin;
+    window.zoomMap = zoomMap;
+    window.resetMapView = resetMapView;
+    window.onImagesSelected = onImagesSelected;
+    window.renderPins = renderPins;
+    window.switchMap = switchMap;
+  </script>
+
+</body></html>
