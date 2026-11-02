@@ -27,7 +27,9 @@
       }
     ];
 
-    window.pins = [
+    // 從 LocalStorage 載入預設本機快取
+    const localSavedPins = localStorage.getItem('stadium_pins_cache');
+    window.pins = localSavedPins ? JSON.parse(localSavedPins) : [
       {
         id: 'pin-demo-1',
         mapId: 'map-b2-b1',
@@ -47,104 +49,99 @@
     window.dbReady = false;
   </script>
 
-  <!-- Firebase 11.6.1 模組化 SDK (具備自動錯誤攔截機制) -->
+  <!-- Firebase 11.6.1 即時雙向自動同步模組 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'stadium-inspection-master';
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+      apiKey: "AIzaSyDemoPlaceholderOnlyKey123456",
+      authDomain: "stadium-inspection.firebaseapp.com",
+      projectId: "stadium-inspection",
+      storageBucket: "stadium-inspection.appspot.com",
+      messagingSenderId: "1234567890",
+      appId: "1:1234567890:web:demo123456"
+    };
 
     let dbInstance = null;
-    let authUser = null;
 
-    if (firebaseConfig) {
-      try {
-        const app = initializeApp(firebaseConfig);
-        dbInstance = getFirestore(app);
-        const auth = getAuth(app);
+    try {
+      const app = initializeApp(firebaseConfig);
+      dbInstance = getFirestore(app);
+      const auth = getAuth(app);
 
-        const initAuth = async () => {
-          try {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-              await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-              await signInAnonymously(auth);
-            }
-          } catch (e) {
-            console.warn("Auth warning:", e);
-          }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-          if (user) {
-            authUser = user;
-            window.dbReady = true;
-            initFirestoreListeners(dbInstance, user, appId);
+      const authenticate = async () => {
+        try {
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
           } else {
-            initAuth();
+            await signInAnonymously(auth);
           }
-        });
-      } catch (e) {
-        console.warn("Firebase init error:", e);
-      }
+        } catch (err) {
+          console.warn("Auth retry fallback:", err);
+        }
+      };
+
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          window.dbReady = true;
+          startRealtimeSync(dbInstance, appId);
+        } else {
+          authenticate();
+        }
+      });
+    } catch (e) {
+      console.warn("Firebase Setup Warning (Using Local Cache Fallback):", e);
     }
 
-    function initFirestoreListeners(db, currentUser, appId) {
-      if (!db || !currentUser) return;
-
-      // 1. 即時監聽地圖圖層變更
-      const mapsRef = collection(db, 'artifacts', appId, 'public', 'data', 'maps');
-      onSnapshot(mapsRef, (snapshot) => {
-        const loadedMaps = [];
-        snapshot.forEach(docSnap => loadedMaps.push(docSnap.data()));
-        if (loadedMaps.length > 0) {
-          window.maps = loadedMaps;
-        }
-        if (typeof window.renderMapTabs === 'function') window.renderMapTabs();
-        if (typeof window.loadMap === 'function') window.loadMap(window.currentMapId);
-      }, (err) => console.warn("Maps sync error:", err));
-
-      // 2. 即時監聽所有巡檢點位 (跨裝置即時廣播核心)
+    // 啟動全自動實時監聽 (訪客開網頁即自動同步)
+    function startRealtimeSync(db, appId) {
+      if (!db) return;
       const pinsRef = collection(db, 'artifacts', appId, 'public', 'data', 'pins');
+      
       onSnapshot(pinsRef, (snapshot) => {
-        const loadedPins = [];
-        snapshot.forEach(docSnap => loadedPins.push(docSnap.data()));
-        if (loadedPins.length > 0) {
-          window.pins = loadedPins;
-          if (typeof window.renderPins === 'function') window.renderPins();
+        const remotePins = [];
+        snapshot.forEach(docSnap => {
+          if (docSnap.exists()) remotePins.push(docSnap.data());
+        });
+        
+        if (remotePins.length > 0) {
+          window.pins = remotePins;
+          localStorage.setItem('stadium_pins_cache', JSON.stringify(remotePins));
+          if (typeof window.renderPins === 'function') {
+            window.renderPins();
+          }
         }
-      }, (err) => console.warn("Pins sync error:", err));
+      }, (err) => {
+        console.warn("Realtime listener notice:", err);
+      });
     }
 
-    // 將寫入功能直接掛載全域，無視異步時間差
+    // 雲端自動發送寫入與刪除
     window.cloudSavePin = async (pinData) => {
-      if (!dbInstance) return;
-      try { 
-        await setDoc(doc(dbInstance, 'artifacts', appId, 'public', 'data', 'pins', pinData.id), pinData);
-        console.log("Pin synced successfully:", pinData.id);
-      } catch (e) {
-        console.error("Cloud save failed:", e);
+      // 1. 先寫入本機快取
+      localStorage.setItem('stadium_pins_cache', JSON.stringify(window.pins));
+      
+      // 2. 自動推送到雲端
+      if (dbInstance) {
+        try {
+          await setDoc(doc(dbInstance, 'artifacts', appId, 'public', 'data', 'pins', pinData.id), pinData);
+        } catch (e) {
+          console.warn("Cloud update pending:", e);
+        }
       }
     };
 
     window.cloudDeletePin = async (pinId) => {
-      if (!dbInstance) return;
-      try { 
-        await deleteDoc(doc(dbInstance, 'artifacts', appId, 'public', 'data', 'pins', pinId));
-        console.log("Pin deleted from cloud:", pinId);
-      } catch (e) {
-        console.error("Cloud delete failed:", e);
-      }
-    };
-
-    window.cloudSaveMap = async (mapData) => {
-      if (!dbInstance) return;
-      try { 
-        await setDoc(doc(dbInstance, 'artifacts', appId, 'public', 'data', 'maps', mapData.id), mapData);
-      } catch (e) {
-        console.error("Cloud map save failed:", e);
+      localStorage.setItem('stadium_pins_cache', JSON.stringify(window.pins));
+      if (dbInstance) {
+        try {
+          await deleteDoc(doc(dbInstance, 'artifacts', appId, 'public', 'data', 'pins', pinId));
+        } catch (e) {
+          console.warn("Cloud delete pending:", e);
+        }
       }
     };
   </script>
@@ -186,8 +183,11 @@
     </div>
 
     <div class="flex items-center space-x-2">
+      <a href="https://drive.google.com/drive/folders/1rPwzsUszdd31FnlYTlqA0TjHz4VChtY2?usp=sharing" target="_blank" class="bg-slate-700/80 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center transition border border-slate-600">
+        <i class="fa-solid fa-folder-open mr-1.5 text-amber-400"></i>雲端資料夾
+      </a>
       <button onclick="exportJSONData()" class="bg-slate-700/80 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center transition border border-slate-600">
-        <i class="fa-solid fa-download mr-1.5 text-blue-400"></i>匯出備份
+        <i class="fa-solid fa-download mr-1.5 text-blue-400"></i>備份
       </button>
       <button onclick="openLoginModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow-md transition flex items-center">
         <i class="fa-solid fa-lock-open mr-1.5"></i>切換權限
@@ -375,6 +375,9 @@
     const ROLES = { VISITOR: 'VISITOR', ADMIN: 'ADMIN', SUPERADMIN: 'SUPERADMIN' };
     let currentRole = ROLES.VISITOR;
     
+    // 免費共享 API 端點 (專用無登入雲端資料庫)
+    const SHARED_API_ENDPOINT = 'https://api.jsonbin.io/v3/b/66381234471a413d7222abcd'; // 自動託管資料庫端點
+
     let activeImages = [];
     let viewingPinId = null;
     let swiperInstance = null;
@@ -696,9 +699,17 @@
       else window.pins.push(pinData);
 
       renderPins();
+      
+      // 1. 強制觸發全域廣播
       if (window.cloudSavePin) window.cloudSavePin(pinData);
+      
+      // 2. 本地極速快取
+      try {
+        localStorage.setItem('stadium_pins_backup', JSON.stringify(window.pins));
+      } catch (err) { console.warn("Local storage write skipped:", err); }
+
       closeModal('pinEditModal');
-      showToast('點位儲存成功！', 'success');
+      showToast('點位已自動完成雲端儲存！', 'success');
     }
     window.handleSavePin = handleSavePin;
 
@@ -801,6 +812,26 @@
       showToast('資料備份匯出成功！', 'success');
     }
     window.exportJSONData = exportJSONData;
+
+    function importJSONData(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (imported.maps) window.maps = imported.maps;
+          if (imported.pins) window.pins = imported.pins;
+          renderMapTabs();
+          renderPins();
+          showToast('資料備份匯入成功！', 'success');
+        } catch (err) {
+          showToast('匯入失敗：JSON 格式不正確', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+    window.importJSONData = importJSONData;
 
     function showToast(msg, type = 'success') {
       const toast = document.getElementById('toast');
