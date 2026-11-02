@@ -56,10 +56,13 @@
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'stadium-inspection-master';
     const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
 
+    let dbInstance = null;
+    let authUser = null;
+
     if (firebaseConfig) {
       try {
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        dbInstance = getFirestore(app);
         const auth = getAuth(app);
 
         const initAuth = async () => {
@@ -76,8 +79,9 @@
 
         onAuthStateChanged(auth, (user) => {
           if (user) {
+            authUser = user;
             window.dbReady = true;
-            initFirestoreListeners(db, user, appId);
+            initFirestoreListeners(dbInstance, user, appId);
           } else {
             initAuth();
           }
@@ -107,38 +111,42 @@
       onSnapshot(pinsRef, (snapshot) => {
         const loadedPins = [];
         snapshot.forEach(docSnap => loadedPins.push(docSnap.data()));
-        // 即時替換全域點位清單並更新畫面
-        window.pins = loadedPins;
-        if (typeof window.renderPins === 'function') window.renderPins();
+        if (loadedPins.length > 0) {
+          window.pins = loadedPins;
+          if (typeof window.renderPins === 'function') window.renderPins();
+        }
       }, (err) => console.warn("Pins sync error:", err));
-
-      // 3. 全域寫入/刪除函式實體綁定 (確保點擊儲存時必然推送到雲端)
-      window.cloudSavePin = async (pinData) => {
-        try { 
-          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pins', pinData.id), pinData);
-          console.log("Pin synced to cloud:", pinData.id);
-        } catch (e) {
-          console.error("Cloud save failed:", e);
-        }
-      };
-
-      window.cloudDeletePin = async (pinId) => {
-        try { 
-          await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pins', pinId));
-          console.log("Pin deleted from cloud:", pinId);
-        } catch (e) {
-          console.error("Cloud delete failed:", e);
-        }
-      };
-
-      window.cloudSaveMap = async (mapData) => {
-        try { 
-          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'maps', mapData.id), mapData);
-        } catch (e) {
-          console.error("Cloud map save failed:", e);
-        }
-      };
     }
+
+    // 將寫入功能直接掛載全域，無視異步時間差
+    window.cloudSavePin = async (pinData) => {
+      if (!dbInstance) return;
+      try { 
+        await setDoc(doc(dbInstance, 'artifacts', appId, 'public', 'data', 'pins', pinData.id), pinData);
+        console.log("Pin synced successfully:", pinData.id);
+      } catch (e) {
+        console.error("Cloud save failed:", e);
+      }
+    };
+
+    window.cloudDeletePin = async (pinId) => {
+      if (!dbInstance) return;
+      try { 
+        await deleteDoc(doc(dbInstance, 'artifacts', appId, 'public', 'data', 'pins', pinId));
+        console.log("Pin deleted from cloud:", pinId);
+      } catch (e) {
+        console.error("Cloud delete failed:", e);
+      }
+    };
+
+    window.cloudSaveMap = async (mapData) => {
+      if (!dbInstance) return;
+      try { 
+        await setDoc(doc(dbInstance, 'artifacts', appId, 'public', 'data', 'maps', mapData.id), mapData);
+      } catch (e) {
+        console.error("Cloud map save failed:", e);
+      }
+    };
   </script>
 
   <style>
