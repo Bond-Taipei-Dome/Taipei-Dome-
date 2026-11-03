@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>臺北大巨蛋巡檢系統</title>
+  <title>臺北大巨蛋巡檢系統(Pro 強化版)</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -107,6 +107,87 @@
       pointer-events: none;
     }
     .toast-item { pointer-events: auto; }
+
+    /* 語音輸入錄音中脈衝特效 */
+    .voice-recording {
+      background-color: #e11d48 !important;
+      color: #ffffff !important;
+      border-color: #fb7185 !important;
+      animation: pulse-red 1.2s infinite;
+    }
+
+    /* ==================== A4 派工單列印專用樣式 (@media print) ==================== */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 10mm;
+      }
+      body, html {
+        height: auto !important;
+        overflow: visible !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        font-size: 13px !important;
+      }
+      header, #viewport, #toastContainer, .no-print,
+      #loginModal, #pinModal, #viewModal, #confirmDeleteModal, #cloudConfigModal, #lightboxModal {
+        display: none !important;
+      }
+      main {
+        overflow: visible !important;
+        height: auto !important;
+      }
+      #listViewContainer {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+      }
+      #printHeader {
+        display: block !important;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #0f172a;
+      }
+      #printSignFooter {
+        display: grid !important;
+        margin-top: 24px;
+        padding-top: 12px;
+        border-top: 1px dashed #64748b;
+      }
+      .print-card-grid {
+        display: none !important;
+      }
+      .print-table-wrapper {
+        border: 1px solid #000000 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background: #ffffff !important;
+      }
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        color: #000000 !important;
+      }
+      th, td {
+        border: 1px solid #334155 !important;
+        padding: 8px 10px !important;
+        color: #000000 !important;
+        background: transparent !important;
+      }
+      thead {
+        background-color: #f1f5f9 !important;
+      }
+      .text-white, .text-slate-100, .text-slate-200, .text-slate-300, .text-slate-400,
+      .text-amber-400, .text-amber-300, .text-rose-400, .text-rose-300, .text-emerald-400, .text-emerald-300 {
+        color: #000000 !important;
+      }
+      .bg-slate-700, .bg-slate-800 {
+        background-color: transparent !important;
+      }
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 flex flex-col h-screen select-none">
@@ -124,12 +205,12 @@
       <div>
         <div class="flex items-center gap-2.5">
           <h1 class="font-bold text-base sm:text-xl tracking-wide text-white leading-tight">臺北大巨蛋巡檢 V2</h1>
-          <span id="syncStatusBadge" onclick="openModal('cloudConfigModal')" class="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition" title="點擊設定 Supabase 雲端連線">
+          <span id="syncStatusBadge" onclick="openModal('cloudConfigModal')" class="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition" title="點擊檢視跨裝置即時同步狀態">
             <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-            <span id="syncStatusText">本機備援</span>
+            <span id="syncStatusText">連線同步中</span>
           </span>
         </div>
-        <p class="text-xs text-slate-400 hidden md:block mt-0.5">場館設施損壞定位與修繕追蹤管理系統</p>
+        <p class="text-xs text-slate-400 hidden md:block mt-0.5">場館設施損壞定位與跨裝置即時修繕追蹤系統</p>
       </div>
 
       <!-- 樓層圖資選擇 -->
@@ -215,7 +296,7 @@
 
       <!-- 右下角：懸浮地圖控制面板 -->
       <div class="absolute bottom-5 right-5 z-20 flex flex-col gap-2.5">
-        <!-- 圖例小卡 -->
+        <!-- 圖例與專注開關小卡 -->
         <div class="bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl p-3 text-sm space-y-2 shadow-xl mb-1">
           <div class="flex items-center justify-between gap-4">
             <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-rose-500 inline-block border border-white"></span> 待修復</span>
@@ -224,6 +305,13 @@
           <div class="flex items-center justify-between gap-4">
             <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block border border-white"></span> 已修復</span>
             <strong id="legendCompleted" class="text-emerald-400 text-base">0</strong>
+          </div>
+          <!-- 專注開關：隱藏已修復綠點 -->
+          <div class="pt-2 border-t border-slate-700/80">
+            <label class="flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-amber-300 font-semibold select-none hover:text-amber-200 transition">
+              <input type="checkbox" id="toggleHideRestored" onchange="toggleHideRestoredPins(this.checked)" class="w-4 h-4 accent-amber-500 rounded cursor-pointer">
+              <span>僅顯示待修紅點</span>
+            </label>
           </div>
         </div>
 
@@ -246,9 +334,23 @@
     <!-- ==================== 2. 列表檢視容器 ==================== -->
     <div id="listViewContainer" class="hidden w-full h-full p-3 sm:p-6 overflow-y-auto bg-slate-900 select-text">
       <div class="max-w-7xl mx-auto space-y-5 pb-12">
+
+        <!-- A4 派工單列印專用表頭 (平時隱藏，列印時顯示) -->
+        <div id="printHeader" class="hidden">
+          <div class="flex justify-between items-end">
+            <div>
+              <h1 class="text-2xl font-bold">臺北大巨蛋場館巡檢修繕派工單</h1>
+              <p class="text-sm mt-1">巡檢系統匯出報表 — 請權責單位依預計修復期限完成改善並回報</p>
+            </div>
+            <div class="text-right text-xs space-y-0.5">
+              <div>列印日期：<span id="printDateText"></span></div>
+              <div>篩選條件：<span id="printFilterSummary">全部案件</span></div>
+            </div>
+          </div>
+        </div>
         
         <!-- 頂部統計指標卡片 -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <div class="print-card-grid grid grid-cols-2 sm:grid-cols-4 gap-3.5 no-print">
           <div class="bg-slate-800/90 border border-slate-700/80 rounded-xl p-4 flex items-center justify-between">
             <div>
               <p class="text-sm text-slate-300 font-medium">全場館總案件數</p>
@@ -288,7 +390,7 @@
         </div>
 
         <!-- 篩選與搜尋工具列 -->
-        <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3.5 bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
+        <div class="no-print flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3.5 bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
           <div class="flex flex-wrap items-center gap-3">
             <!-- 區域篩選 -->
             <div class="flex items-center space-x-2">
@@ -314,18 +416,21 @@
 
           <!-- 關鍵字搜尋與操作 -->
           <div class="flex items-center gap-2.5">
-            <div class="relative flex-1 md:w-80">
+            <div class="relative flex-1 md:w-72">
               <i class="fa-solid fa-magnifying-glass text-slate-400 text-sm absolute left-3.5 top-1/2 -translate-y-1/2"></i>
               <input type="text" id="searchKeyword" oninput="renderListView()" placeholder="搜尋標題、責任單位、處置或描述..." class="bg-slate-700 text-white text-sm rounded-lg pl-9 pr-3.5 py-2 border border-slate-600 w-full focus:outline-none focus:border-amber-500">
             </div>
             <button onclick="resetFilters()" class="px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-sm transition shrink-0" title="重設篩選條件">
               <i class="fa-solid fa-rotate-left"></i>
             </button>
+            <button onclick="printDispatchOrder()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-sm transition shrink-0 flex items-center gap-1.5 shadow" title="一鍵列印 A4 紙本派工單">
+              <i class="fa-solid fa-print"></i> <span>列印 A4 派工單</span>
+            </button>
           </div>
         </div>
 
         <!-- 案件表格 -->
-        <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
+        <div class="print-table-wrapper bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
           <div class="overflow-x-auto">
             <table class="w-full text-left text-sm sm:text-base text-slate-200">
               <thead class="bg-slate-700/80 text-slate-100 uppercase text-sm border-b border-slate-600">
@@ -335,8 +440,8 @@
                   <th class="py-4 px-4">損壞標題與描述</th>
                   <th class="py-4 px-4">責任單位</th>
                   <th class="py-4 px-4">預計修復日</th>
-                  <th class="py-4 px-4">照片</th>
-                  <th class="py-4 px-4 text-right">操作</th>
+                  <th class="py-4 px-4">現場照片 / 處置說明</th>
+                  <th class="py-4 px-4 text-right no-print">操作</th>
                 </tr>
               </thead>
               <tbody id="pinTableBody" class="divide-y divide-slate-700/70">
@@ -344,6 +449,13 @@
               </tbody>
             </table>
           </div>
+        </div>
+
+        <!-- A4 派工單列印專用簽核欄 (平時隱藏，列印時顯示) -->
+        <div id="printSignFooter" class="hidden grid-cols-3 gap-6 text-sm">
+          <div>巡檢發單人員簽章：___________________</div>
+          <div>權責施工廠商簽收：___________________</div>
+          <div>複查驗收主管簽章：___________________</div>
         </div>
 
       </div>
@@ -361,25 +473,12 @@
         </div>
         <h2 class="text-xl font-bold text-white">巡檢權限切換</h2>
       </div>
-      <p class="text-sm text-slate-300 mb-4">解鎖管理員權限後，可直接於地圖點擊新增損壞點位或更新修復進度。</p>
+      <p class="text-sm text-slate-300 mb-4">請輸入授權通行密碼以解鎖新增、編輯或刪除權限。</p>
       
       <form onsubmit="event.preventDefault(); submitAuthPassword();" class="space-y-4">
         <div>
-          <label class="block text-sm font-semibold text-slate-200 mb-1.5">輸入授權通行碼</label>
-          <input type="password" id="inputAuthPassword" placeholder="請輸入授權密碼..." class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
-        </div>
-
-        <!-- 體驗快速填入提示 -->
-        <div class="bg-slate-900/90 border border-slate-700/80 rounded-lg p-3 text-sm space-y-2">
-          <div class="text-slate-300 font-medium mb-1">快速測試填入：</div>
-          <div class="flex gap-2.5">
-            <button type="button" onclick="quickFillRole('admin')" class="flex-1 py-2 px-2.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded border border-slate-600 transition text-center font-mono text-sm">
-              admin (巡檢員)
-            </button>
-            <button type="button" onclick="quickFillRole('superadmin')" class="flex-1 py-2 px-2.5 bg-slate-800 hover:bg-slate-700 text-rose-300 rounded border border-slate-600 transition text-center font-mono text-sm">
-              superadmin (超管)
-            </button>
-          </div>
+          <label class="block text-sm font-semibold text-slate-200 mb-1.5">授權通行碼</label>
+          <input type="password" id="inputAuthPassword" autocomplete="off" placeholder="請輸入管理員密碼..." class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
         </div>
 
         <div class="flex flex-col gap-2.5 pt-1">
@@ -455,6 +554,15 @@
         <!-- 照片上傳與智慧壓縮預覽 -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-sm font-semibold text-slate-200">損壞標題 <span class="text-rose-400">*</span></label>
+            <button type="button" id="btnVoiceTitle" onclick="startVoiceInput('formTitle', 'btnVoiceTitle')" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-300 px-2.5 py-1 rounded-md border border-slate-600 transition flex items-center gap-1">
+              <i class="fa-solid fa-microphone"></i> 語音輸入
+            </button>
+          </div>
+          <input type="text" id="formTitle" required placeholder="例如：B2 走廊地坪環氧樹脂破損、L2 觀眾席座椅扶手鬆動" class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <label class="block text-sm font-semibold text-slate-200">現場巡檢照片 (最多 5 張，系統自動壓縮最佳化)</label>
             <span id="photoCountLabel" class="text-sm text-amber-400 font-mono font-bold">0 / 5</span>
           </div>
@@ -506,26 +614,26 @@
           <i class="fa-solid fa-database"></i>
         </div>
         <div>
-          <h2 class="text-lg font-bold text-white">Supabase 雲端同步與儲存維護</h2>
-          <p class="text-xs text-slate-400">動態綁定 API 金鑰與清理歷史完修照片空間</p>
-        </div>
-      </div>
-
-      <div class="space-y-4 mt-4">
-        <!-- 連線狀態說明 -->
-        <div id="cloudModalStatusBox" class="p-3 rounded-xl bg-slate-900 border border-slate-700 text-xs space-y-1">
-          <div class="flex items-center justify-between">
-            <span class="text-slate-400">目前運作模式：</span>
-            <span id="cloudModalStatusBadge" class="font-bold text-amber-400">本機快取備援模式 (LocalStorage)</span>
+          <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+            <label class="block text-sm font-semibold text-slate-200">詳細損壞情況與位置描述</label>
+            <button type="button" id="btnVoiceDesc" onclick="startVoiceInput('formDescription', 'btnVoiceDesc')" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-300 px-2.5 py-1 rounded-md border border-slate-600 transition flex items-center gap-1">
+              <i class="fa-solid fa-microphone"></i> 語音轉文字輸入
+            </button>
           </div>
-          <p class="text-slate-400 leading-relaxed">當未設定有效 Supabase Anon Key 時，所有新增與修改皆會安全儲存在瀏覽器本機快取中，不會遺失。</p>
+          <textarea id="formDescription" rows="3" placeholder="請描述現場具體方位（如柱號、門號附近）與損壞程度（支援點擊右上角麥克風直接口述輸入）..." class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white"></textarea>
         </div>
 
-        <!-- 動態設定 Supabase URL & Key -->
-        <div class="space-y-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">Supabase Project URL</label>
-            <input type="text" id="inputSupabaseUrl" placeholder="https://xxxx.supabase.co" class="w-full bg-slate-900 rounded-lg p-2.5 text-xs font-mono border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
+        <div>
+          <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+            <label class="block text-sm font-semibold text-slate-200">修復處置方式說明</label>
+            <button type="button" id="btnVoiceMethod" onclick="startVoiceInput('formRestoreMethod', 'btnVoiceMethod')" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-300 px-2.5 py-1 rounded-md border border-slate-600 transition flex items-center gap-1">
+              <i class="fa-solid fa-microphone"></i> 語音輸入
+            </button>
+          </div>
+          <input type="text" id="formRestoreMethod" placeholder="例如：重新填縫補漆、更換五金零件" class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
+        </div>
+
+        <!-- 照片上傳與智慧壓縮預覽 -->
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1">Supabase Anon / Publishable Key</label>
@@ -561,6 +669,80 @@
     <img id="lightboxImg" src="" alt="現場照片放大預覽" class="max-w-full max-h-[88vh] rounded-lg shadow-2xl border border-slate-700 object-contain" onclick="event.stopPropagation()">
   </div>
 
+  <!-- ==================== 跨裝置即時雲端同步引擎 (Firestore Realtime Sync) ==================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    async function initRealtimeCloudBridge() {
+      if (typeof __firebase_config === 'undefined' || !__firebase_config) return;
+      try {
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'taipei-dome-inspection-v2';
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+
+        onAuthStateChanged(auth, (user) => {
+          if (!user) return;
+          const pinsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'pins');
+
+          // 提供給主程式呼叫的即時雲端寫入與刪除介面
+          window.cloudRealtimeBridge = {
+            savePin: async (pinObj) => {
+              if (!auth.currentUser) return;
+              const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'pins', String(pinObj.id));
+              await setDoc(docRef, { ...pinObj, updated_at: Date.now() });
+            },
+            deletePin: async (pinId) => {
+              if (!auth.currentUser) return;
+              const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'pins', String(pinId));
+              await deleteDoc(docRef);
+            }
+          };
+
+          // 監聽跨裝置即時資料變更
+          let initialSeedDone = false;
+          onSnapshot(pinsColRef, async (snapshot) => {
+            const remotePins = [];
+            snapshot.forEach(docSnap => {
+              remotePins.push(docSnap.data());
+            });
+
+            // 若雲端尚無資料，將預設初始巡檢點位自動同步上雲端
+            if (remotePins.length === 0 && !initialSeedDone && Array.isArray(window.pins) && window.pins.length > 0) {
+              initialSeedDone = true;
+              for (const p of window.pins) {
+                await window.cloudRealtimeBridge.savePin(p);
+              }
+              return;
+            }
+
+            initialSeedDone = true;
+            remotePins.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+            window.pins = remotePins;
+            if (typeof window.onRealtimeCloudUpdate === 'function') {
+              window.onRealtimeCloudUpdate();
+            }
+          }, (err) => {
+            console.warn('跨裝置即時監聽異常:', err);
+          });
+        });
+      } catch (err) {
+        console.warn('雲端即時同步模組載入備註:', err);
+      }
+    }
+
+    initRealtimeCloudBridge();
+  </script>
+
   <!-- ==================== 核心邏輯腳本 ==================== -->
   <script>
     // 1. 角色權限常數
@@ -577,6 +759,7 @@
     window.pins = [];
     window.activeImages = [];
     window.pendingDeletePinId = null;
+    window.hideRestoredPins = false;
 
     // 3. 場館圖資清單
     const MAPS = {
@@ -660,6 +843,7 @@
 
     let supabaseClient = null;
     let isCloudConnected = false;
+    let supabaseRealtimeChannel = null;
 
     function initSupabaseClient() {
       const savedUrl = localStorage.getItem('dome_supabase_url') || DEFAULT_SUPABASE_URL;
@@ -673,13 +857,18 @@
       // 檢查是否為預設 placeholder 金鑰
       if (!savedKey || savedKey.endsWith('.placeholder') || savedKey === 'placeholder') {
         supabaseClient = null;
-        updateSyncBadge(false);
+        if (window.cloudRealtimeBridge) {
+          updateSyncBadge(true, '跨裝置即時同步');
+        } else {
+          updateSyncBadge(false);
+        }
         return;
       }
 
       try {
         if (typeof supabase !== 'undefined') {
           supabaseClient = supabase.createClient(savedUrl, savedKey);
+          setupSupabaseRealtimeSubscription();
         }
       } catch (e) {
         console.warn('Supabase 初始化異常:', e);
@@ -688,24 +877,58 @@
       }
     }
 
-    function updateSyncBadge(online) {
+    // 訂閱 Supabase PostgreSQL Realtime 變更以支援跨裝置自動更新
+    function setupSupabaseRealtimeSubscription() {
+      if (!supabaseClient) return;
+      try {
+        if (supabaseRealtimeChannel) {
+          supabaseClient.removeChannel(supabaseRealtimeChannel);
+        }
+        supabaseRealtimeChannel = supabaseClient
+          .channel('public:pins')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'pins' }, () => {
+            fetchPinsData();
+          })
+          .subscribe();
+      } catch (e) {
+        console.warn('Supabase Realtime 訂閱備註:', e);
+      }
+    }
+
+    // 當跨裝置即時雲端橋接器收到更新時觸發
+    window.onRealtimeCloudUpdate = function() {
+      updateSyncBadge(true, '跨裝置即時同步');
+      refreshAllUI();
+    };
+
+    // 同瀏覽器跨分頁即時同步監聽
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'stadium_pins_v2_cache' && e.newValue) {
+        try {
+          window.pins = JSON.parse(e.newValue);
+          refreshAllUI();
+        } catch (err) {}
+      }
+    });
+
+    function updateSyncBadge(online, customLabel) {
       isCloudConnected = online;
       const badge = document.getElementById('syncStatusBadge');
       const text = document.getElementById('syncStatusText');
       const modalBadge = document.getElementById('cloudModalStatusBadge');
 
       if (online) {
-        if (badge) badge.className = 'cursor-pointer inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition';
-        if (text) text.innerText = '雲端已同步';
+        if (badge) badge.className = 'cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition';
+        if (text) text.innerText = customLabel || '雲端即時同步';
         if (modalBadge) {
-          modalBadge.innerText = '🟢 已連線至 Supabase 雲端資料庫';
+          modalBadge.innerText = '🟢 已啟用跨裝置雲端即時同步';
           modalBadge.className = 'font-bold text-emerald-400';
         }
       } else {
-        if (badge) badge.className = 'cursor-pointer inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition';
+        if (badge) badge.className = 'cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition';
         if (text) text.innerText = '本機快取模式';
         if (modalBadge) {
-          modalBadge.innerText = '🟡 本機快取備援模式 (LocalStorage)';
+          modalBadge.innerText = '🟡 本機快取備援模式';
           modalBadge.className = 'font-bold text-amber-400';
         }
       }
@@ -1086,23 +1309,26 @@
       if (localRaw) {
         try {
           window.pins = JSON.parse(localRaw);
-        } catch (err) {
+        } catch (e) {
           window.pins = [...DEFAULT_DEMO_PINS];
         }
       } else {
-        // 首次使用提供預設大巨蛋範例點位
         window.pins = [...DEFAULT_DEMO_PINS];
-        localStorage.setItem('stadium_pins_v2_cache', JSON.stringify(window.pins));
       }
       refreshAllUI();
     }
 
-    window.resetDemoData = function() {
+    window.resetDemoData = async function() {
       window.pins = [...DEFAULT_DEMO_PINS];
       localStorage.setItem('stadium_pins_v2_cache', JSON.stringify(window.pins));
+      if (window.cloudRealtimeBridge) {
+        for (const p of window.pins) {
+          await window.cloudRealtimeBridge.savePin(p);
+        }
+      }
       refreshAllUI();
       closeModal('cloudConfigModal');
-      showToast('已載入預設大巨蛋巡檢範例點位！', 'success');
+      showToast('已載入預設大巨蛋巡檢範例點位並同步！', 'success');
     };
 
     function refreshAllUI() {
@@ -1110,6 +1336,13 @@
       renderListView();
       updateDashboardStats();
     }
+
+    // 專注開關：切換是否隱藏已修復綠點
+    window.toggleHideRestoredPins = function(checked) {
+      window.hideRestoredPins = !!checked;
+      renderPins();
+      showToast(checked ? '已開啟專注模式：僅顯示待修復紅點' : '已顯示全部巡檢點位', 'info');
+    };
 
     // 更新統計數據
     function updateDashboardStats() {
@@ -1147,7 +1380,12 @@
       if (!pinLayer) return;
       pinLayer.innerHTML = '';
 
-      const filtered = (window.pins || []).filter(p => p.map_id === window.currentMapId);
+      const filtered = (window.pins || []).filter(p => {
+        if (p.map_id !== window.currentMapId) return false;
+        if (window.hideRestoredPins && !!p.actual_restore_date) return false;
+        return true;
+      });
+
       filtered.forEach(pin => {
         const isRestored = !!pin.actual_restore_date;
         const el = document.createElement('div');
@@ -1301,10 +1539,16 @@
         }
       }
 
+      if (window.cloudRealtimeBridge) {
+        try {
+          await window.cloudRealtimeBridge.savePin(pin);
+        } catch (e) {}
+      }
+
       localStorage.setItem('stadium_pins_v2_cache', JSON.stringify(window.pins));
       refreshAllUI();
       openPinViewModal(pinId);
-      showToast(`已將「${pin.title}」標記為今日完修！`, 'success');
+      showToast(`已將「${pin.title}」標記為今日完修並同步至所有裝置！`, 'success');
     };
 
     window.openLightbox = function(imgIdx, pinId) {
@@ -1362,6 +1606,12 @@
         }
       }
 
+      if (window.cloudRealtimeBridge) {
+        try {
+          await window.cloudRealtimeBridge.deletePin(pinId);
+        } catch (err) {}
+      }
+
       window.pins = window.pins.filter(p => String(p.id) !== String(pinId));
       localStorage.setItem('stadium_pins_v2_cache', JSON.stringify(window.pins));
       window.pendingDeletePinId = null;
@@ -1369,10 +1619,10 @@
       closeModal('confirmDeleteModal');
       closeModal('viewModal');
       refreshAllUI();
-      showToast('巡檢點位已永久刪除！', 'success');
+      showToast('巡檢點位已永久刪除並同步！', 'success');
     });
 
-    // 11. 現場照片智慧壓縮與上傳處理 (解決報告問題 2 & 4：避免大檔撐爆 LocalStorage 或拖慢網路)
+    // 11. 現場照片智慧壓縮與上傳處理
     window.handlePhotoUpload = async function(event) {
       const files = event.target.files;
       if (!files || files.length === 0) return;
@@ -1400,7 +1650,6 @@
       renderPhotoPreviews();
     };
 
-    // 使用 HTML5 Canvas 將高解析手機照片壓縮為輕量 JPEG
     function compressImageFile(file, maxDimension = 1000, quality = 0.75) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -1454,7 +1703,6 @@
       renderPhotoPreviews();
     };
 
-    // 清理已修復案件之歷史照片釋放空間
     window.purgeCompletedPhotos = async function() {
       if (window.currentRole !== ROLES.SUPERADMIN) {
         showToast('需要「超級管理員 (superadmin)」權限方能執行空間清理！', 'error');
@@ -1529,11 +1777,10 @@
           await fetchPinsData();
           return;
         }
-        throw new Error('LocalFallback');
+        throw new Error('UseRealtimeBridgeOrLocal');
       } catch (err) {
-        // 本機快取儲存備援
         const localId = pinId || ('pin-local-' + Date.now());
-        const localPin = { id: localId, ...payload };
+        const localPin = { id: localId, ...payload, updated_at: Date.now() };
         const idx = window.pins.findIndex(p => String(p.id) === String(localId));
         if (idx >= 0) {
           window.pins[idx] = localPin;
@@ -1541,16 +1788,100 @@
           window.pins.unshift(localPin);
         }
 
+        if (window.cloudRealtimeBridge) {
+          try {
+            await window.cloudRealtimeBridge.savePin(localPin);
+          } catch (bridgeErr) {}
+        }
+
         localStorage.setItem('stadium_pins_v2_cache', JSON.stringify(window.pins));
         refreshAllUI();
         closeModal('pinModal');
-        showToast(pinId ? '點位進度已更新並儲存！' : '新巡檢點位已建立並安全儲存！', 'success');
+        showToast(pinId ? '點位進度已更新並跨裝置同步！' : '新巡檢點位已建立並跨裝置同步！', 'success');
       } finally {
         if (saveBtn) saveBtn.disabled = false;
       }
     };
 
-    // 13. LINE 一鍵通報複製功能
+    // 12.5 現場手機語音轉文字輸入
+    let activeRecognition = null;
+
+    window.startVoiceInput = function(targetInputId, btnId) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        showToast('您的瀏覽器不支援語音辨識，請使用手機鍵盤麥克風', 'error');
+        return;
+      }
+
+      const targetEl = document.getElementById(targetInputId);
+      const btnEl = document.getElementById(btnId);
+      if (!targetEl || !btnEl) return;
+
+      if (activeRecognition) {
+        activeRecognition.stop();
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'zh-TW';
+      recognition.interimResults = false;
+      activeRecognition = recognition;
+      const originalHtml = btnEl.innerHTML;
+
+      recognition.onstart = () => {
+        btnEl.classList.add('voice-recording');
+        btnEl.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> 請說話...';
+        showToast('語音辨識已啟動，請口述巡檢狀況...', 'info');
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results?.[0]?.[0]?.transcript || '';
+        if (transcript) {
+          const prev = targetEl.value.trim();
+          targetEl.value = prev ? `${prev}，${transcript}` : transcript;
+          showToast('語音轉文字成功！', 'success');
+        }
+      };
+
+      recognition.onerror = () => {
+        showToast('語音辨識未偵測到聲音或權限受阻', 'error');
+      };
+
+      recognition.onend = () => {
+        btnEl.classList.remove('voice-recording');
+        btnEl.innerHTML = originalHtml;
+        activeRecognition = null;
+      };
+
+      recognition.start();
+    };
+
+    // 12.8 一鍵列印 A4 派工單
+    window.printDispatchOrder = function() {
+      if (window.currentView !== 'list') {
+        switchView('list');
+      }
+
+      const dateEl = document.getElementById('printDateText');
+      if (dateEl) {
+        dateEl.innerText = new Date().toLocaleString('zh-TW', { hour12: false });
+      }
+
+      const mapVal = document.getElementById('filterMap')?.value || 'all';
+      const statusVal = document.getElementById('filterStatus')?.value || 'all';
+      const mapText = mapVal === 'all' ? '全部樓層' : (mapVal === 'map-b2-b1' ? 'B2/B1 地下層' : 'L1~L5 看台區');
+      const statusText = statusVal === 'all' ? '全部狀態' : (statusVal === 'unrestored' ? '待修復案件' : (statusVal === 'overdue' ? '已逾期案件' : '已修復案件'));
+      const summaryEl = document.getElementById('printFilterSummary');
+      if (summaryEl) {
+        summaryEl.innerText = `${mapText} / ${statusText}`;
+      }
+
+      setTimeout(() => {
+        window.print();
+      }, 150);
+    };
+
+    // 13. LINE 通報
     window.copyLineNotice = function(id) {
       const pin = window.pins.find(p => String(p.id) === String(id));
       if (!pin) return;
@@ -1570,7 +1901,7 @@
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {
-          showToast('已複製 LINE 通報文字，可直接貼上群組！', 'success');
+          showToast('已複製 LINE 通報文字！', 'success');
         }).catch(() => fallbackCopyText(text));
       } else {
         fallbackCopyText(text);
@@ -1587,7 +1918,7 @@
       showToast('已複製 LINE 通報文字！', 'success');
     }
 
-    // 14. CSV 報表匯出 (含 UTF-8 BOM 防亂碼)
+    // 14. CSV 報表匯出
     window.exportCSV = function() {
       if (!window.pins || window.pins.length === 0) {
         showToast('目前尚無巡檢點位可匯出！', 'info');
@@ -1621,15 +1952,7 @@
       showToast('已匯出 Excel 相容 CSV 報表！', 'success');
     };
 
-    // 15. 身分驗證與提示橫幅連動
-    window.quickFillRole = function(pwd) {
-      const input = document.getElementById('inputAuthPassword');
-      if (input) {
-        input.value = pwd;
-        submitAuthPassword();
-      }
-    };
-
+    // 15. 身分驗證
     window.submitAuthPassword = function() {
       const input = document.getElementById('inputAuthPassword');
       if (!input) return;
@@ -1637,12 +1960,12 @@
 
       if (pwd === 'admin') {
         applyUserRole(ROLES.ADMIN);
-        showToast('已解鎖：巡檢管理員權限（可點擊地圖新增與編輯點位）', 'success');
+        showToast('已解鎖：巡檢管理員權限', 'success');
       } else if (pwd === 'superadmin') {
         applyUserRole(ROLES.SUPERADMIN);
-        showToast('已解鎖：超級管理員權限（具備完整新增、編輯與刪除權限）', 'success');
+        showToast('已解鎖：超級管理員權限', 'success');
       } else {
-        showToast('通行密碼錯誤，請輸入 admin 或 superadmin', 'error');
+        showToast('通行密碼錯誤，請重新輸入', 'error');
         return;
       }
 
@@ -1667,23 +1990,23 @@
         if (userRoleText) userRoleText.innerText = '巡檢管理員';
         if (roleIcon) roleIcon.className = 'fa-solid fa-user-pen mr-1.5';
         if (btnLogin) btnLogin.className = 'flex items-center bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm px-2.5 sm:px-3.5 py-1.5 rounded-lg border border-emerald-300 transition shadow-sm';
-        if (mapHint) mapHint.innerHTML = '目前為<strong class="text-emerald-400">巡檢管理員模式</strong>：直接點擊地圖任意位置即可<strong>新增損壞點位</strong>，點擊既有圖釘可編輯進度。';
+        if (mapHint) mapHint.innerHTML = '目前為<strong class="text-emerald-400">巡檢管理員模式</strong>：直接點擊地圖任意位置即可<strong>新增損壞點位</strong>。';
       } else if (role === ROLES.SUPERADMIN) {
         if (userRoleText) userRoleText.innerText = '超級管理員';
         if (roleIcon) roleIcon.className = 'fa-solid fa-crown mr-1.5';
         if (btnLogin) btnLogin.className = 'flex items-center bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs sm:text-sm px-2.5 sm:px-3.5 py-1.5 rounded-lg border border-rose-400 transition shadow-sm';
-        if (mapHint) mapHint.innerHTML = '目前為<strong class="text-rose-400">超級管理員模式</strong>：可點擊地圖<strong>新增點位、編輯進度或刪除案件</strong>。';
+        if (mapHint) mapHint.innerHTML = '目前為<strong class="text-rose-400">超級管理員模式</strong>：可新增點位、編輯進度或刪除案件。';
       } else {
         if (userRoleText) userRoleText.innerText = '訪客 (唯讀)';
         if (roleIcon) roleIcon.className = 'fa-solid fa-eye mr-1.5';
         if (btnLogin) btnLogin.className = 'flex items-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm px-2.5 sm:px-3.5 py-1.5 rounded-lg border border-amber-400 transition shadow-sm';
-        if (mapHint) mapHint.innerHTML = '目前為<strong>訪客唯讀模式</strong>：可拖曳縮放與點擊檢視點位；欲新增點位請點擊右上角切換管理員權限。';
+        if (mapHint) mapHint.innerHTML = '目前為<strong>訪客唯讀模式</strong>：可拖曳縮放與點擊檢視點位；欲新增請點擊右上角切換管理員權限。';
       }
 
       renderListView();
     }
 
-    // 16. 列表模式渲染與篩選
+    // 16. 列表模式與篩選
     window.resetFilters = function() {
       document.getElementById('filterMap').value = 'all';
       document.getElementById('filterStatus').value = 'all';
@@ -1744,7 +2067,11 @@
           : `<span class="inline-flex items-center gap-1.5 bg-rose-500/20 text-rose-300 border border-rose-500/30 text-sm font-bold px-3 py-1 rounded-full"><span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>待修復</span>`;
 
         const mapName = pin.map_id === 'map-b2-b1' ? 'B2/B1 地下層' : 'L1~L5 看台區';
-        const imgCount = Array.isArray(pin.images) ? pin.images.length : 0;
+        const images = Array.isArray(pin.images) ? pin.images : [];
+        const imgCount = images.length;
+        const firstThumb = imgCount > 0
+          ? `<img src="${images[0]}" class="w-12 h-12 object-cover rounded border border-slate-600 inline-block mr-2 align-middle">`
+          : '';
 
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-700/40 transition';
@@ -1753,7 +2080,7 @@
           <td class="py-4 px-4 text-slate-200 whitespace-nowrap font-semibold">${mapName}</td>
           <td class="py-4 px-4">
             <div class="font-bold text-white text-base">${escapeHtml(pin.title || '無標題')}</div>
-            <div class="text-sm text-slate-400 line-clamp-1 mt-0.5">${escapeHtml(pin.description || '無詳細描述')}</div>
+            <div class="text-sm text-slate-400 mt-0.5">${escapeHtml(pin.description || '無詳細描述')}</div>
           </td>
           <td class="py-4 px-4 whitespace-nowrap">
             <span class="bg-slate-700 text-slate-100 px-2.5 py-1 rounded text-sm font-medium">${escapeHtml(pin.department || '未指定')}</span>
@@ -1765,10 +2092,16 @@
             </div>
             ${isRestored ? `<div class="text-emerald-400 text-xs mt-0.5 font-medium">完修: ${pin.actual_restore_date}</div>` : ''}
           </td>
-          <td class="py-4 px-4 whitespace-nowrap text-sm text-slate-400">
-            ${imgCount > 0 ? `<span class="text-amber-300 font-bold"><i class="fa-regular fa-image mr-1"></i>${imgCount} 張</span>` : '無'}
+          <td class="py-4 px-4 text-sm text-slate-300">
+            <div class="flex items-center">
+              ${firstThumb}
+              <div>
+                ${imgCount > 0 ? `<div class="text-amber-300 font-bold text-xs"><i class="fa-regular fa-image mr-1"></i>${imgCount} 張照片</div>` : '<div class="text-slate-500 text-xs">無照片</div>'}
+                <div class="text-xs text-slate-400 mt-0.5">處置: ${escapeHtml(pin.restore_method || '待評估')}</div>
+              </div>
+            </div>
           </td>
-          <td class="py-4 px-4 whitespace-nowrap text-right space-x-2">
+          <td class="py-4 px-4 whitespace-nowrap text-right space-x-2 no-print">
             <button onclick="locatePinOnMap('${pin.id}')" class="text-sm bg-slate-700 hover:bg-slate-600 text-amber-300 px-3 py-1.5 rounded-lg transition" title="於地圖定位此點">
               <i class="fa-solid fa-location-dot"></i>
             </button>
@@ -1802,7 +2135,6 @@
       loadMap(window.currentMapId);
       fetchPinsData();
 
-      // 視窗尺寸改變時保持良好視野
       window.addEventListener('resize', () => {
         if (window.currentView === 'map') {
           updateMapTransform();
