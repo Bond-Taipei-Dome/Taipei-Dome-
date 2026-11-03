@@ -18,12 +18,12 @@
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
-      font-size: 17px; /* 放大全站基礎字體，提升現場行動裝置與平板閱讀清晰度 */
+      font-size: 17px;
       overflow: hidden;
       background-color: #090d16;
     }
 
-    /* 將日期選擇器 (input[type="date"]) 內建的日曆圖示按鈕改為純白色並放大 */
+    /* 日曆選擇器按鈕改為純白色 */
     input[type="date"]::-webkit-calendar-picker-indicator {
       filter: brightness(0) invert(1);
       cursor: pointer;
@@ -37,11 +37,9 @@
       transform: scale(1.4);
     }
 
-    /* 隱藏滾動條但保留滾動功能 */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* 地圖點位圖釘樣式 - 支援反向縮放維持恆定大小 */
     .custom-pin {
       position: absolute;
       width: 34px;
@@ -68,16 +66,13 @@
       border-color: #fde68a;
     }
 
-    /* 待修復：紅色加呼吸光暈 */
     .pin-unrestored {
       background: radial-gradient(circle at 30% 30%, #f87171, #dc2626);
       animation: pulse-red 2.2s infinite;
     }
-    /* 已修復：翠綠色 */
     .pin-restored {
       background: radial-gradient(circle at 30% 30%, #34d399, #059669);
     }
-    /* 焦點閃爍效果 (從列表定位時觸發) */
     .pin-highlight {
       animation: highlight-bounce 0.8s ease-in-out 4 !important;
       z-index: 40 !important;
@@ -95,7 +90,6 @@
       50% { transform: translate(-50%, -85%) scale(calc(var(--inv-scale, 1) * 1.45)); box-shadow: 0 0 25px #fbbf24; }
     }
 
-    /* 吐司通知容器 */
     #toastContainer {
       position: fixed;
       bottom: 20px;
@@ -108,7 +102,6 @@
     }
     .toast-item { pointer-events: auto; }
 
-    /* 語音輸入錄音中脈衝特效 */
     .voice-recording {
       background-color: #e11d48 !important;
       color: #ffffff !important;
@@ -116,7 +109,6 @@
       animation: pulse-red 1.2s infinite;
     }
 
-    /* ==================== A4 派工單列印專用樣式 (@media print) ==================== */
     @media print {
       @page {
         size: A4 landscape;
@@ -225,7 +217,6 @@
 
     <!-- 中間：即時統計與視圖切換 -->
     <div class="flex items-center space-x-3">
-      <!-- 統計膠囊 (桌面顯示) -->
       <div class="hidden xl:flex items-center bg-slate-800/90 border border-slate-700/80 rounded-lg px-3.5 py-1.5 space-x-3.5 text-sm">
         <span class="text-slate-300">當前圖層：</span>
         <span class="flex items-center text-rose-400 font-bold"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1.5"></span>待修復 <strong id="statPending" class="ml-1.5 text-white text-base">0</strong></span>
@@ -233,7 +224,6 @@
         <span class="flex items-center text-emerald-400 font-bold"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1.5"></span>已修復 <strong id="statCompleted" class="ml-1.5 text-white text-base">0</strong></span>
       </div>
 
-      <!-- 地圖 / 列表 切換器 -->
       <div class="flex bg-slate-800 rounded-lg p-1 border border-slate-700 text-sm sm:text-base">
         <button id="btnMapView" onclick="switchView('map')" class="px-3 sm:px-4 py-1.5 rounded-md bg-amber-500 text-slate-950 font-bold transition flex items-center gap-1.5 shadow">
           <i class="fa-solid fa-map"></i> <span class="hidden sm:inline">地圖模式</span>
@@ -247,17 +237,14 @@
 
     <!-- 右側：工具與權限按鈕 -->
     <div class="flex items-center space-x-2 sm:space-x-2.5">
-      <!-- 雲端設定按鈕 -->
       <button onclick="openModal('cloudConfigModal')" class="p-2.5 text-slate-300 hover:text-amber-400 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition" title="Supabase 雲端資料庫設定與空間清理">
         <i class="fa-solid fa-cloud-arrow-up text-base"></i>
       </button>
 
-      <!-- 匯出 CSV 按鈕 -->
       <button onclick="exportCSV()" class="flex items-center bg-emerald-600/90 hover:bg-emerald-500 text-white text-sm font-bold px-3 sm:px-3.5 py-2 rounded-lg border border-emerald-500/60 transition shadow-sm" title="匯出 Excel 相容 CSV 報表">
         <i class="fa-solid fa-file-csv sm:mr-1.5 text-base"></i> <span class="hidden md:inline">匯出報表</span>
       </button>
 
-      <!-- 角色切換按鈕 -->
       <button id="btnLogin" onclick="openModal('loginModal')" class="flex items-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm sm:text-base px-3 sm:px-4 py-2 rounded-lg border border-amber-400 transition shadow-sm">
         <i id="roleIcon" class="fa-solid fa-eye mr-1.5"></i>
         <span id="userRoleText">訪客 (唯讀)</span>
@@ -268,10 +255,9 @@
   <!-- 主要內容區 -->
   <main class="flex-1 relative overflow-hidden">
 
-    <!-- ==================== 1. 地圖檢視容器 ==================== -->
+    <!-- 1. 地圖檢視容器 -->
     <div id="viewport" class="w-full h-full relative overflow-hidden bg-slate-950 touch-none cursor-grab active:cursor-grabbing">
       
-      <!-- 頂部浮動操作提示條 -->
       <div class="absolute top-3 left-3 z-20 pointer-events-none flex flex-wrap items-center gap-2">
         <div id="mapHintBanner" class="bg-slate-900/90 backdrop-blur-md border border-slate-700/80 text-slate-100 px-3.5 py-2 rounded-lg text-sm flex items-center gap-2 shadow-lg">
           <i class="fa-solid fa-circle-info text-amber-400 text-base"></i>
@@ -279,14 +265,12 @@
         </div>
       </div>
 
-      <!-- 圖資載入中遮罩 -->
       <div id="mapLoadingOverlay" class="absolute inset-0 z-20 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-300">
         <div class="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-3"></div>
         <p class="text-base font-bold text-amber-400">正在載入大巨蛋高解析度巡檢圖資...</p>
         <p class="text-sm text-slate-400 mt-1">支援滑鼠滾輪或雙指縮放檢視</p>
       </div>
 
-      <!-- 地圖畫布與點位包裹容器 (確保圖片與點位 100% 同步縮放與對齊) -->
       <div id="mapStage" class="absolute top-0 left-0 origin-top-left will-change-transform select-none">
         <div id="mapWrapper" class="relative inline-block">
           <img id="mapImage" src="" alt="臺北大巨蛋巡檢平面圖" class="block max-w-none select-none pointer-events-none">
@@ -294,9 +278,7 @@
         </div>
       </div>
 
-      <!-- 右下角：懸浮地圖控制面板 -->
       <div class="absolute bottom-5 right-5 z-20 flex flex-col gap-2.5">
-        <!-- 圖例與專注開關小卡 -->
         <div class="bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl p-3 text-sm space-y-2 shadow-xl mb-1">
           <div class="flex items-center justify-between gap-4">
             <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-rose-500 inline-block border border-white"></span> 待修復</span>
@@ -306,7 +288,6 @@
             <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block border border-white"></span> 已修復</span>
             <strong id="legendCompleted" class="text-emerald-400 text-base">0</strong>
           </div>
-          <!-- 專注開關：隱藏已修復綠點 -->
           <div class="pt-2 border-t border-slate-700/80">
             <label class="flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-amber-300 font-semibold select-none hover:text-amber-200 transition">
               <input type="checkbox" id="toggleHideRestored" onchange="toggleHideRestoredPins(this.checked)" class="w-4 h-4 accent-amber-500 rounded cursor-pointer">
@@ -315,7 +296,6 @@
           </div>
         </div>
 
-        <!-- 縮放控制按鈕組 -->
         <div class="bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl overflow-hidden flex flex-col shadow-xl">
           <button onclick="zoomMap(1.25)" class="p-3 hover:bg-slate-800 text-slate-200 hover:text-amber-400 transition border-b border-slate-800 text-base" title="放大圖資">
             <i class="fa-solid fa-magnifying-glass-plus"></i>
@@ -331,11 +311,10 @@
       </div>
     </div>
 
-    <!-- ==================== 2. 列表檢視容器 ==================== -->
+    <!-- 2. 列表檢視容器 -->
     <div id="listViewContainer" class="hidden w-full h-full p-3 sm:p-6 overflow-y-auto bg-slate-900 select-text">
       <div class="max-w-7xl mx-auto space-y-5 pb-12">
 
-        <!-- A4 派工單列印專用表頭 (平時隱藏，列印時顯示) -->
         <div id="printHeader" class="hidden">
           <div class="flex justify-between items-end">
             <div>
@@ -349,7 +328,6 @@
           </div>
         </div>
         
-        <!-- 頂部統計指標卡片 -->
         <div class="print-card-grid grid grid-cols-2 sm:grid-cols-4 gap-3.5 no-print">
           <div class="bg-slate-800/90 border border-slate-700/80 rounded-xl p-4 flex items-center justify-between">
             <div>
@@ -389,10 +367,8 @@
           </div>
         </div>
 
-        <!-- 篩選與搜尋工具列 -->
         <div class="no-print flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3.5 bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
           <div class="flex flex-wrap items-center gap-3">
-            <!-- 區域篩選 -->
             <div class="flex items-center space-x-2">
               <span class="text-sm text-slate-300 font-semibold">圖層：</span>
               <select id="filterMap" onchange="renderListView()" class="bg-slate-700 text-white text-sm rounded-lg px-3 py-2 border border-slate-600 focus:outline-none focus:border-amber-500">
@@ -402,7 +378,6 @@
               </select>
             </div>
 
-            <!-- 狀態篩選 -->
             <div class="flex items-center space-x-2">
               <span class="text-sm text-slate-300 font-semibold">狀態：</span>
               <select id="filterStatus" onchange="renderListView()" class="bg-slate-700 text-white text-sm rounded-lg px-3 py-2 border border-slate-600 focus:outline-none focus:border-amber-500">
@@ -414,7 +389,6 @@
             </div>
           </div>
 
-          <!-- 關鍵字搜尋與操作 -->
           <div class="flex items-center gap-2.5">
             <div class="relative flex-1 md:w-72">
               <i class="fa-solid fa-magnifying-glass text-slate-400 text-sm absolute left-3.5 top-1/2 -translate-y-1/2"></i>
@@ -429,7 +403,6 @@
           </div>
         </div>
 
-        <!-- 案件表格 -->
         <div class="print-table-wrapper bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
           <div class="overflow-x-auto">
             <table class="w-full text-left text-sm sm:text-base text-slate-200">
@@ -451,7 +424,6 @@
           </div>
         </div>
 
-        <!-- A4 派工單列印專用簽核欄 (平時隱藏，列印時顯示) -->
         <div id="printSignFooter" class="hidden grid-cols-3 gap-6 text-sm">
           <div>巡檢發單人員簽章：___________________</div>
           <div>權責施工廠商簽收：___________________</div>
@@ -462,7 +434,7 @@
     </div>
   </main>
 
-  <!-- ==================== 彈窗 1：身分驗證切換 ==================== -->
+  <!-- 彈窗 1：身分驗證切換 -->
   <div id="loginModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-md w-full p-6 text-slate-100 relative shadow-2xl">
       <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl w-9 h-9 rounded-lg hover:bg-slate-700 flex items-center justify-center transition"><i class="fa-solid fa-xmark"></i></button>
@@ -478,7 +450,7 @@
       <form onsubmit="event.preventDefault(); submitAuthPassword();" class="space-y-4">
         <div>
           <label class="block text-sm font-semibold text-slate-200 mb-1.5">授權通行碼</label>
-          <input type="password" id="inputAuthPassword" autocomplete="off" placeholder="請輸入管理員密碼..." class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
+          <input type="password" id="inputAuthPassword" autocomplete="off" placeholder="請輸入通行密碼..." class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
         </div>
 
         <div class="flex flex-col gap-2.5 pt-1">
@@ -493,7 +465,7 @@
     </div>
   </div>
 
-  <!-- ==================== 彈窗 2：新增 / 編輯巡檢點位 ==================== -->
+  <!-- 彈窗 2：新增 / 編輯巡檢點位 -->
   <div id="pinModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4 z-50">
     <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-xl w-full p-5 sm:p-6 text-slate-100 relative max-h-[92vh] overflow-y-auto shadow-2xl">
       <button onclick="closeModal('pinModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl w-9 h-9 rounded-lg hover:bg-slate-700 flex items-center justify-center transition"><i class="fa-solid fa-xmark"></i></button>
@@ -509,21 +481,25 @@
         <input type="hidden" id="formCoordX">
         <input type="hidden" id="formCoordY">
 
-        <!-- 點位座標與圖層資訊橫幅 -->
         <div class="bg-slate-900/90 border border-slate-700 rounded-lg px-3.5 py-2.5 flex items-center justify-between text-sm text-slate-300">
           <span>圖層區域：<strong id="formMapLabel" class="text-amber-400">B2 / B1 區</strong></span>
           <span>圖面座標：<strong id="formCoordLabel" class="text-slate-200 font-mono">X: 50%, Y: 50%</strong></span>
         </div>
 
         <div>
-          <label class="block text-sm font-semibold text-slate-200 mb-1.5">損壞標題 <span class="text-rose-400">*</span></label>
+          <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+            <label class="block text-sm font-semibold text-slate-200">損壞標題 <span class="text-rose-400">*</span></label>
+            <button type="button" id="btnVoiceTitle" onclick="startVoiceInput('formTitle', 'btnVoiceTitle')" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-300 px-2.5 py-1 rounded-md border border-slate-600 transition flex items-center gap-1">
+              <i class="fa-solid fa-microphone"></i> 語音輸入
+            </button>
+          </div>
           <input type="text" id="formTitle" required placeholder="例如：B2 走廊地坪環氧樹脂破損、L2 觀眾席座椅扶手鬆動" class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
             <label class="block text-sm font-semibold text-slate-200 mb-1.5">責任單位</label>
-            <input type="text" id="formDept" placeholder="請直接輸入責任單位，例如：工務部" class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
+            <input type="text" id="formDept" placeholder="請輸入責任單位，例如：工務部" class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
           </div>
           <div>
             <label class="block text-sm font-semibold text-slate-200 mb-1.5">預計修復日期</label>
@@ -542,27 +518,27 @@
         </div>
 
         <div>
-          <label class="block text-sm font-semibold text-slate-200 mb-1.5">詳細損壞情況與位置描述</label>
+          <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+            <label class="block text-sm font-semibold text-slate-200">詳細損壞情況與位置描述</label>
+            <button type="button" id="btnVoiceDesc" onclick="startVoiceInput('formDescription', 'btnVoiceDesc')" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-300 px-2.5 py-1 rounded-md border border-slate-600 transition flex items-center gap-1">
+              <i class="fa-solid fa-microphone"></i> 語音轉文字輸入
+            </button>
+          </div>
           <textarea id="formDescription" rows="3" placeholder="請描述現場具體方位（如柱號、門號附近）與損壞程度..." class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white"></textarea>
         </div>
 
         <div>
-          <label class="block text-sm font-semibold text-slate-200 mb-1.5">修復處置方式說明</label>
-          <input type="text" id="formRestoreMethod" placeholder="例如：重新填縫補漆、更換五金零件" class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
-        </div>
-
-        <!-- 照片上傳與智慧壓縮預覽 -->
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="block text-sm font-semibold text-slate-200">損壞標題 <span class="text-rose-400">*</span></label>
-            <button type="button" id="btnVoiceTitle" onclick="startVoiceInput('formTitle', 'btnVoiceTitle')" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-300 px-2.5 py-1 rounded-md border border-slate-600 transition flex items-center gap-1">
+          <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+            <label class="block text-sm font-semibold text-slate-200">修復處置方式說明</label>
+            <button type="button" id="btnVoiceMethod" onclick="startVoiceInput('formRestoreMethod', 'btnVoiceMethod')" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-300 px-2.5 py-1 rounded-md border border-slate-600 transition flex items-center gap-1">
               <i class="fa-solid fa-microphone"></i> 語音輸入
             </button>
           </div>
-          <input type="text" id="formTitle" required placeholder="例如：B2 走廊地坪環氧樹脂破損、L2 觀眾席座椅扶手鬆動" class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
+          <input type="text" id="formRestoreMethod" placeholder="例如：重新填縫補漆、更換五金零件" class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
             <label class="block text-sm font-semibold text-slate-200">現場巡檢照片 (最多 5 張，系統自動壓縮最佳化)</label>
             <span id="photoCountLabel" class="text-sm text-amber-400 font-mono font-bold">0 / 5</span>
           </div>
@@ -580,7 +556,7 @@
     </div>
   </div>
 
-  <!-- ==================== 彈窗 3：檢視案件詳情 ==================== -->
+  <!-- 彈窗 3：檢視案件詳情 -->
   <div id="viewModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4 z-50">
     <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-xl w-full p-5 sm:p-6 text-slate-100 relative max-h-[90vh] overflow-y-auto shadow-2xl">
       <button onclick="closeModal('viewModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl w-9 h-9 rounded-lg hover:bg-slate-700 flex items-center justify-center transition"><i class="fa-solid fa-xmark"></i></button>
@@ -588,7 +564,7 @@
     </div>
   </div>
 
-  <!-- ==================== 彈窗 4：自訂刪除確認彈窗 (取代原生 confirm) ==================== -->
+  <!-- 彈窗 4：自訂刪除確認彈窗 -->
   <div id="confirmDeleteModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-[60]">
     <div class="bg-slate-800 rounded-2xl border border-rose-500/40 max-w-sm w-full p-6 text-slate-100 shadow-2xl text-center">
       <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto mb-3 text-xl">
@@ -604,7 +580,7 @@
     </div>
   </div>
 
-  <!-- ==================== 彈窗 5：雲端連線設定與空間維護 (解決報告問題 1 & 4) ==================== -->
+  <!-- 彈窗 5：雲端連線設定與空間維護 -->
   <div id="cloudConfigModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-lg w-full p-6 text-slate-100 relative max-h-[90vh] overflow-y-auto shadow-2xl">
       <button onclick="closeModal('cloudConfigModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg w-8 h-8 rounded-lg hover:bg-slate-700 flex items-center justify-center transition"><i class="fa-solid fa-xmark"></i></button>
@@ -614,47 +590,35 @@
           <i class="fa-solid fa-database"></i>
         </div>
         <div>
-          <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
-            <label class="block text-sm font-semibold text-slate-200">詳細損壞情況與位置描述</label>
-            <button type="button" id="btnVoiceDesc" onclick="startVoiceInput('formDescription', 'btnVoiceDesc')" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-300 px-2.5 py-1 rounded-md border border-slate-600 transition flex items-center gap-1">
-              <i class="fa-solid fa-microphone"></i> 語音轉文字輸入
-            </button>
-          </div>
-          <textarea id="formDescription" rows="3" placeholder="請描述現場具體方位（如柱號、門號附近）與損壞程度（支援點擊右上角麥克風直接口述輸入）..." class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white"></textarea>
+          <h2 class="text-lg font-bold text-white">Supabase 雲端資料庫設定</h2>
+          <p id="cloudModalStatusBadge" class="text-xs font-semibold text-emerald-400">連線狀態檢測中...</p>
         </div>
-
+      </div>
+      <p class="text-xs text-slate-400 mb-4">輸入您的 Supabase 專案 URL 與 Anon Key，即可達成跨手機、平板與電腦的即時同步。</p>
+      
+      <div class="space-y-4">
         <div>
-          <div class="flex items-center justify-between mb-1.5 flex-wrap gap-1">
-            <label class="block text-sm font-semibold text-slate-200">修復處置方式說明</label>
-            <button type="button" id="btnVoiceMethod" onclick="startVoiceInput('formRestoreMethod', 'btnVoiceMethod')" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-300 px-2.5 py-1 rounded-md border border-slate-600 transition flex items-center gap-1">
-              <i class="fa-solid fa-microphone"></i> 語音輸入
-            </button>
-          </div>
-          <input type="text" id="formRestoreMethod" placeholder="例如：重新填縫補漆、更換五金零件" class="w-full bg-slate-900 rounded-lg p-3 text-base border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Supabase Project URL</label>
+          <input type="text" id="inputSupabaseUrl" placeholder="https://xxxx.supabase.co" class="w-full bg-slate-900 rounded-lg p-2.5 text-xs font-mono border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Supabase Anon / Publishable Key</label>
+          <input type="password" id="inputSupabaseKey" placeholder="請貼上 eyJ... 或 sb_publishable_... 金鑰" class="w-full bg-slate-900 rounded-lg p-2.5 text-xs font-mono border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
+        </div>
+        <div class="flex gap-2">
+          <button onclick="saveCloudConfig()" class="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs transition">
+            <i class="fa-solid fa-plug mr-1"></i> 套用並重新連線同步
+          </button>
+          <button onclick="resetDemoData()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs transition" title="載入預設巨蛋巡檢範例資料">
+            載入範例點位
+          </button>
         </div>
 
-        <!-- 照片上傳與智慧壓縮預覽 -->
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">Supabase Anon / Publishable Key</label>
-            <input type="password" id="inputSupabaseKey" placeholder="請貼上 eyJ... 或 sb_publishable_... 金鑰" class="w-full bg-slate-900 rounded-lg p-2.5 text-xs font-mono border border-slate-600 focus:outline-none focus:border-amber-500 text-white">
-          </div>
-          <div class="flex gap-2">
-            <button onclick="saveCloudConfig()" class="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs transition">
-              <i class="fa-solid fa-plug mr-1"></i> 套用並重新連線同步
-            </button>
-            <button onclick="resetDemoData()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs transition" title="載入預設巨蛋巡檢範例資料">
-              載入範例點位
-            </button>
-          </div>
-        </div>
-
-        <!-- 解決報告第 4 點：歷史照片定期清理機制 -->
         <div class="pt-4 border-t border-slate-700 space-y-2.5">
           <h3 class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
             <i class="fa-solid fa-broom text-amber-400"></i> 歷史已完修案件照片清理工具 (空間釋放)
           </h3>
-          <p class="text-xs text-slate-400">為避免歷史照片長期佔用雲端或本機快取空間，超級管理員可一鍵清理「已修復完成」案件所附帶的圖檔，僅保留文字修繕紀錄。</p>
+          <p class="text-xs text-slate-400">超級管理員可一鍵清理「已修復完成」案件附帶的圖檔，僅保留文字修繕紀錄以節省空間。</p>
           <button onclick="purgeCompletedPhotos()" class="w-full py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/40 rounded-lg text-xs font-semibold transition">
             <i class="fa-solid fa-images mr-1"></i> 清理所有「已修復」案件之附帶照片
           </button>
@@ -663,13 +627,13 @@
     </div>
   </div>
 
-  <!-- ==================== 彈窗 6：高畫質照片燈箱預覽 ==================== -->
+  <!-- 彈窗 6：高畫質照片燈箱預覽 -->
   <div id="lightboxModal" onclick="closeModal('lightboxModal')" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4 z-[70] cursor-zoom-out">
     <button onclick="closeModal('lightboxModal')" class="absolute top-5 right-5 text-white/80 hover:text-white text-2xl w-10 h-10 rounded-full bg-slate-800/80 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
     <img id="lightboxImg" src="" alt="現場照片放大預覽" class="max-w-full max-h-[88vh] rounded-lg shadow-2xl border border-slate-700 object-contain" onclick="event.stopPropagation()">
   </div>
 
-  <!-- ==================== 跨裝置即時雲端同步引擎 (Firestore Realtime Sync) ==================== -->
+  <!-- 跨裝置即時雲端同步引擎 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -694,7 +658,6 @@
           if (!user) return;
           const pinsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'pins');
 
-          // 提供給主程式呼叫的即時雲端寫入與刪除介面
           window.cloudRealtimeBridge = {
             savePin: async (pinObj) => {
               if (!auth.currentUser) return;
@@ -708,7 +671,6 @@
             }
           };
 
-          // 監聽跨裝置即時資料變更
           let initialSeedDone = false;
           onSnapshot(pinsColRef, async (snapshot) => {
             const remotePins = [];
@@ -716,7 +678,6 @@
               remotePins.push(docSnap.data());
             });
 
-            // 若雲端尚無資料，將預設初始巡檢點位自動同步上雲端
             if (remotePins.length === 0 && !initialSeedDone && Array.isArray(window.pins) && window.pins.length > 0) {
               initialSeedDone = true;
               for (const p of window.pins) {
@@ -743,16 +704,14 @@
     initRealtimeCloudBridge();
   </script>
 
-  <!-- ==================== 核心邏輯腳本 ==================== -->
+  <!-- 核心邏輯腳本 -->
   <script>
-    // 1. 角色權限常數
     const ROLES = {
       VISITOR: 'guest',
       ADMIN: 'admin',
       SUPERADMIN: 'superadmin'
     };
 
-    // 2. 全域狀態管理
     window.currentRole = ROLES.VISITOR;
     window.currentMapId = 'map-b2-b1';
     window.currentView = 'map';
@@ -761,7 +720,6 @@
     window.pendingDeletePinId = null;
     window.hideRestoredPins = false;
 
-    // 3. 場館圖資清單
     const MAPS = {
       'map-b2-b1': {
         name: 'B2 / B1 地下層區',
@@ -777,7 +735,6 @@
       }
     };
 
-    // 預設範例巡檢資料 (當首次開啟無任何資料時提供直覺展示)
     const DEFAULT_DEMO_PINS = [
       {
         id: 'demo-pin-1',
@@ -789,7 +746,7 @@
         restore_date: '2026-11-15',
         actual_restore_date: null,
         status: 'PENDING',
-        description: '近 B2 東側柱號 E12 轉角處，環氧樹脂地坪出現約 45 公分表面龜裂，推車經過易產生震動。',
+        description: '近 B2 東側柱號 E12 轉角處，環氧樹脂地坪出現約 45 公分表面龜裂。',
         restore_method: '磨除局部表層後重新施作無收縮樹脂填縫',
         images: []
       },
@@ -817,7 +774,7 @@
         restore_date: '2026-11-10',
         actual_restore_date: null,
         status: 'PENDING',
-        description: 'L2 內野看台第 12 排 15~16 號連座扶手固定螺栓鬆脫，需於近期賽事進場前加固。',
+        description: 'L2 內野看台第 12 排 15~16 號連座扶手固定螺栓鬆脫。',
         restore_method: '更換防鬆脫不鏽鋼膨脹螺栓並上扭力膠固定',
         images: []
       },
@@ -837,7 +794,6 @@
       }
     ];
 
-    // 4. 初始化 Supabase 客戶端與連線判斷
     const DEFAULT_SUPABASE_URL = 'https://pmwnnkemklbeuzupdvlq.supabase.co';
     const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtd25ua2Vta2xiZXV6dXBkdmxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAxNTAwMDAwMH0.placeholder';
 
@@ -854,7 +810,6 @@
       if (urlInput) urlInput.value = savedUrl;
       if (keyInput) keyInput.value = savedKey === DEFAULT_SUPABASE_KEY ? '' : savedKey;
 
-      // 檢查是否為預設 placeholder 金鑰
       if (!savedKey || savedKey.endsWith('.placeholder') || savedKey === 'placeholder') {
         supabaseClient = null;
         if (window.cloudRealtimeBridge) {
@@ -871,13 +826,11 @@
           setupSupabaseRealtimeSubscription();
         }
       } catch (e) {
-        console.warn('Supabase 初始化異常:', e);
         supabaseClient = null;
         updateSyncBadge(false);
       }
     }
 
-    // 訂閱 Supabase PostgreSQL Realtime 變更以支援跨裝置自動更新
     function setupSupabaseRealtimeSubscription() {
       if (!supabaseClient) return;
       try {
@@ -890,18 +843,14 @@
             fetchPinsData();
           })
           .subscribe();
-      } catch (e) {
-        console.warn('Supabase Realtime 訂閱備註:', e);
-      }
+      } catch (e) {}
     }
 
-    // 當跨裝置即時雲端橋接器收到更新時觸發
     window.onRealtimeCloudUpdate = function() {
       updateSyncBadge(true, '跨裝置即時同步');
       refreshAllUI();
     };
 
-    // 同瀏覽器跨分頁即時同步監聽
     window.addEventListener('storage', (e) => {
       if (e.key === 'stadium_pins_v2_cache' && e.newValue) {
         try {
@@ -951,7 +900,6 @@
       showToast(key ? '已更新雲端金鑰並重新同步資料！' : '已切換為本機快取儲存模式', 'info');
     };
 
-    // 5. Toast 提示訊息引擎
     function showToast(msg, type = 'info') {
       const toastContainer = document.getElementById('toastContainer');
       if (!toastContainer) return;
@@ -980,7 +928,6 @@
       }, 3200);
     }
 
-    // 6. 彈窗開關控制
     window.openModal = function(id) {
       const el = document.getElementById(id);
       if (el) {
@@ -997,7 +944,6 @@
       }
     };
 
-    // 7. 地圖畫布縮放、拖曳與精準座標引擎
     let viewport, mapStage, mapWrapper, mapImg;
     let scale = 1, panX = 0, panY = 0;
     let isPointerDown = false;
@@ -1030,14 +976,12 @@
 
       mapImg.onerror = () => {
         if (overlay) overlay.classList.add('opacity-0', 'pointer-events-none');
-        // 若網路離線無法載入 GitHub 底圖，自動生成高質感工程網格 SVG 底圖確保系統 100% 可用
         mapImg.src = generateFallbackBlueprintSVG(mapConfig.name);
       };
 
       mapImg.src = mapConfig.url;
     }
 
-    // 離線備援工程藍圖產生器
     function generateFallbackBlueprintSVG(title) {
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1100" viewBox="0 0 1600 1100">
         <defs>
@@ -1052,9 +996,7 @@
         <rect width="100%" height="100%" fill="#0f172a"/>
         <rect width="100%" height="100%" fill="url(#grid)"/>
         <ellipse cx="800" cy="550" rx="520" ry="380" fill="#1e293b" fill-opacity="0.4" stroke="#f59e0b" stroke-width="4" stroke-dasharray="12,8"/>
-        <ellipse cx="800" cy="550" rx="340" ry="250" fill="none" stroke="#64748b" stroke-width="2"/>
         <text x="800" y="530" font-family="sans-serif" font-size="36" font-weight="bold" fill="#f8fafc" text-anchor="middle">臺北大巨蛋 (${title})</text>
-        <text x="800" y="580" font-family="sans-serif" font-size="20" fill="#94a3b8" text-anchor="middle">離線工程網格底圖模式 — 點擊任意位置即可標註巡檢點</text>
       </svg>`;
       return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
     }
@@ -1063,7 +1005,6 @@
       loadMap(mapId);
     };
 
-    // 自動計算最佳縮放並置中於視窗
     window.fitMapToScreen = function() {
       if (!viewport || !mapImg) return;
       const vw = viewport.clientWidth || window.innerWidth;
@@ -1081,7 +1022,6 @@
       updateMapTransform();
     };
 
-    // 以畫面中心或指定點進行縮放
     window.zoomMap = function(factor, centerX, centerY) {
       if (!viewport) return;
       const cx = centerX !== undefined ? centerX : viewport.clientWidth / 2;
@@ -1099,7 +1039,6 @@
     function updateMapTransform() {
       if (mapStage) {
         mapStage.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
-        // 動態設定反向縮放變數，讓圖釘在放大時不會變得過大、縮小時不會看不見
         const invScale = Math.min(Math.max(1 / Math.pow(scale, 0.65), 0.45), 2.2);
         mapStage.style.setProperty('--inv-scale', invScale.toFixed(3));
       }
@@ -1109,11 +1048,9 @@
       }
     }
 
-    // 綁定滑鼠與行動裝置觸控手勢
     function setupMapInteractions() {
       if (!viewport || !mapWrapper) return;
 
-      // 滑鼠按一下
       viewport.addEventListener('mousedown', (e) => {
         if (e.button !== 0 || e.target.closest('.custom-pin')) return;
         isPointerDown = true;
@@ -1122,7 +1059,6 @@
         pointerStartY = e.clientY;
       });
 
-      // 滑鼠移動拖曳
       window.addEventListener('mousemove', (e) => {
         if (!isPointerDown) return;
         const dx = e.clientX - pointerStartX;
@@ -1143,7 +1079,6 @@
         isPointerDown = false;
       });
 
-      // 滑鼠滾輪指向縮放
       viewport.addEventListener('wheel', (e) => {
         e.preventDefault();
         const rect = viewport.getBoundingClientRect();
@@ -1153,7 +1088,6 @@
         zoomMap(factor, mouseX, mouseY);
       }, { passive: false });
 
-      // 行動裝置單指拖曳與雙指捏合縮放
       viewport.addEventListener('touchstart', (e) => {
         if (e.target.closest('.custom-pin')) return;
         if (e.touches.length === 1) {
@@ -1204,7 +1138,6 @@
         initialPinchDist = null;
       });
 
-      // 點擊圖資新增點位 (排除拖曳誤觸)
       mapWrapper.addEventListener('click', (e) => {
         if (hasMovedDuringDrag || e.target.closest('.custom-pin')) return;
 
@@ -1214,7 +1147,6 @@
           return;
         }
 
-        // 精準依據圖片實際邊界計算百分比座標
         const rect = mapImg.getBoundingClientRect();
         if (!rect.width || !rect.height) return;
 
@@ -1225,7 +1157,6 @@
       });
     }
 
-    // 8. 視圖模式切換与地圖飛越定位
     window.switchView = function(view) {
       window.currentView = view;
       const vp = document.getElementById('viewport');
@@ -1248,7 +1179,6 @@
       }
     };
 
-    // 從列表或詳情一鍵跳轉至地圖並聚焦閃爍該點位
     window.locatePinOnMap = function(pinId) {
       const pin = window.pins.find(p => String(p.id) === String(pinId));
       if (!pin) return;
@@ -1271,7 +1201,6 @@
         panY = (vh / 2) - (targetY * scale);
         updateMapTransform();
 
-        // 觸發該圖釘的高亮彈跳動畫
         const pinEl = document.querySelector(`[data-pin-id="${pin.id}"]`);
         if (pinEl) {
           pinEl.classList.add('pin-highlight');
@@ -1287,7 +1216,6 @@
       }
     };
 
-    // 9. 資料讀取與寫入 (Supabase + LocalStorage 雙重容錯)
     async function fetchPinsData() {
       if (supabaseClient) {
         try {
@@ -1299,9 +1227,7 @@
             refreshAllUI();
             return;
           }
-        } catch (e) {
-          console.warn('Supabase 讀取失敗，自動切換至本機備援快取:', e);
-        }
+        } catch (e) {}
       }
 
       updateSyncBadge(false);
@@ -1337,14 +1263,12 @@
       updateDashboardStats();
     }
 
-    // 專注開關：切換是否隱藏已修復綠點
     window.toggleHideRestoredPins = function(checked) {
       window.hideRestoredPins = !!checked;
       renderPins();
       showToast(checked ? '已開啟專注模式：僅顯示待修復紅點' : '已顯示全部巡檢點位', 'info');
     };
 
-    // 更新統計數據
     function updateDashboardStats() {
       const allPins = window.pins || [];
       const currentMapPins = allPins.filter(p => p.map_id === window.currentMapId);
@@ -1374,7 +1298,6 @@
       setTxt('cardRate', `${rate}%`);
     }
 
-    // 渲染地圖上的圖釘
     function renderPins() {
       const pinLayer = document.getElementById('pinLayer');
       if (!pinLayer) return;
@@ -1407,7 +1330,6 @@
       updateDashboardStats();
     }
 
-    // 10. 新增、檢視、編輯與刪除點位流程
     function openPinModalForCreate(x, y) {
       document.getElementById('pinModalTitle').innerText = '新增損壞巡檢點';
       document.getElementById('pinForm').reset();
@@ -1523,7 +1445,6 @@
       openModal('viewModal');
     };
 
-    // 輕量級新功能：詳情頁一鍵標記今日完修
     window.quickCompletePin = async function(pinId) {
       const pin = window.pins.find(p => String(p.id) === String(pinId));
       if (!pin) return;
@@ -1534,9 +1455,7 @@
       if (supabaseClient && !String(pinId).startsWith('pin-local-') && !String(pinId).startsWith('demo-')) {
         try {
           await supabaseClient.from('pins').update({ actual_restore_date: today, status: 'COMPLETED' }).eq('id', pinId);
-        } catch (e) {
-          console.warn('雲端快速完修同步備援:', e);
-        }
+        } catch (e) {}
       }
 
       if (window.cloudRealtimeBridge) {
@@ -1584,7 +1503,6 @@
       openModal('pinModal');
     };
 
-    // 自訂刪除確認流程 (不使用 window.confirm)
     window.requestDeletePin = function(pinId) {
       const pin = window.pins.find(p => String(p.id) === String(pinId));
       if (!pin) return;
@@ -1601,9 +1519,7 @@
         try {
           const { error } = await supabaseClient.from('pins').delete().eq('id', pinId);
           if (error) throw error;
-        } catch (err) {
-          console.warn('雲端刪除受限，於本機快取同步移除:', err);
-        }
+        } catch (err) {}
       }
 
       if (window.cloudRealtimeBridge) {
@@ -1622,7 +1538,6 @@
       showToast('巡檢點位已永久刪除並同步！', 'success');
     });
 
-    // 11. 現場照片智慧壓縮與上傳處理
     window.handlePhotoUpload = async function(event) {
       const files = event.target.files;
       if (!files || files.length === 0) return;
@@ -1641,9 +1556,7 @@
         try {
           const compressedDataUrl = await compressImageFile(file, 1000, 0.75);
           window.activeImages.push(compressedDataUrl);
-        } catch (err) {
-          console.warn('圖片壓縮失敗:', err);
-        }
+        } catch (err) {}
       }
 
       event.target.value = '';
@@ -1724,7 +1637,6 @@
       showToast(clearedCount > 0 ? `已成功清理 ${clearedCount} 張歷史完修照片，空間已釋放！` : '目前沒有已完修案件附帶歷史照片需清理', 'success');
     };
 
-    // 12. 儲存巡檢點位
     window.handleSavePin = async function(e) {
       if (e) e.preventDefault();
 
@@ -1803,7 +1715,6 @@
       }
     };
 
-    // 12.5 現場手機語音轉文字輸入
     let activeRecognition = null;
 
     window.startVoiceInput = function(targetInputId, btnId) {
@@ -1856,7 +1767,6 @@
       recognition.start();
     };
 
-    // 12.8 一鍵列印 A4 派工單
     window.printDispatchOrder = function() {
       if (window.currentView !== 'list') {
         switchView('list');
@@ -1881,7 +1791,6 @@
       }, 150);
     };
 
-    // 13. LINE 通報
     window.copyLineNotice = function(id) {
       const pin = window.pins.find(p => String(p.id) === String(id));
       if (!pin) return;
@@ -1918,7 +1827,6 @@
       showToast('已複製 LINE 通報文字！', 'success');
     }
 
-    // 14. CSV 報表匯出
     window.exportCSV = function() {
       if (!window.pins || window.pins.length === 0) {
         showToast('目前尚無巡檢點位可匯出！', 'info');
@@ -1952,7 +1860,6 @@
       showToast('已匯出 Excel 相容 CSV 報表！', 'success');
     };
 
-    // 15. 身分驗證
     window.submitAuthPassword = function() {
       const input = document.getElementById('inputAuthPassword');
       if (!input) return;
@@ -2006,7 +1913,6 @@
       renderListView();
     }
 
-    // 16. 列表模式與篩選
     window.resetFilters = function() {
       document.getElementById('filterMap').value = 'all';
       document.getElementById('filterStatus').value = 'all';
@@ -2123,7 +2029,6 @@
         .replace(/'/g, '&#039;');
     }
 
-    // 17. 啟動初始化
     window.addEventListener('DOMContentLoaded', () => {
       viewport = document.getElementById('viewport');
       mapStage = document.getElementById('mapStage');
