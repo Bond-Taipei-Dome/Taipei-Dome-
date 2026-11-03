@@ -20,7 +20,20 @@
     const SUPABASE_URL = 'https://pmwnnkemklbeuzupdvlq.supabase.co'; 
     const SUPABASE_ANON_KEY = 'sb_publishable_XFUvaEUIqj8KKmVAgjpMqA_XpEyI1';
 
-    // 早期宣告並全域掛載模態視窗與 UI 操作函式，徹底避免 inline onclick 觸發 ReferenceError
+    // 2. 地圖圖資設定 (臺北大巨蛋高畫質 GitHub Raw 連結)
+    window.maps = [
+      {
+        id: 'map-b2-b1',
+        name: 'B2 / B1 區',
+        url: 'https://raw.githubusercontent.com/Bond-Taipei-Dome/TaipeiDome-maps/main/taipeidome-map-b2%26b1.jpg'
+      },
+      {
+        id: 'map-l1-l5',
+        name: 'L1 ~ L5 區',
+        url: 'https://raw.githubusercontent.com/Bond-Taipei-Dome/TaipeiDome-maps/main/taipeidome-map-L1toL5.jpg'
+      }
+    ];
+
     window.openLoginModal = function() {
       const modal = document.getElementById('loginModal');
       if (modal) modal.classList.remove('hidden');
@@ -39,7 +52,6 @@
     let supabaseClient = null;
     let isSupabaseConfigured = false;
 
-    // 啟動 Supabase Client 串接
     if (SUPABASE_URL && SUPABASE_ANON_KEY) {
       try {
         if (window.supabase) {
@@ -51,21 +63,6 @@
       }
     }
 
-    // 2. 地圖圖資設定 (臺北大巨蛋高畫質 GitHub Raw 連結)
-    window.maps = [
-      {
-        id: 'map-b2-b1',
-        name: 'B2 / B1層 專有共用區分圖',
-        url: 'https://raw.githubusercontent.com/Bond-Taipei-Dome/TaipeiDome-maps/main/taipeidome-map-b2%26b1.jpg'
-      },
-      {
-        id: 'map-l1-l5',
-        name: 'L1 ~ L5層 專有共用區分圖',
-        url: 'https://raw.githubusercontent.com/Bond-Taipei-Dome/TaipeiDome-maps/main/taipeidome-map-L1toL5.jpg'
-      }
-    ];
-
-    // 預設示範點位 (作為備份)
     const defaultDemoPins = [
       {
         id: 'demo-pin-1',
@@ -178,7 +175,7 @@
     </div>
 
     <div id="mapContainer" class="relative inline-block transition-transform duration-75 ease-out cursor-grab active:cursor-grabbing select-none" style="transform-origin: 0 0;">
-      <img id="mapImage" src="" alt="台北大巨蛋平面圖" class="max-w-none block shadow-2xl rounded" onload="onMapLoaded()" onerror="this.src='https://placehold.co/2400x1400/1e293b/cbd5e1?text=Map+Loading+Error'">
+      <img id="mapImage" src="https://raw.githubusercontent.com/Bond-Taipei-Dome/TaipeiDome-maps/main/taipeidome-map-b2%26b1.jpg" alt="台北大巨蛋平面圖" class="max-w-none block shadow-2xl rounded" onload="window.onMapLoaded()" onerror="this.src='https://placehold.co/2400x1400/1e293b/cbd5e1?text=Map+Loading+Error'">
       <div id="pinsLayer" class="absolute inset-0"></div>
     </div>
 
@@ -325,160 +322,153 @@
     const ROLES = { VISITOR: 'VISITOR', ADMIN: 'ADMIN', SUPERADMIN: 'SUPERADMIN' };
     let currentRole = ROLES.VISITOR;
 
-    // 1. 視圖切換 (地圖 vs 列表)
-    function toggleView(view) {
-      currentView = view;
-      const mapViewport = document.getElementById('viewport');
-      const listView = document.getElementById('listViewContainer');
-      const btnMapView = document.getElementById('btnMapView');
-      const btnListView = document.getElementById('btnListView');
+    // 平移與縮放全域變數
+    let scale = 1, panX = 0, panY = 0, isDragging = false;
+    let startX = 0, startY = 0;
+    let isTransformPending = false;
+    let viewport, container, mapImg;
 
-      if (view === 'map') {
-        mapViewport.classList.remove('hidden');
-        listView.classList.add('hidden');
-        btnMapView.className = "px-3 py-1 rounded-md bg-amber-500 text-slate-950 font-semibold transition";
-        btnListView.className = "px-3 py-1 rounded-md text-slate-300 hover:text-white transition";
-        renderPins();
-      } else {
-        mapViewport.classList.add('hidden');
-        listView.classList.remove('hidden');
-        btnListView.className = "px-3 py-1 rounded-md bg-amber-500 text-slate-950 font-semibold transition";
-        btnMapView.className = "px-3 py-1 rounded-md text-slate-300 hover:text-white transition";
-        renderListView();
+    window.addEventListener('DOMContentLoaded', () => {
+      viewport = document.getElementById('viewport');
+      container = document.getElementById('mapContainer');
+      mapImg = document.getElementById('mapImage');
+
+      switchMap('map-b2-b1');
+      setupInteractions();
+      fetchPinsFromSupabase();
+    });
+
+    function switchMap(mapId) {
+      window.currentMapId = mapId;
+      const targetMap = window.maps.find(m => m.id === mapId) || window.maps[0];
+      const img = document.getElementById('mapImage');
+      if (img && targetMap) {
+        img.src = targetMap.url;
       }
+      const select = document.getElementById('mapSelect');
+      if (select) select.value = mapId;
+      
+      resetMapView();
+      renderPins();
     }
 
-    // 2. 渲染列表檢視表格 (支援狀態搜尋與關鍵字過濾)
-    function renderListView() {
-      const tbody = document.getElementById('pinTableBody');
-      if (!tbody) return;
-      tbody.innerHTML = '';
+    function renderPins() {
+      const layer = document.getElementById('pinsLayer');
+      if (!layer) return;
+      layer.innerHTML = '';
+      if (!window.currentMapId) return;
 
-      const filterStatus = document.getElementById('filterStatus')?.value || 'all';
-      const keyword = (document.getElementById('searchKeyword')?.value || '').toLowerCase();
-
-      let filtered = window.pins || [];
-
-      // 狀態過濾
-      if (filterStatus === 'unrestored') {
-        filtered = filtered.filter(p => !p.actualRestoreDate);
-      } else if (filterStatus === 'restored') {
-        filtered = filtered.filter(p => !!p.actualRestoreDate);
-      }
-
-      // 關鍵字搜尋 (標題、責任單位、描述)
-      if (keyword) {
-        filtered = filtered.filter(p => 
-          (p.title && p.title.toLowerCase().includes(keyword)) ||
-          (p.department && p.department.toLowerCase().includes(keyword)) ||
-          (p.description && p.description.toLowerCase().includes(keyword))
-        );
-      }
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">未找到符合條件的點位資料</td></tr>`;
-        return;
-      }
-
-      filtered.forEach(pin => {
+      const list = (window.pins || []).filter(p => p.mapId === window.currentMapId);
+      list.forEach(pin => {
         const isRepaired = !!pin.actualRestoreDate;
-        const statusBadge = isRepaired 
-          ? `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs px-2 py-0.5 rounded-full font-bold">已修復</span>`
-          : `<span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs px-2 py-0.5 rounded-full font-bold">待修復</span>`;
-        
-        const mapName = (window.maps.find(m => m.id === pin.mapId) || {}).name || pin.mapId;
+        const pulseClass = isRepaired ? 'pin-pulse-green bg-emerald-500/40' : 'pin-pulse-red bg-rose-500/40';
+        const bgGradient = isRepaired ? 'from-emerald-600 to-teal-500' : 'from-rose-600 to-red-500';
 
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-700/50 transition';
-        tr.innerHTML = `
-          <td class="p-3">${statusBadge}</td>
-          <td class="p-3 font-medium text-slate-300">${mapName}</td>
-          <td class="p-3 font-semibold text-white">${pin.title}</td>
-          <td class="p-3 text-slate-300">${pin.department || '-'}</td>
-          <td class="p-3 text-amber-400 font-medium">${pin.restoreDate || '-'}</td>
-          <td class="p-3">
-            <button onclick="openPinViewModal('${pin.id}')" class="bg-slate-700 hover:bg-slate-600 text-xs px-2.5 py-1 rounded border border-slate-600 transition">
-              <i class="fa-solid fa-eye mr-1"></i>檢視
-            </button>
-          </td>
+        const el = document.createElement('div');
+        el.className = 'absolute z-20 cursor-pointer group -translate-x-1/2 -translate-y-full';
+        el.style.left = `${pin.x}%`;
+        el.style.top = `${pin.y}%`;
+
+        el.innerHTML = `
+          <div class="relative flex flex-col items-center">
+            <div class="absolute -inset-2 rounded-full ${pulseClass} pointer-events-none"></div>
+            <div class="relative bg-gradient-to-tr ${bgGradient} text-white w-8 h-8 rounded-full shadow-2xl border-2 border-white flex items-center justify-center transition-transform group-hover:scale-125">
+              <i class="fa-solid fa-location-dot text-xs drop-shadow"></i>
+            </div>
+            <div class="mt-1 whitespace-nowrap bg-slate-900/95 text-white text-[11px] font-bold px-2 py-0.5 rounded-md shadow-xl border border-slate-700 pointer-events-none">
+              ${pin.title}
+            </div>
+          </div>
         `;
-        tbody.appendChild(tr);
+        el.onclick = (e) => { e.stopPropagation(); openPinViewModal(pin.id); };
+        layer.appendChild(el);
       });
     }
 
-    // 3. 匯出 CSV 檔案
-    function exportPinsToCSV() {
-      if (!window.pins || window.pins.length === 0) {
-        showToast('目前沒有可匯出的點位資料', 'info');
-        return;
-      }
+    function setupInteractions() {
+      if (!viewport || !container) return;
+      let isMoved = false;
 
-      let csv = '\uFEFF'; // UTF-8 BOM
-      csv += '編號,圖資區域,損壞標題,責任單位,預計修復日期,實際修復日期,狀態,處置說明,詳細描述\n';
+      const startPan = (cx, cy) => {
+        isDragging = true;
+        isMoved = false;
+        startX = cx - panX;
+        startY = cy - panY;
+      };
 
-      window.pins.forEach((p, index) => {
-        const mapName = (window.maps.find(m => m.id === p.mapId) || {}).name || p.mapId;
-        const status = p.actualRestoreDate ? '已修復' : '待修復';
-        const title = `"${(p.title || '').replace(/"/g, '""')}"`;
-        const dept = `"${(p.department || '').replace(/"/g, '""')}"`;
-        const method = `"${(p.restoreMethod || '').replace(/"/g, '""')}"`;
-        const desc = `"${(p.description || '').replace(/"/g, '""')}"`;
+      const movePan = (cx, cy) => {
+        if (!isDragging) return;
+        const nextPanX = cx - startX;
+        const nextPanY = cy - startY;
 
-        csv += `${index + 1},"${mapName}",${title},${dept},"${p.restoreDate || ''}","${p.actualRestoreDate || ''}","${status}",${method},${desc}\n`;
+        if (Math.abs(nextPanX - panX) > 2 || Math.abs(nextPanY - panY) > 2) {
+          isMoved = true;
+        }
+
+        panX = nextPanX;
+        panY = nextPanY;
+        requestUpdateTransform();
+      };
+
+      const endPan = () => { isDragging = false; };
+
+      viewport.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        startPan(e.clientX, e.clientY);
       });
 
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `大巨蛋巡檢紀錄_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      showToast('CSV 匯出成功！', 'success');
+      window.addEventListener('mousemove', (e) => {
+        if (isDragging) movePan(e.clientX, e.clientY);
+      });
+
+      window.addEventListener('mouseup', endPan);
+
+      container.onclick = (e) => {
+        if (isMoved || currentRole === ROLES.VISITOR) {
+          if (currentRole === ROLES.VISITOR && !isMoved) {
+            showToast('請先切換至管理員身分以新增點位', 'info');
+          }
+          return;
+        }
+        const rect = container.getBoundingClientRect();
+        const px = (((e.clientX - rect.left) / rect.width) * 100).toFixed(1);
+        const py = (((e.clientY - rect.top) / rect.height) * 100).toFixed(1);
+        openAddPinModal(px, py);
+      };
+
+      viewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = e.deltaY < 0 ? 1.12 : 0.88;
+        zoomMap(zoomFactor);
+      }, { passive: false });
     }
 
-    // 4. 身分驗證提交處理
-    function submitAuthPassword() {
-      const pwd = document.getElementById('inputAuthPassword').value.trim();
-      const badge = document.getElementById('roleBadge');
-      const userRoleText = document.getElementById('userRoleText');
-
-      if (pwd === 'admin') {
-        currentRole = ROLES.ADMIN;
-        badge.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1.5"></span>巡檢管理員 (可編輯)`;
-        userRoleText.innerText = '巡檢管理員';
-        showToast('已解鎖：巡檢管理員身分', 'success');
-      } else if (pwd === 'superadmin') {
-        currentRole = ROLES.SUPERADMIN;
-        badge.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-purple-400 mr-1.5 animate-pulse"></span>超級管理員 (最高權限)`;
-        userRoleText.innerText = '超級管理員';
-        showToast('已解鎖：超級管理員身分', 'success');
-      } else {
-        showToast('密碼錯誤，無法解鎖權限', 'error');
-        return;
+    function requestUpdateTransform() {
+      if (!isTransformPending && container) {
+        isTransformPending = true;
+        requestAnimationFrame(() => {
+          container.style.transform = `translate3d(${panX}px, ${panY}px, 0px) scale(${scale})`;
+          isTransformPending = false;
+        });
       }
-      closeModal('loginModal');
-      document.getElementById('inputAuthPassword').value = '';
-      if (currentView === 'map') renderPins();
-      else renderListView();
     }
 
-    function resetToGuestRole() {
-      currentRole = ROLES.VISITOR;
-      document.getElementById('roleBadge').innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-1.5 animate-pulse"></span>訪客模式 (唯讀)`;
-      document.getElementById('userRoleText').innerText = '訪客 (唯讀)';
-      closeModal('loginModal');
-      showToast('已切回訪客唯讀模式', 'info');
-      if (currentView === 'map') renderPins();
-      else renderListView();
+    function zoomMap(f) {
+      scale = Math.min(Math.max(0.4, scale * f), 5);
+      requestUpdateTransform();
+    }
+
+    function resetMapView() {
+      scale = 1;
+      panX = 0;
+      panY = 0;
+      requestUpdateTransform();
     }
 
     // 掛載至全域
-    window.toggleView = toggleView;
-    window.renderListView = renderListView;
-    window.exportPinsToCSV = exportPinsToCSV;
-    window.submitAuthPassword = submitAuthPassword;
-    window.resetToGuestRole = resetToGuestRole;
+    window.switchMap = switchMap;
+    window.renderPins = renderPins;
+    window.zoomMap = zoomMap;
+    window.resetMapView = resetMapView;
   </script>
 <!-- ... existing code -->
