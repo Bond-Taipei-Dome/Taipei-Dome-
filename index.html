@@ -36,7 +36,13 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* 高靜態對比標籤，不使用吃 CPU 的 Repaint 動畫 */
+    /* 手機與平版觸控優化 */
+    #viewport {
+      touch-action: none; /* 防止 Safari/Chrome 預設原生滾動干擾地圖平移 */
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
     .custom-pin {
       position: absolute;
       width: 34px;
@@ -104,7 +110,7 @@
         overflow: visible !important;
         background-color: #ffffff !important;
         color: #000000 !important;
-        font-size: 12px !important;
+        font-size: 11px !important;
       }
       header, nav, #viewport, #toastContainer, .no-print,
       #loginModal, #pinModal, #viewModal, #confirmDeleteModal, #cloudConfigModal, #lightboxModal, #projectHeaderModal {
@@ -123,7 +129,7 @@
       }
       .appendix24-table th, .appendix24-table td {
         border: 1px solid #000000 !important;
-        padding: 5px 8px !important;
+        padding: 4px 6px !important;
       }
     }
   </style>
@@ -181,7 +187,8 @@
         <i class="fa-solid fa-folder-tree"></i> <span class="hidden md:inline">檔期抬頭分類</span>
       </button>
 
-      <button onclick="exportAppendix24ModeA()" class="px-3 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-xs sm:text-sm transition flex items-center gap-1.5 shadow" title="匯出當前活動《附件二十四》A4 報表">
+      <!-- 匯出附件二十四 (連動當前模式) -->
+      <button onclick="triggerExportAppendix24()" class="px-3 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-xs sm:text-sm transition flex items-center gap-1.5 shadow" title="匯出當前視角數據為《附件二十四》A4 報表">
         <i class="fa-solid fa-file-export"></i> <span class="hidden md:inline">附件二十四 A4</span>
       </button>
 
@@ -208,12 +215,12 @@
   <main class="flex-1 relative overflow-hidden">
 
     <!-- 1. 地圖檢視容器 -->
-    <div id="viewport" class="w-full h-full relative overflow-hidden bg-slate-950 touch-none cursor-grab active:cursor-grabbing">
+    <div id="viewport" class="w-full h-full relative overflow-hidden bg-slate-950 cursor-grab active:cursor-grabbing">
       
       <div class="absolute top-3 left-3 z-20 pointer-events-none flex flex-wrap items-center gap-2">
         <div id="mapHintBanner" class="bg-slate-900/90 backdrop-blur-md border border-slate-700/80 text-slate-100 px-3.5 py-2 rounded-lg text-sm flex items-center gap-2 shadow-lg">
           <i class="fa-solid fa-circle-info text-amber-400 text-base"></i>
-          <span id="mapActionHint">目前為<strong>訪客唯讀模式</strong>：可拖曳縮放與點擊檢視點位；欲新增點位請先切換管理員權限。</span>
+          <span id="mapActionHint">目前為<strong>訪客唯讀模式</strong>：可單指滑動拖曳與雙指縮放；欲新增點位請切換管理員權限。</span>
         </div>
       </div>
 
@@ -642,8 +649,8 @@
     </div>
   </div>
 
-  <!-- 彈窗 6：照片燈箱 -->
-  <div id="lightboxModal" onclick="closeModal('lightboxModal')" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4 z-[70] cursor-zoom-out">
+  <!-- 彈窗 6：照片燈箱 (z-index 提高至 80 以防層級遮擋) -->
+  <div id="lightboxModal" onclick="closeModal('lightboxModal')" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4 z-[80] cursor-zoom-out">
     <button onclick="closeModal('lightboxModal')" class="absolute top-5 right-5 text-white/80 hover:text-white text-2xl w-10 h-10 rounded-full bg-slate-800/80 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
     <img id="lightboxImg" src="" alt="現場照片放大預覽" class="max-w-full max-h-[88vh] rounded-lg shadow-2xl border border-slate-700 object-contain" onclick="event.stopPropagation()">
   </div>
@@ -834,6 +841,7 @@
     let scale = 1, panX = 0, panY = 0;
     let isPointerDown = false, hasMovedDuringDrag = false;
     let pointerStartX = 0, pointerStartY = 0;
+    let initialPinchDistance = null;
 
     function loadMap(mapId, callback) {
       window.currentMapId = mapId;
@@ -892,9 +900,11 @@
       if (zoomText) zoomText.innerText = `${Math.round(scale * 100)}%`;
     }
 
+    // 重構 Touch / Mouse 地圖拖曳事件 (徹底修復手機滑動卡死)
     function setupMapInteractions() {
       if (!viewport || !mapWrapper) return;
 
+      // 滑鼠 Drag
       viewport.addEventListener('mousedown', (e) => {
         if (e.button !== 0 || e.target.closest('.custom-pin')) return;
         isPointerDown = true; hasMovedDuringDrag = false;
@@ -914,6 +924,49 @@
 
       window.addEventListener('mouseup', () => { isPointerDown = false; });
 
+      // 手機板觸控事件 (Touch Events)
+      viewport.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.custom-pin')) return;
+        if (e.touches.length === 1) {
+          isPointerDown = true; hasMovedDuringDrag = false;
+          pointerStartX = e.touches[0].clientX;
+          pointerStartY = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+          isPointerDown = false;
+          initialPinchDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+        }
+      }, { passive: true });
+
+      viewport.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1 && isPointerDown) {
+          const dx = e.touches[0].clientX - pointerStartX;
+          const dy = e.touches[0].clientY - pointerStartY;
+          if (Math.hypot(dx, dy) > 4) hasMovedDuringDrag = true;
+          if (hasMovedDuringDrag) {
+            panX += dx; panY += dy;
+            pointerStartX = e.touches[0].clientX;
+            pointerStartY = e.touches[0].clientY;
+            updateMapTransform();
+          }
+        } else if (e.touches.length === 2 && initialPinchDistance) {
+          const currentDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          const factor = currentDistance / initialPinchDistance;
+          zoomMap(factor > 1 ? 1.03 : 0.97);
+          initialPinchDistance = currentDistance;
+        }
+      }, { passive: true });
+
+      viewport.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) initialPinchDistance = null;
+        if (e.touches.length === 0) isPointerDown = false;
+      });
+
       viewport.addEventListener('wheel', (e) => {
         e.preventDefault();
         const rect = viewport.getBoundingClientRect();
@@ -923,7 +976,6 @@
       mapWrapper.addEventListener('click', (e) => {
         if (hasMovedDuringDrag || e.target.closest('.custom-pin')) return;
 
-        // 訪客唯讀防護
         if (window.currentRole === ROLES.VISITOR) {
           showToast('訪客為唯讀模式，請點擊右上角切換「管理員權限」！', 'info');
           openModal('loginModal');
@@ -1121,7 +1173,6 @@
       showToast('已切換當前檔期抬頭！', 'info');
     };
 
-    // iOS Safari datetime-local 相容解析器（裁切秒數）
     function safeFormatForDatetimeInput(dtStr) {
       if (!dtStr) return '';
       if (dtStr.length === 16 && dtStr.includes('T')) return dtStr;
@@ -1209,7 +1260,6 @@
       document.getElementById('formCoordX').value = x.toFixed(2);
       document.getElementById('formCoordY').value = y.toFixed(2);
 
-      // 自動帶入當前啟用檔期抬頭
       const list = getStoredHeaderList();
       const activeId = localStorage.getItem('dome_active_header_id') || '';
       const activeHeader = list.find(h => h.id === activeId);
@@ -1229,7 +1279,6 @@
       openModal('pinModal');
     }
 
-    // 勾選「租用方自行修復」動態展開 / 隱藏「委託廠商」與「預計施作日期」
     window.toggleRepairFields = () => {
       const selected = document.querySelector('input[name="repairOption"]:checked')?.value;
       const selfDiv = document.getElementById('selfRepairFields');
@@ -1248,6 +1297,12 @@
       }
     };
 
+    window.openLightbox = function(srcUrl) {
+      const img = document.getElementById('lightboxImg');
+      if (img) img.src = srcUrl;
+      openModal('lightboxModal');
+    };
+
     window.openPinViewModal = function(pinId) {
       const pin = window.pins.find(p => String(p.id) === String(pinId));
       if (!pin) return;
@@ -1256,8 +1311,8 @@
       const images = Array.isArray(pin.images) ? pin.images : [];
       const mapLabel = MAPS[pin.map_id]?.name || pin.map_id;
 
-      const imgHtml = images.map((url, idx) => `
-        <div onclick="openLightbox('${idx}', '${pin.id}')" class="group relative w-20 h-20 rounded-xl border border-slate-600 overflow-hidden cursor-zoom-in shadow">
+      const imgHtml = images.map((url) => `
+        <div onclick="openLightbox('${url}')" class="group relative w-20 h-20 rounded-xl border border-slate-600 overflow-hidden cursor-zoom-in shadow">
           <img src="${url}" class="w-full h-full object-cover group-hover:scale-110 transition">
         </div>
       `).join('');
@@ -1290,7 +1345,10 @@
         ${images.length > 0 ? `<div class="mb-4"><span class="block text-xs font-semibold text-slate-300 mb-2">現場照片：</span><div class="flex gap-2 flex-wrap">${imgHtml}</div></div>` : ''}
         
         <div class="pt-3 border-t border-slate-700 flex flex-wrap gap-2 justify-between">
-          <button onclick="locatePinOnMap('${pin.id}')" class="px-3 py-1.5 bg-slate-700 text-amber-300 rounded text-xs font-semibold">地圖定位</button>
+          <div class="flex gap-2">
+            <button onclick="locatePinOnMap('${pin.id}')" class="px-3 py-1.5 bg-slate-700 text-amber-300 rounded text-xs font-semibold">地圖定位</button>
+            <button onclick="exportSinglePinAppendix24('${pin.id}')" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded text-xs font-bold shadow"><i class="fa-solid fa-print mr-1"></i>印單筆《附件二十四》</button>
+          </div>
           <div class="flex gap-2">
             ${window.currentRole !== ROLES.VISITOR ? `<button onclick="openPinModalForEdit('${pin.id}')" class="px-3.5 py-1.5 bg-amber-500 text-slate-950 font-bold rounded text-xs">編輯</button>` : ''}
             ${window.currentRole === ROLES.SUPERADMIN ? `<button onclick="requestDeletePin('${pin.id}')" class="px-3.5 py-1.5 bg-rose-600 text-white font-bold rounded text-xs">刪除</button>` : ''}
@@ -1489,19 +1547,64 @@
       recognition.start();
     };
 
-    // 《附件二十四》官方 Word / PDF 100% 精準報表生成與列印引擎
-    window.exportAppendix24ModeA = function() {
+    // 頂部「附件二十四 A4」按鈕之智慧觸發器 (連動地圖/列表當前可見資料)
+    window.triggerExportAppendix24 = function() {
       const list = getStoredHeaderList();
       const activeId = localStorage.getItem('dome_active_header_id') || '';
       const activeHeader = list.find(h => h.id === activeId) || {};
 
-      let pinsToExport = window.pins;
-      if (activeHeader.activity) {
-        pinsToExport = window.pins.filter(p => p.activity_name === activeHeader.activity);
+      let pinsToExport = [];
+
+      if (window.currentView === 'map') {
+        // 地圖模式：抓取目前選擇圖層的點位
+        pinsToExport = (window.pins || []).filter(p => p.map_id === window.currentMapId);
+      } else {
+        // 列表模式：抓取經過搜尋過濾後的點位
+        pinsToExport = getCurrentlyFilteredListPins();
       }
+
+      if (pinsToExport.length === 0) {
+        return showToast('當前視角與篩選條件下沒有任何點位資料可供列印！', 'info');
+      }
+
       generateAppendix24Printout(pinsToExport, activeHeader);
     };
 
+    // 匯出單筆巡檢點《附件二十四》
+    window.exportSinglePinAppendix24 = function(pinId) {
+      const pin = window.pins.find(p => String(p.id) === String(pinId));
+      if (!pin) return;
+      closeModal('viewModal');
+      generateAppendix24Printout([pin], {
+        activity: pin.activity_name,
+        unit: pin.renter_unit,
+        start: pin.rent_start_date,
+        end: pin.rent_end_date
+      });
+    };
+
+    function getCurrentlyFilteredListPins() {
+      const filterMap = document.getElementById('filterMap')?.value || 'all';
+      const filterStatus = document.getElementById('filterStatus')?.value || 'all';
+      const searchKeyword = document.getElementById('searchKeyword')?.value.trim().toLowerCase() || '';
+
+      let list = [...(window.pins || [])];
+      if (filterMap !== 'all') list = list.filter(p => p.map_id === filterMap);
+      if (filterStatus === 'unrestored') list = list.filter(p => !p.actual_restore_date);
+      else if (filterStatus === 'restored') list = list.filter(p => !!p.actual_restore_date);
+
+      if (searchKeyword) {
+        list = list.filter(p =>
+          (p.title && p.title.toLowerCase().includes(searchKeyword)) ||
+          (p.activity_name && p.activity_name.toLowerCase().includes(searchKeyword)) ||
+          (p.renter_unit && p.renter_unit.toLowerCase().includes(searchKeyword)) ||
+          (p.department && p.department.toLowerCase().includes(searchKeyword))
+        );
+      }
+      return list;
+    }
+
+    // 統一《附件二十四》官方 Word/PDF 排版引擎 (100% 精準連動)
     function generateAppendix24Printout(pinsList, headerData = {}) {
       const today = new Date();
       document.getElementById('rptPrintTodayDate').innerHTML = `日期： &nbsp; ${today.getFullYear()} &nbsp; 年 &nbsp; ${today.getMonth() + 1} &nbsp; 月 &nbsp; ${today.getDate()} &nbsp; 日`;
@@ -1517,10 +1620,9 @@
       if (!tbody) return;
 
       if (!pinsList || pinsList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">當前檔期尚無登錄任何損害異常案件</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">當前條件下無登錄任何損害異常案件</td></tr>`;
       } else {
-        // 渲染官方 Word 的兩行 1 組跨欄結構 (colspan / rowspan)
-        tbody.innerHTML = pinsList.map((p, i) => {
+        tbody.innerHTML = pinsList.map((p) => {
           const mapLabel = MAPS[p.map_id]?.name || p.map_id;
           const isSelfRepair = p.repair_option === '租用方自行修復';
           const isPaidRepair = p.repair_option === '租用方付費維修';
@@ -1537,12 +1639,13 @@
               </td>
               <td class="align-top">
                 <div class="font-bold">場勘代表：</div>
-                <div class="pl-2">租用單位：_____________ &nbsp; 場務科：_____________</div>
+                <div class="pl-1 mt-1 text-[10px]">租用單位：_____________</div>
+                <div class="pl-1 mt-1 text-[10px]">場務科：_____________</div>
               </td>
             </tr>
             <tr class="border-b-2 border-black">
               <td class="align-middle text-center bg-gray-50">
-                ${p.images && p.images.length > 0 ? `<img src="${p.images[0]}" class="w-24 h-16 object-cover mx-auto rounded border border-gray-400">` : '<span class="text-gray-400">無照片縮圖</span>'}
+                ${p.images && p.images.length > 0 ? `<img src="${p.images[0]}" class="w-24 h-16 object-cover mx-auto rounded border border-gray-400">` : '<span class="text-gray-400">無現場照片</span>'}
               </td>
               <td colspan="2" class="align-top">
                 <div class="font-bold">預計修復日期：<span class="font-normal">${p.construct_date || p.actual_restore_date || '配合場館租用時段'}</span></div>
@@ -1566,9 +1669,11 @@
     }
 
     window.exportCSV = function() {
-      if (!window.pins || window.pins.length === 0) return showToast('無巡檢點位可匯出！', 'info');
+      const filteredPins = getCurrentlyFilteredListPins();
+      if (!filteredPins || filteredPins.length === 0) return showToast('無巡檢點位可匯出！', 'info');
+      
       const headers = ['案件編號', '狀態', '圖層', '活動名稱', '租用單位', '損壞標題', '責任單位', '損害發生日', '預計修復方式', '委託廠商', '預計施作日期', '詳細描述'];
-      const rows = window.pins.map(p => [
+      const rows = filteredPins.map(p => [
         `"${p.id}"`, p.actual_restore_date ? '已修復' : '待修復',
         p.map_id === 'map-b2-b1' ? 'B2/B1層' : 'L1~L5層',
         `"${(p.activity_name || '').replace(/"/g, '""')}"`,
@@ -1641,23 +1746,7 @@
       const tbody = document.getElementById('pinTableBody');
       if (!tbody) return;
 
-      const filterMap = document.getElementById('filterMap')?.value || 'all';
-      const filterStatus = document.getElementById('filterStatus')?.value || 'all';
-      const searchKeyword = document.getElementById('searchKeyword')?.value.trim().toLowerCase() || '';
-
-      let list = [...(window.pins || [])];
-      if (filterMap !== 'all') list = list.filter(p => p.map_id === filterMap);
-      if (filterStatus === 'unrestored') list = list.filter(p => !p.actual_restore_date);
-      else if (filterStatus === 'restored') list = list.filter(p => !!p.actual_restore_date);
-
-      if (searchKeyword) {
-        list = list.filter(p =>
-          (p.title && p.title.toLowerCase().includes(searchKeyword)) ||
-          (p.activity_name && p.activity_name.toLowerCase().includes(searchKeyword)) ||
-          (p.renter_unit && p.renter_unit.toLowerCase().includes(searchKeyword)) ||
-          (p.department && p.department.toLowerCase().includes(searchKeyword))
-        );
-      }
+      const list = getCurrentlyFilteredListPins();
 
       tbody.innerHTML = '';
       if (list.length === 0) {
