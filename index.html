@@ -93,7 +93,7 @@
       border-color: #fb7185 !important;
     }
 
-    /* 原生 A4 列印與《附件二十四》樣式 */
+    /* 原生 A4 列印與《附件二十四》官方實體排版樣式 */
     @media print {
       @page {
         size: A4 portrait;
@@ -116,6 +116,15 @@
         width: 100% !important;
         color: #000000 !important;
       }
+      
+      .appendix24-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      .appendix24-table th, .appendix24-table td {
+        border: 1px solid #000000 !important;
+        padding: 5px 8px !important;
+      }
     }
   </style>
 </head>
@@ -129,7 +138,7 @@
     <!-- 左側：Logo 與圖層切換 -->
     <div class="flex items-center space-x-3 sm:space-x-4">
       <div class="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-inner">
-        <i class="fa-solid fa-stadium-flex text-xl"></i>
+        <i class="fa-solid fa-helmet-safety text-xl"></i>
       </div>
       <div>
         <div class="flex items-center gap-2">
@@ -524,7 +533,7 @@
 
           <div id="selfRepairFields" class="hidden grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-700/50">
             <div>
-              <label class="block text-xs font-semibold mb-1">施工單位名稱 (constructor_name)</label>
+              <label class="block text-xs font-semibold mb-1">委託廠商 (constructor_name)</label>
               <input type="text" id="formConstructorName" placeholder="例如：○○營造工程" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white">
             </div>
             <div>
@@ -639,64 +648,64 @@
     <img id="lightboxImg" src="" alt="現場照片放大預覽" class="max-w-full max-h-[88vh] rounded-lg shadow-2xl border border-slate-700 object-contain" onclick="event.stopPropagation()">
   </div>
 
-  <!-- 《附件二十四》官方 A4 紙本格式匯出模板 (DI-VM-05-2023-01) -->
-  <div id="appendix24PrintArea" class="hidden bg-white text-black p-6 font-sans">
+  <!-- 《附件二十四》官方 Word / PDF 100% 精準實體排版模板 -->
+  <div id="appendix24PrintArea" class="hidden bg-white text-black p-4 font-sans leading-normal">
+    <!-- 頁首標題與日期 -->
     <div class="text-center font-bold text-2xl mb-1">臺北大巨蛋設施設備損害異常紀錄表</div>
-    <div class="text-center text-xs mb-4">（表單編號：DI-VM-05-2023-01）</div>
+    <div class="text-right text-xs mb-2 font-bold" id="rptPrintTodayDate">日期： &nbsp; &nbsp; 年 &nbsp; &nbsp; 月 &nbsp; &nbsp; 日</div>
 
-    <div class="border border-black p-3 text-xs space-y-1 mb-4">
-      <div class="flex justify-between">
-        <span><strong>活動名稱：</strong><span id="rptActivityName">--</span></span>
-        <span><strong>租用單位：</strong><span id="rptRenterUnit">--</span></span>
-      </div>
-      <div><strong>租用期間：</strong><span id="rptRentDates">--</span></div>
-    </div>
-
-    <table class="w-full border-collapse border border-black text-xs mb-6">
-      <thead>
-        <tr class="bg-gray-100 text-center font-bold">
-          <th class="border border-black p-2 w-10">項次</th>
-          <th class="border border-black p-2">損害項目與詳細描述</th>
-          <th class="border border-black p-2 w-24">損害日期</th>
-          <th class="border border-black p-2 w-32">預計修復方式</th>
-          <th class="border border-black p-2 w-36">現場照片</th>
-        </tr>
-      </thead>
-      <tbody id="rptTableBody"></tbody>
+    <!-- 表頭活動與租用資訊 -->
+    <table class="appendix24-table text-xs mb-3">
+      <tr>
+        <td class="font-bold w-28 bg-gray-100 text-center">活動名稱</td>
+        <td id="rptActivityName" colspan="2" class="font-bold">--</td>
+      </tr>
+      <tr>
+        <td class="font-bold bg-gray-100 text-center">租用單位</td>
+        <td id="rptRenterUnit" colspan="2">--</td>
+      </tr>
+      <tr>
+        <td class="font-bold bg-gray-100 text-center">場地租用期間</td>
+        <td id="rptRentDates" colspan="2">--</td>
+      </tr>
     </table>
 
-    <!-- 四科室與雙方實體簽核區 -->
-    <div class="mt-8 border border-black text-xs">
-      <div class="bg-gray-100 p-2 font-bold border-b border-black text-center">會簽與審核欄位</div>
-      <div class="grid grid-cols-4 divide-x divide-black h-20 border-b border-black">
-        <div class="p-2 flex flex-col justify-between">
-          <span class="font-semibold">營運部主管：</span>
-          <div class="text-[10px] text-gray-400">（簽章）</div>
-        </div>
-        <div class="p-2 flex flex-col justify-between">
-          <span class="font-semibold">場館業務科：</span>
-          <div class="text-[10px] text-gray-400">（簽章）</div>
-        </div>
-        <div class="p-2 flex flex-col justify-between">
-          <span class="font-semibold">設備技術科：</span>
-          <div class="text-[10px] text-gray-400">（簽章）</div>
-        </div>
-        <div class="p-2 flex flex-col justify-between">
-          <span class="font-semibold">場務管理科：</span>
-          <div class="text-[10px] text-gray-400">（簽章）</div>
-        </div>
-      </div>
-      <div class="grid grid-cols-2 divide-x divide-black h-20">
-        <div class="p-2 flex flex-col justify-between">
-          <span class="font-bold">租用單位代表簽章：</span>
-          <div class="text-[10px] text-gray-400">簽署日期： 年 月 日</div>
-        </div>
-        <div class="p-2 flex flex-col justify-between">
-          <span class="font-bold">場館驗收代表簽章：</span>
-          <div class="text-[10px] text-gray-400">簽署日期： 年 月 日</div>
-        </div>
-      </div>
+    <!-- 異常設施設備表格 (複合多層欄位) -->
+    <table class="appendix24-table text-xs mb-2">
+      <thead>
+        <tr class="bg-gray-100 text-center font-bold">
+          <th class="w-1/3">異常設施設備</th>
+          <th class="w-1/3">異常圖說</th>
+          <th class="w-1/3">場勘代表 & 修復處置</th>
+        </tr>
+      </thead>
+      <tbody id="rptTableBody">
+        <!-- 由 JS 動態注入符合官方複合跨列欄位 -->
+      </tbody>
+    </table>
+
+    <!-- 修復須知警語區塊 -->
+    <div class="text-[11px] mb-4 font-semibold leading-tight">
+      <div>※修復須知：</div>
+      <div class="pl-3">1. 租用方自行修復須配合場館租用時段。</div>
+      <div class="pl-3">2. 租用方付費則由體育館提供維修報價單。</div>
     </div>
+
+    <!-- 底端四科室會簽區 -->
+    <table class="appendix24-table text-xs">
+      <tr class="bg-gray-100 text-center font-bold">
+        <td class="w-1/4">營運部主管</td>
+        <td class="w-1/4">場館業務科</td>
+        <td class="w-1/4">設備技術科</td>
+        <td class="w-1/4">場務管理科</td>
+      </tr>
+      <tr class="h-20">
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </table>
   </div>
 
   <!-- 核心邏輯腳本 -->
@@ -1129,6 +1138,15 @@
       return dtStr.replace('T', ' ').substring(0, 16);
     }
 
+    function formatDateToTwFullString(dtStr) {
+      if (!dtStr) return ' &nbsp; 年 &nbsp; 月 &nbsp; 日';
+      try {
+        const d = new Date(dtStr);
+        if (isNaN(d.getTime())) return dtStr;
+        return `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 ${d.getHours()} 時 ${d.getMinutes()} 分`;
+      } catch(e) { return dtStr; }
+    }
+
     window.saveGlobalProjectHeader = function(e) {
       if (e) e.preventDefault();
       const editId = document.getElementById('headerEditId')?.value;
@@ -1211,6 +1229,7 @@
       openModal('pinModal');
     }
 
+    // 勾選「租用方自行修復」動態展開 / 隱藏「委託廠商」與「預計施作日期」
     window.toggleRepairFields = () => {
       const selected = document.querySelector('input[name="repairOption"]:checked')?.value;
       const selfDiv = document.getElementById('selfRepairFields');
@@ -1221,6 +1240,8 @@
       } else if (selected === '租用方付費維修') {
         selfDiv?.classList.add('hidden'); selfDiv?.classList.remove('grid');
         paidDiv?.classList.remove('hidden');
+        document.getElementById('formConstructorName').value = '';
+        document.getElementById('formConstructDate').value = '';
       } else {
         selfDiv?.classList.add('hidden'); selfDiv?.classList.remove('grid');
         paidDiv?.classList.add('hidden');
@@ -1261,7 +1282,7 @@
           <div class="border-b border-slate-800 pb-2">
             <span class="text-slate-400 block">預計修復方式</span>
             <strong class="text-indigo-300">${escapeHtml(pin.repair_option || '未定')}</strong>
-            ${pin.constructor_name ? `<span class="ml-2 text-slate-400">施工: ${escapeHtml(pin.constructor_name)} (${pin.construct_date || ''})</span>` : ''}
+            ${pin.constructor_name ? `<div class="mt-1 text-slate-300"><i class="fa-solid fa-building mr-1"></i>委託廠商: ${escapeHtml(pin.constructor_name)} (${pin.construct_date || '未定施作日'})</div>` : ''}
           </div>
           <div><span class="text-slate-400 block">詳細位置與描述</span><p class="text-slate-100 whitespace-pre-line">${escapeHtml(pin.description || '無詳細描述')}</p></div>
         </div>
@@ -1468,7 +1489,7 @@
       recognition.start();
     };
 
-    // 《附件二十四》Mode A 官方 A4 報表過濾與列印引擎
+    // 《附件二十四》官方 Word / PDF 100% 精準報表生成與列印引擎
     window.exportAppendix24ModeA = function() {
       const list = getStoredHeaderList();
       const activeId = localStorage.getItem('dome_active_header_id') || '';
@@ -1482,36 +1503,58 @@
     };
 
     function generateAppendix24Printout(pinsList, headerData = {}) {
+      const today = new Date();
+      document.getElementById('rptPrintTodayDate').innerHTML = `日期： &nbsp; ${today.getFullYear()} &nbsp; 年 &nbsp; ${today.getMonth() + 1} &nbsp; 月 &nbsp; ${today.getDate()} &nbsp; 日`;
+
       document.getElementById('rptActivityName').innerText = headerData.activity || pinsList[0]?.activity_name || '全場館通用巡檢';
       document.getElementById('rptRenterUnit').innerText = headerData.unit || pinsList[0]?.renter_unit || '未指定單位';
       
-      const startDisplay = formatDateTimeDisplay(headerData.start || pinsList[0]?.rent_start_date);
-      const endDisplay = formatDateTimeDisplay(headerData.end || pinsList[0]?.rent_end_date);
-      document.getElementById('rptRentDates').innerText = `${startDisplay} ~ ${endDisplay}`;
+      const startDisplay = formatDateToTwFullString(headerData.start || pinsList[0]?.rent_start_date);
+      const endDisplay = formatDateToTwFullString(headerData.end || pinsList[0]?.rent_end_date);
+      document.getElementById('rptRentDates').innerText = `${startDisplay} 至 ${endDisplay}`;
 
       const tbody = document.getElementById('rptTableBody');
       if (!tbody) return;
 
       if (!pinsList || pinsList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="border border-black p-4 text-center">當前檔期尚無登錄任何損害異常案件</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">當前檔期尚無登錄任何損害異常案件</td></tr>`;
       } else {
-        tbody.innerHTML = pinsList.map((p, i) => `
-          <tr>
-            <td class="border border-black p-1.5 text-center font-bold">${i + 1}</td>
-            <td class="border border-black p-1.5">
-              <div class="font-bold text-sm">${escapeHtml(p.title)}</div>
-              <div class="text-[11px] text-gray-600 mt-0.5">${escapeHtml(p.description || '無詳細描述')}</div>
-            </td>
-            <td class="border border-black p-1.5 text-center">${p.damage_date || '--'}</td>
-            <td class="border border-black p-1.5 text-center">
-              <div class="font-semibold">${escapeHtml(p.repair_option || '待確定')}</div>
-              ${p.constructor_name ? `<div class="text-[10px] text-gray-500">施工: ${escapeHtml(p.constructor_name)}</div>` : ''}
-            </td>
-            <td class="border border-black p-1.5 text-center">
-              ${p.images && p.images.length > 0 ? `<img src="${p.images[0]}" class="w-16 h-12 object-cover mx-auto rounded border">` : '<span class="text-gray-400">無照片</span>'}
-            </td>
-          </tr>
-        `).join('');
+        // 渲染官方 Word 的兩行 1 組跨欄結構 (colspan / rowspan)
+        tbody.innerHTML = pinsList.map((p, i) => {
+          const mapLabel = MAPS[p.map_id]?.name || p.map_id;
+          const isSelfRepair = p.repair_option === '租用方自行修復';
+          const isPaidRepair = p.repair_option === '租用方付費維修';
+
+          return `
+            <tr>
+              <td class="align-top">
+                <div class="font-bold">位置：<span class="font-normal">${escapeHtml(mapLabel)} (${Number(p.x).toFixed(1)}%, ${Number(p.y).toFixed(1)}%)</span></div>
+                <div class="font-bold mt-1">名稱：<span class="font-normal">${escapeHtml(p.title)}</span></div>
+              </td>
+              <td class="align-top">
+                <div class="font-bold">日期：<span class="font-normal">${p.damage_date || '--'}</span></div>
+                <div class="font-bold mt-1">說明：<span class="font-normal">${escapeHtml(p.description || '無詳細說明')}</span></div>
+              </td>
+              <td class="align-top">
+                <div class="font-bold">場勘代表：</div>
+                <div class="pl-2">租用單位：_____________ &nbsp; 場務科：_____________</div>
+              </td>
+            </tr>
+            <tr class="border-b-2 border-black">
+              <td class="align-middle text-center bg-gray-50">
+                ${p.images && p.images.length > 0 ? `<img src="${p.images[0]}" class="w-24 h-16 object-cover mx-auto rounded border border-gray-400">` : '<span class="text-gray-400">無照片縮圖</span>'}
+              </td>
+              <td colspan="2" class="align-top">
+                <div class="font-bold">預計修復日期：<span class="font-normal">${p.construct_date || p.actual_restore_date || '配合場館租用時段'}</span></div>
+                <div class="font-bold mt-1">預計修復方式：</div>
+                <div class="pl-4 mt-0.5">
+                  <div>${isSelfRepair ? '■' : '□'} 租用方自行修復 ${isSelfRepair && p.constructor_name ? `<span class="underline font-bold ml-1">(委託廠商：${escapeHtml(p.constructor_name)})</span>` : ''}</div>
+                  <div>${isPaidRepair ? '■' : '□'} 租用方付費維修</div>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
       }
 
       const printArea = document.getElementById('appendix24PrintArea');
@@ -1524,7 +1567,7 @@
 
     window.exportCSV = function() {
       if (!window.pins || window.pins.length === 0) return showToast('無巡檢點位可匯出！', 'info');
-      const headers = ['案件編號', '狀態', '圖層', '活動名稱', '租用單位', '損壞標題', '責任單位', '損害發生日', '預計修復方式', '施工單位', '詳細描述'];
+      const headers = ['案件編號', '狀態', '圖層', '活動名稱', '租用單位', '損壞標題', '責任單位', '損害發生日', '預計修復方式', '委託廠商', '預計施作日期', '詳細描述'];
       const rows = window.pins.map(p => [
         `"${p.id}"`, p.actual_restore_date ? '已修復' : '待修復',
         p.map_id === 'map-b2-b1' ? 'B2/B1層' : 'L1~L5層',
@@ -1534,6 +1577,7 @@
         `"${(p.department || '').replace(/"/g, '""')}"`,
         p.damage_date || '', `"${(p.repair_option || '').replace(/"/g, '""')}"`,
         `"${(p.constructor_name || '').replace(/"/g, '""')}"`,
+        p.construct_date || '',
         `"${(p.description || '').replace(/"/g, '""')}"`
       ]);
 
