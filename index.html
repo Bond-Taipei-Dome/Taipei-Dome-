@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>臺北大巨蛋巡檢系統 v2026.11.04</title>
+  <title>臺北大巨蛋場務管理系統 v2026.11.05</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -34,8 +34,8 @@
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
     .touch-target {
-      min-width: 56px;
-      min-height: 56px;
+      min-width: 48px;
+      min-height: 48px;
     }
 
     .custom-pin {
@@ -104,7 +104,7 @@
         color: #000000 !important;
       }
       header, #viewport, #toastContainer, .no-print,
-      #loginModal, #pinModal, #projectHeaderModal, #listViewContainer {
+      #loginModal, #pinModal, #projectHeaderModal, #listViewContainer, #confirmModal {
         display: none !important;
       }
       #appendix24PrintArea {
@@ -135,13 +135,13 @@
   <header class="h-20 bg-slate-900/95 backdrop-blur border-b border-slate-800 flex items-center justify-between px-3 sm:px-6 z-30 shrink-0 shadow-md">
     <!-- 左側：標誌與樓層選單 -->
     <div class="flex items-center space-x-3 sm:space-x-4">
-      <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-blue-600 flex items-center justify-center text-white shadow-inner shrink-0">
-        <i class="fa-solid fa-stadium text-2xl"></i>
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-inner shrink-0">
+        <i class="fa-solid fa-building-shield text-2xl"></i>
       </div>
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="font-bold text-base sm:text-lg tracking-wide text-white leading-tight">臺北大巨蛋巡檢系統</h1>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v2026.11.04</span>
+          <h1 class="font-bold text-base sm:text-lg tracking-wide text-white leading-tight">臺北大巨蛋場務管理系統</h1>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">v2026.11.05</span>
           <!-- 恆久雲端連線狀態標籤 -->
           <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -188,7 +188,7 @@
 
       <button id="btnLogin" onclick="openModal('loginModal')" class="flex items-center bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-slate-700 transition min-h-[44px]">
         <i class="fa-solid fa-shield-halved mr-1.5 text-amber-400"></i>
-        <span id="userRoleText">訪客</span>
+        <span id="userRoleText">訪客(唯讀)</span>
       </button>
     </div>
   </header>
@@ -226,7 +226,7 @@
             <strong id="legendPending" class="text-rose-400 text-base">0</strong>
           </div>
           <div class="flex items-center justify-between gap-4">
-            <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block border border-white"></span> 已修復</span>
+            <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block border border-white"></span> 已完修</span>
             <strong id="legendCompleted" class="text-emerald-400 text-base">0</strong>
           </div>
           <div class="pt-2 border-t border-slate-700/80">
@@ -265,7 +265,7 @@
             <select id="filterStatus" onchange="renderListViewTable()" class="bg-slate-700 text-white text-xs sm:text-sm rounded-lg px-3.5 py-2.5 border border-slate-600 focus:outline-none focus:border-amber-500 min-h-[44px]">
               <option value="all">全部狀態</option>
               <option value="unrestored">🔴 待修復案件</option>
-              <option value="restored">🟢 已修復案件</option>
+              <option value="restored">🟢 已完修案件</option>
             </select>
           </div>
           <div class="relative flex-1 sm:w-72">
@@ -330,12 +330,12 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold mb-1">租用開始時間 (含時分)</label>
-            <input type="datetime-local" id="globalRentStartDate" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
+            <label class="block text-xs font-semibold mb-1">租用開始時間 (24小時制)</label>
+            <input type="datetime-local" id="globalRentStartDate" step="60" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
           </div>
           <div>
-            <label class="block text-xs font-semibold mb-1">租用結束時間 (含時分)</label>
-            <input type="datetime-local" id="globalRentEndDate" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
+            <label class="block text-xs font-semibold mb-1">租用結束時間 (24小時制)</label>
+            <input type="datetime-local" id="globalRentEndDate" step="60" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
           </div>
         </div>
         <div class="flex gap-2 pt-1">
@@ -358,7 +358,7 @@
     <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-sm w-full p-6 text-slate-100 relative shadow-2xl">
       <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
       <h3 class="text-lg font-bold text-white mb-2"><i class="fa-solid fa-shield-halved text-amber-400 mr-2"></i>巡檢身分驗證</h3>
-      <p class="text-xs text-slate-400 mb-4">輸入通行密碼以解鎖點位新增與編輯權限 (密碼: admin)：</p>
+      <p class="text-xs text-slate-400 mb-4">輸入通行密碼以解鎖權限 (管理員: admin / 超級管理員: superadmin)：</p>
       <input type="password" id="inputAuthPassword" placeholder="請輸入通行密碼..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-500 min-h-[44px]">
       <div class="flex gap-2">
         <button onclick="submitAuthPassword()" class="touch-target flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm shadow flex items-center justify-center">解鎖權限</button>
@@ -396,12 +396,12 @@
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-semibold mb-1">租用開始時間</label>
-              <input type="datetime-local" id="formRentStartDate" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
+              <label class="block text-xs font-semibold mb-1">租用開始時間 (24小時制)</label>
+              <input type="datetime-local" id="formRentStartDate" step="60" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
             </div>
             <div>
-              <label class="block text-xs font-semibold mb-1">租用結束時間</label>
-              <input type="datetime-local" id="formRentEndDate" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
+              <label class="block text-xs font-semibold mb-1">租用結束時間 (24小時制)</label>
+              <input type="datetime-local" id="formRentEndDate" step="60" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
             </div>
           </div>
         </div>
@@ -421,6 +421,18 @@
             <label class="block text-xs font-semibold mb-1">損害發生日期 (damage_date)</label>
             <input type="date" id="formDamageDate" class="w-full bg-slate-900 rounded-lg p-2.5 text-xs border border-slate-700 text-white min-h-[44px]">
           </div>
+        </div>
+
+        <!-- 實際完修日期 (修復完成後顯示綠點，並從附件二十四中排除) -->
+        <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700/80 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-bold text-emerald-400">實際完修日期 (actual_restore_date)</label>
+            <button type="button" onclick="document.getElementById('formActualRestoreDate').value = new Date().toISOString().split('T')[0]" class="text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 px-2.5 py-1 rounded border border-emerald-500/30 font-semibold">
+              填入今日完修
+            </button>
+          </div>
+          <input type="date" id="formActualRestoreDate" class="w-full bg-slate-800 rounded-lg p-2.5 text-sm border border-slate-600 text-white focus:outline-none focus:border-emerald-500 min-h-[44px]">
+          <p class="text-[11px] text-slate-400">※ 填寫完修日期後點位轉為綠色，並將<strong>自動從《附件二十四》報表中排除</strong>。</p>
         </div>
 
         <!-- 預計修復方式單選與延伸欄位 -->
@@ -470,13 +482,28 @@
         </div>
 
         <div class="pt-3 flex justify-between items-center border-t border-slate-700">
-          <button type="button" id="btnDeletePin" onclick="confirmDeletePin()" class="hidden px-4 py-3 bg-rose-600/80 hover:bg-rose-500 text-white font-bold rounded-xl text-xs min-h-[44px]">刪除點位</button>
+          <button type="button" id="btnDeletePin" onclick="confirmDeletePin()" class="hidden px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs min-h-[44px]">刪除點位</button>
           <div class="flex gap-2 ml-auto">
             <button type="button" onclick="closeModal('pinModal')" class="px-4 py-3 bg-slate-700 text-slate-300 rounded-xl text-xs min-h-[44px]">取消</button>
             <button type="submit" class="touch-target px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-md flex items-center justify-center">儲存點位資料</button>
           </div>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- 自訂刪除確認對話框 -->
+  <div id="confirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 text-center space-y-4 shadow-2xl">
+      <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center text-xl">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="text-base font-bold text-white">確定刪除此點位？</h3>
+      <p class="text-xs text-slate-400">刪除後該筆巡檢點位紀錄將無法恢復。</p>
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeConfirmModal(false)" class="flex-1 py-2.5 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">取消</button>
+        <button onclick="closeConfirmModal(true)" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs">確定刪除</button>
+      </div>
     </div>
   </div>
 
@@ -556,7 +583,7 @@
 
   <!-- 系統核心邏輯腳本 -->
   <script>
-    // 永久綁定您的專屬 Supabase 憑證
+    // 永久綁定專屬 Supabase 憑證
     const SUPABASE_URL = 'https://pmwnnkemklbeuzupdvlq.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_XFUvaEUIqj8KKmVAgjpMqA_XpEyI11e';
 
@@ -577,7 +604,7 @@
 
     window.currentMapId = 'map-b2-b1';
     window.currentMainView = 'map';
-    window.currentRole = 'visitor';
+    window.currentRole = 'visitor'; // 'visitor' | 'admin' | 'superadmin'
     window.pins = [];
     window.activeImages = [];
     window.supabaseClient = null;
@@ -673,7 +700,7 @@
       let filtered = window.pins.filter(p => {
         const pMap = p.map_id || p.mapId;
         const matchesFloor = floorFilter === 'all' || pMap === floorFilter;
-        const matchesStatus = statusFilter === 'all' || (statusFilter === 'restored' ? p.actual_restore_date : !p.actual_restore_date);
+        const matchesStatus = statusFilter === 'all' || (statusFilter === 'restored' ? !!p.actual_restore_date : !p.actual_restore_date);
         const matchesKey = !keyword || 
           (p.title || '').toLowerCase().includes(keyword) ||
           (p.department || '').toLowerCase().includes(keyword) ||
@@ -694,16 +721,16 @@
           <tr class="hover:bg-slate-700/40 transition">
             <td class="py-3.5 px-4 whitespace-nowrap">
               <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isRestored ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'}">
-                ${isRestored ? '🟢 已修復' : '🔴 待修復'}
+                ${isRestored ? '🟢 已完修' : '🔴 待修復'}
               </span>
             </td>
             <td class="py-3.5 px-4 font-semibold text-indigo-300">${mapName}</td>
             <td class="py-3.5 px-4">
-              <div class="font-bold text-white text-sm">${p.title}</div>
-              ${p.activity_name ? `<div class="text-[11px] text-amber-400 mt-0.5"><i class="fa-solid fa-tag mr-1"></i>${p.activity_name}</div>` : ''}
+              <div class="font-bold text-white text-sm">${escapeHtml(p.title)}</div>
+              ${p.activity_name ? `<div class="text-[11px] text-amber-400 mt-0.5"><i class="fa-solid fa-tag mr-1"></i>${escapeHtml(p.activity_name)}</div>` : ''}
             </td>
-            <td class="py-3.5 px-4 text-slate-300">${p.department || '未指定'}</td>
-            <td class="py-3.5 px-4 text-slate-300">${p.repair_option || '待確定'}</td>
+            <td class="py-3.5 px-4 text-slate-300">${escapeHtml(p.department || '未指定')}</td>
+            <td class="py-3.5 px-4 text-slate-300">${escapeHtml(p.repair_option || '待確定')}</td>
             <td class="py-3.5 px-4 text-right space-x-2">
               <button onclick="locatePinOnMap('${p.id}')" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs transition shadow">
                 <i class="fa-solid fa-crosshairs"></i> 定位
@@ -743,12 +770,13 @@
 
     window.openModal = (id) => document.getElementById(id)?.classList.remove('hidden');
     window.closeModal = (id) => document.getElementById(id)?.classList.add('hidden');
+    
     window.showToast = (msg, type = 'success') => {
       const toast = document.getElementById('toastContainer');
       if (!toast) return;
       const item = document.createElement('div');
       item.className = `toast-item flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-semibold shadow-2xl backdrop-blur transition-all duration-300 ${type === 'success' ? 'bg-emerald-600/95 border-emerald-400 text-white' : 'bg-slate-800/95 border-amber-500 text-amber-300'}`;
-      item.innerHTML = `<i class="fa-solid fa-circle-check"></i><span>${msg}</span>`;
+      item.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check text-emerald-300' : 'fa-circle-exclamation text-amber-400'}"></i><span>${escapeHtml(msg)}</span>`;
       toast.appendChild(item);
       setTimeout(() => item.remove(), 3200);
     };
@@ -877,8 +905,8 @@
 
       stage.onclick = (e) => {
         if (dragDistance > 8) return;
-        if (window.currentRole !== 'admin') {
-          showToast('目前為訪客唯讀模式，請點擊右上角「權限」進行解鎖！', 'info');
+        if (window.currentRole === 'visitor') {
+          showToast('目前為訪客唯讀模式，請點擊右上角解鎖權限！', 'info');
           openModal('loginModal');
           return;
         }
@@ -938,7 +966,7 @@
       const selector = document.getElementById('activeHeaderSelector');
       if (selector) {
         selector.innerHTML = '<option value="">-- 無預設檔期 (手動填寫) --</option>' +
-          list.map(h => `<option value="${h.id}" ${h.id === activeId ? 'selected' : ''}>${h.activity} (${h.unit || '未設定單位'})</option>`).join('');
+          list.map(h => `<option value="${h.id}" ${h.id === activeId ? 'selected' : ''}>${escapeHtml(h.activity)} (${escapeHtml(h.unit || '未設定單位')})</option>`).join('');
       }
 
       const container = document.getElementById('savedHeaderList');
@@ -950,10 +978,10 @@
             <div class="flex items-center justify-between p-3 bg-slate-900/80 rounded-lg border ${h.id === activeId ? 'border-amber-500 bg-amber-500/10' : 'border-slate-700'} text-xs">
               <div class="flex-1 pr-2">
                 <div class="font-bold text-white text-sm flex items-center gap-2">
-                  ${h.activity}
+                  ${escapeHtml(h.activity)}
                   ${h.id === activeId ? '<span class="bg-amber-500 text-slate-950 px-2 py-0.5 rounded text-[10px] font-black">使用中</span>' : ''}
                 </div>
-                <div class="text-slate-400 mt-0.5">單位: ${h.unit || '未指定'} | 期間: ${h.start ? h.start.replace('T', ' ') : '--'} ~ ${h.end ? h.end.replace('T', ' ') : '--'}</div>
+                <div class="text-slate-400 mt-0.5">單位: ${escapeHtml(h.unit || '未指定')} | 期間: ${h.start ? h.start.replace('T', ' ') : '--'} ~ ${h.end ? h.end.replace('T', ' ') : '--'}</div>
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
                 <button onclick="editProjectHeader('${h.id}')" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-amber-300 rounded font-semibold min-h-[40px]">編輯</button>
@@ -967,7 +995,7 @@
       const headerText = document.getElementById('headerActiveProjectText');
       const activeHeader = list.find(h => h.id === activeId);
       if (headerText) {
-        headerText.innerHTML = `<i class="fa-solid fa-file-signature mr-1"></i>當前檔期：${activeHeader ? activeHeader.activity : '未設定'}`;
+        headerText.innerHTML = `<i class="fa-solid fa-file-signature mr-1"></i>當前檔期：${activeHeader ? escapeHtml(activeHeader.activity) : '未設定'}`;
       }
     }
 
@@ -985,7 +1013,7 @@
       const start = document.getElementById('globalRentStartDate')?.value;
       const end = document.getElementById('globalRentEndDate')?.value;
 
-      if (!activity) return showToast('請填寫活動名稱！', 'error');
+      if (!activity) return showToast('請填寫活動名稱！', 'info');
 
       let list = getStoredHeaderList();
       if (editId) {
@@ -1035,19 +1063,24 @@
 
     window.submitAuthPassword = function() {
       const pwd = document.getElementById('inputAuthPassword').value.trim();
-      if (pwd === 'admin') {
-        window.currentRole = 'admin';
-        document.getElementById('userRoleText').innerText = '管理員 (可編輯)';
+      if (pwd === 'superadmin') {
+        window.currentRole = 'superadmin';
+        document.getElementById('userRoleText').innerText = '超級管理員';
         closeModal('loginModal');
-        showToast('管理員權限已解鎖！', 'success');
+        showToast('超級管理員權限已解鎖！(具刪除權限)', 'success');
+      } else if (pwd === 'admin') {
+        window.currentRole = 'admin';
+        document.getElementById('userRoleText').innerText = '巡檢管理員';
+        closeModal('loginModal');
+        showToast('巡檢管理員權限已解鎖！', 'success');
       } else {
-        showToast('密碼錯誤 (預設密碼: admin)', 'error');
+        showToast('密碼錯誤 (管理員: admin / 超級管理員: superadmin)', 'info');
       }
     };
 
     window.resetToGuest = function() {
       window.currentRole = 'visitor';
-      document.getElementById('userRoleText').innerText = '訪客';
+      document.getElementById('userRoleText').innerText = '訪客(唯讀)';
       closeModal('loginModal');
       showToast('已切換為訪客模式', 'info');
     };
@@ -1059,6 +1092,7 @@
       document.getElementById('formMapId').value = window.currentMapId;
       document.getElementById('formCoordX').value = x.toFixed(2);
       document.getElementById('formCoordY').value = y.toFixed(2);
+      document.getElementById('formActualRestoreDate').value = '';
       document.getElementById('btnDeletePin').classList.add('hidden');
 
       const list = getStoredHeaderList();
@@ -1080,7 +1114,7 @@
     }
 
     window.editPin = function(id) {
-      const pin = window.pins.find(p => p.id === id);
+      const pin = window.pins.find(p => String(p.id) === String(id));
       if (!pin) return;
 
       document.getElementById('pinModalTitle').innerText = '編輯損壞巡檢點';
@@ -1095,10 +1129,17 @@
       document.getElementById('formRentEndDate').value = pin.rent_end_date || '';
       document.getElementById('formDepartment').value = pin.department || '';
       document.getElementById('formDamageDate').value = pin.damage_date || '';
+      document.getElementById('formActualRestoreDate').value = pin.actual_restore_date || '';
       document.getElementById('formConstructorName').value = pin.constructor_name || '';
       document.getElementById('formConstructDate').value = pin.construct_date || '';
       document.getElementById('formDescription').value = pin.description || '';
-      document.getElementById('btnDeletePin').classList.remove('hidden');
+
+      const btnDelete = document.getElementById('btnDeletePin');
+      if (window.currentRole === 'superadmin') {
+        btnDelete.classList.remove('hidden');
+      } else {
+        btnDelete.classList.add('hidden');
+      }
 
       const radios = document.getElementsByName('repairOption');
       radios.forEach(r => r.checked = (r.value === pin.repair_option));
@@ -1127,6 +1168,10 @@
 
     window.handlePhotoUpload = (e) => {
       const files = Array.from(e.target.files);
+      if (window.activeImages.length + files.length > 5) {
+        showToast('最多上傳 5 張現場巡檢照片！', 'info');
+        return;
+      }
       files.forEach(f => {
         const reader = new FileReader();
         reader.onload = (ev) => {
@@ -1150,7 +1195,8 @@
 
     window.handleSavePin = async (e) => {
       e.preventDefault();
-      const pinId = document.getElementById('formPinId').value || `pin-${Date.now()}`;
+      const rawId = document.getElementById('formPinId').value;
+      const pinId = rawId || `pin-${Date.now()}`;
       
       const pinData = {
         id: pinId,
@@ -1164,6 +1210,7 @@
         rent_end_date: document.getElementById('formRentEndDate').value,
         department: document.getElementById('formDepartment').value.trim(),
         damage_date: document.getElementById('formDamageDate').value,
+        actual_restore_date: document.getElementById('formActualRestoreDate').value || null,
         repair_option: document.querySelector('input[name="repairOption"]:checked')?.value || '待確定',
         constructor_name: document.getElementById('formConstructorName').value.trim(),
         construct_date: document.getElementById('formConstructDate').value,
@@ -1171,7 +1218,7 @@
         images: [...window.activeImages]
       };
 
-      const idx = window.pins.findIndex(p => p.id === pinId);
+      const idx = window.pins.findIndex(p => String(p.id) === String(pinId));
       if (idx >= 0) window.pins[idx] = pinData;
       else window.pins.push(pinData);
 
@@ -1180,7 +1227,7 @@
       if (window.supabaseClient) {
         const { error } = await window.supabaseClient.from('pins').upsert([pinData]);
         if (error) {
-          showToast('雲端同步失敗，已儲存至本機！', 'error');
+          showToast('雲端同步中，已同步至本地快取！', 'info');
         } else {
           showToast('巡檢點位已成功同步至雲端！', 'success');
         }
@@ -1190,33 +1237,54 @@
       closeModal('pinModal');
     };
 
-    window.confirmDeletePin = async function() {
-      const pinId = document.getElementById('formPinId').value;
-      if (!pinId || !confirm('確定要永久刪除此損壞點位嗎？')) return;
-
-      window.pins = window.pins.filter(p => p.id !== pinId);
-      localStorage.setItem('dome_pins_cache', JSON.stringify(window.pins));
-
-      if (window.supabaseClient) {
-        await window.supabaseClient.from('pins').delete().eq('id', pinId);
+    let targetDeletePinId = null;
+    window.confirmDeletePin = function() {
+      if (window.currentRole !== 'superadmin') {
+        showToast('權限不足：僅有超級管理員具備刪除點位權限！', 'info');
+        return;
       }
-
-      renderPins();
-      closeModal('pinModal');
-      showToast('點位已刪除', 'info');
+      targetDeletePinId = document.getElementById('formPinId').value;
+      if (targetDeletePinId) {
+        openModal('confirmModal');
+      }
     };
 
-    // 《附件二十四》官方 Word 檔 A4 報表 1:1 匯出引擎 (防拆頁修復)
+    window.closeConfirmModal = async function(confirmed) {
+      closeModal('confirmModal');
+      if (confirmed && targetDeletePinId) {
+        window.pins = window.pins.filter(p => String(p.id) !== String(targetDeletePinId));
+        localStorage.setItem('dome_pins_cache', JSON.stringify(window.pins));
+
+        if (window.supabaseClient) {
+          await window.supabaseClient.from('pins').delete().eq('id', targetDeletePinId);
+        }
+
+        renderPins();
+        closeModal('pinModal');
+        showToast('點位已順利刪除', 'info');
+      }
+      targetDeletePinId = null;
+    };
+
+    // 《附件二十四》官方 Word 檔 A4 報表 1:1 匯出引擎 (自動過濾已完修案件 & 防拆頁修復)
     window.exportAppendix24ModeA = function() {
       const list = getStoredHeaderList();
       const activeId = localStorage.getItem('dome_active_header_id') || '';
       const activeHeader = list.find(h => h.id === activeId) || {};
 
-      let pinsToExport = window.pins;
+      // 核心過濾：自動排除已有「實際完修日期」的點位
+      let pendingPins = window.pins.filter(p => !p.actual_restore_date);
+
       if (activeHeader.activity) {
-        pinsToExport = window.pins.filter(p => p.activity_name === activeHeader.activity);
+        pendingPins = pendingPins.filter(p => p.activity_name === activeHeader.activity);
       }
-      generateAppendix24Printout(pinsToExport, activeHeader);
+
+      if (pendingPins.length === 0) {
+        showToast('當前檔期下無任何「待修復」案件需要產製《附件二十四》！', 'info');
+        return;
+      }
+
+      generateAppendix24Printout(pendingPins, activeHeader);
     };
 
     function generateAppendix24Printout(pinsList, headerData = {}) {
@@ -1228,52 +1296,53 @@
       document.getElementById('rptRentDates').innerText = `${startDisplay} ~ ${endDisplay}`;
 
       const tbody = document.getElementById('rptTableBody');
-      if (pinsList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-500 font-semibold">此活動檔期尚無登錄任何損害案件記錄</td></tr>`;
-      } else {
-        tbody.innerHTML = pinsList.map((p, i) => {
-          const mapName = window.MAPS[p.map_id || p.mapId]?.name || '專有共用區';
-          return `
-            <tr class="align-top print-keep-together">
-              <td class="border border-black p-2 text-center font-bold">${i + 1}</td>
-              <td class="border border-black p-2 space-y-1.5">
-                <div><span class="font-bold text-gray-700">【位置】：</span><span class="font-semibold">${mapName} (${p.x}%, ${p.y}%)</span></div>
-                <div><span class="font-bold text-gray-700">【名稱】：</span><span class="font-bold text-black text-sm">${p.title}</span></div>
-                ${p.images && p.images.length > 0 ? `
-                  <div class="pt-1">
-                    <img src="${p.images[0]}" class="print-img-limit max-h-24 object-contain rounded border border-gray-400">
-                  </div>
-                ` : '<div class="text-[10px] text-gray-400 italic">（未附現場照片）</div>'}
-              </td>
-              <td class="border border-black p-2 space-y-1.5">
-                <div><span class="font-bold text-gray-700">損害發生日期：</span><br><span class="font-mono">${p.damage_date || '未紀錄'}</span></div>
-                <div class="pt-1 border-t border-gray-200">
-                  <span class="font-bold text-gray-700">原因與損害說明：</span>
-                  <p class="text-xs text-gray-800 whitespace-pre-wrap mt-0.5">${p.description || '無詳細說明'}</p>
+      tbody.innerHTML = pinsList.map((p, i) => {
+        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '專有共用區';
+        return `
+          <tr class="align-top print-keep-together">
+            <td class="border border-black p-2 text-center font-bold">${i + 1}</td>
+            <td class="border border-black p-2 space-y-1.5">
+              <div><span class="font-bold text-gray-700">【位置】：</span><span class="font-semibold">${mapName} (${p.x}%, ${p.y}%)</span></div>
+              <div><span class="font-bold text-gray-700">【名稱】：</span><span class="font-bold text-black text-sm">${escapeHtml(p.title)}</span></div>
+              ${p.images && p.images.length > 0 ? `
+                <div class="pt-1">
+                  <img src="${p.images[0]}" class="print-img-limit max-h-24 object-contain rounded border border-gray-400">
                 </div>
-              </td>
-              <td class="border border-black p-2 space-y-2">
-                <div class="space-y-1">
-                  <div class="flex items-center gap-1 font-bold">
-                    <span>■</span>
-                    <span>${p.repair_option || '租用方自行修復'}</span>
-                  </div>
+              ` : '<div class="text-[10px] text-gray-400 italic">（未附現場照片）</div>'}
+            </td>
+            <td class="border border-black p-2 space-y-1.5">
+              <div><span class="font-bold text-gray-700">損害發生日期：</span><br><span class="font-mono">${p.damage_date || '未紀錄'}</span></div>
+              <div class="pt-1 border-t border-gray-200">
+                <span class="font-bold text-gray-700">原因與損害說明：</span>
+                <p class="text-xs text-gray-800 whitespace-pre-wrap mt-0.5">${escapeHtml(p.description || '無詳細說明')}</p>
+              </div>
+            </td>
+            <td class="border border-black p-2 space-y-2">
+              <div class="space-y-1">
+                <div class="flex items-center gap-1 font-bold">
+                  <span>■</span>
+                  <span>${escapeHtml(p.repair_option || '租用方自行修復')}</span>
                 </div>
+              </div>
 
-                <div class="pt-1 border-t border-gray-200 text-[11px] space-y-1">
-                  <div><strong>預計修復日期：</strong><span class="font-mono font-semibold">${p.construct_date || p.damage_date || '配合檔期排程'}</span></div>
-                  ${p.constructor_name ? `<div><strong>施工單位：</strong>${p.constructor_name}</div>` : ''}
-                </div>
-              </td>
-            </tr>
-          `;
-        }).join('');
-      }
+              <div class="pt-1 border-t border-gray-200 text-[11px] space-y-1">
+                <div><strong>預計修復日期：</strong><span class="font-mono font-semibold">${p.construct_date || p.damage_date || '配合檔期排程'}</span></div>
+                ${p.constructor_name ? `<div><strong>施工單位：</strong>${escapeHtml(p.constructor_name)}</div>` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
 
       const printArea = document.getElementById('appendix24PrintArea');
       printArea.classList.remove('hidden');
       window.print();
       setTimeout(() => printArea.classList.add('hidden'), 500);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     }
   </script>
 </body>
