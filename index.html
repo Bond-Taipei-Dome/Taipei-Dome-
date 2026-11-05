@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>臺北大巨蛋巡檢與點位管理系統 v2026.11.04</title>
+  <title>臺北大巨蛋巡檢系統 v2026.11.04</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -104,7 +104,7 @@
         color: #000000 !important;
       }
       header, #viewport, #toastContainer, .no-print,
-      #loginModal, #pinModal, #projectHeaderModal, #cloudConfigModal, #listViewContainer {
+      #loginModal, #pinModal, #projectHeaderModal, #listViewContainer {
         display: none !important;
       }
       #appendix24PrintArea {
@@ -142,6 +142,11 @@
         <div class="flex items-center gap-2">
           <h1 class="font-bold text-base sm:text-lg tracking-wide text-white leading-tight">臺北大巨蛋巡檢系統</h1>
           <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v2026.11.04</span>
+          <!-- 恆久雲端連線狀態標籤 -->
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>🟢 雲端即時連線</span>
+          </span>
         </div>
         <p id="headerActiveProjectText" class="text-xs text-amber-400/90 truncate max-w-[180px] sm:max-w-xs mt-0.5 font-medium">
           <i class="fa-solid fa-file-signature mr-1"></i>當前檔期：未設定
@@ -203,7 +208,7 @@
 
       <div id="mapLoadingOverlay" class="absolute inset-0 z-20 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-300">
         <div class="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-        <p class="text-sm font-bold text-amber-400">正在載入大巨蛋高畫質圖資...</p>
+        <p class="text-sm font-bold text-amber-400">正在同步雲端資料與載入高畫質圖資...</p>
       </div>
 
       <div id="mapStage" class="absolute top-0 left-0 origin-top-left will-change-transform select-none">
@@ -475,27 +480,6 @@
     </div>
   </div>
 
-  <!-- 彈窗 4：Supabase 設定 Modal -->
-  <div id="cloudConfigModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-md w-full p-6 text-slate-100 relative shadow-2xl">
-      <button onclick="closeModal('cloudConfigModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
-      <h3 class="text-lg font-bold text-white mb-2"><i class="fa-solid fa-database text-blue-400 mr-2"></i>Supabase 雲端設定</h3>
-      <p class="text-xs text-slate-400 mb-4">輸入專屬 Supabase URL 與 Anon Key 以連結資料庫：</p>
-      
-      <div class="space-y-3 text-xs mb-4">
-        <div>
-          <label class="block font-medium mb-1">Project URL</label>
-          <input type="text" id="supabaseUrlInput" placeholder="https://xxxx.supabase.co" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white min-h-[44px]">
-        </div>
-        <div>
-          <label class="block font-medium mb-1">Anon API Key</label>
-          <input type="password" id="supabaseKeyInput" placeholder="eyJhbGci..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white min-h-[44px]">
-        </div>
-      </div>
-      <button onclick="saveSupabaseConfig()" class="touch-target w-full bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shadow-md flex items-center justify-center">儲存並連線</button>
-    </div>
-  </div>
-
   <!-- 《附件二十四》Word 檔標準 A4 官方報表列印模板 (含防拆頁與照片縮圖限制) -->
   <div id="appendix24PrintArea" class="hidden bg-white text-black p-2 font-sans">
     <!-- 頂部標題 -->
@@ -572,6 +556,10 @@
 
   <!-- 系統核心邏輯腳本 -->
   <script>
+    // 永久綁定您的專屬 Supabase 憑證
+    const SUPABASE_URL = 'https://pmwnnkemklbeuzupdvlq.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_XFUvaEUIqj8KKmVAgjpMqA_XpEyI11e';
+
     window.MAPS = {
       'map-b2-b1': {
         id: 'map-b2-b1',
@@ -590,7 +578,7 @@
     window.currentMapId = 'map-b2-b1';
     window.currentMainView = 'map';
     window.currentRole = 'visitor';
-    window.pins = JSON.parse(localStorage.getItem('dome_pins_cache') || '[]');
+    window.pins = [];
     window.activeImages = [];
     window.supabaseClient = null;
 
@@ -600,11 +588,53 @@
     let isTransformPending = false;
 
     document.addEventListener('DOMContentLoaded', () => {
-      initSupabase();
+      initSupabaseConnection();
       loadMap(window.currentMapId);
       setupInteractions();
       renderProjectHeaderListUI();
     });
+
+    // 初始化 Supabase 雲端連線並建立即時訂閱監聽
+    function initSupabaseConnection() {
+      try {
+        if (window.supabase) {
+          window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+          fetchPinsFromCloud();
+          
+          // 開啟 Supabase Realtime 即時雙向同步
+          window.supabaseClient
+            .channel('public:pins')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'pins' }, () => {
+              fetchPinsFromCloud();
+            })
+            .subscribe();
+        }
+      } catch (e) {
+        console.warn('Supabase initialization warning:', e);
+      }
+    }
+
+    async function fetchPinsFromCloud() {
+      if (!window.supabaseClient) return;
+      try {
+        const { data, error } = await window.supabaseClient.from('pins').select('*').order('id', { ascending: false });
+        if (!error && Array.isArray(data)) {
+          window.pins = data;
+          localStorage.setItem('dome_pins_cache', JSON.stringify(data));
+          renderPins();
+          updateDashboardStats();
+          if (window.currentMainView === 'list') renderListViewTable();
+        }
+      } catch (err) {
+        console.warn('Cloud fetch warning, using local cache:', err);
+        const cached = localStorage.getItem('dome_pins_cache');
+        if (cached) {
+          window.pins = JSON.parse(cached);
+          renderPins();
+          updateDashboardStats();
+        }
+      }
+    }
 
     window.switchMainView = function(viewMode) {
       window.currentMainView = viewMode;
@@ -723,40 +753,6 @@
       setTimeout(() => item.remove(), 3200);
     };
 
-    function initSupabase() {
-      const url = localStorage.getItem('dome_sb_url');
-      const key = localStorage.getItem('dome_sb_key');
-      if (url && key && window.supabase) {
-        try {
-          window.supabaseClient = window.supabase.createClient(url, key);
-          fetchPinsFromCloud();
-        } catch (e) { console.warn('Supabase init warning:', e); }
-      }
-    }
-
-    async function fetchPinsFromCloud() {
-      if (!window.supabaseClient) return;
-      const { data, error } = await window.supabaseClient.from('pins').select('*');
-      if (!error && data) {
-        window.pins = data;
-        localStorage.setItem('dome_pins_cache', JSON.stringify(data));
-        renderPins();
-        updateDashboardStats();
-      }
-    }
-
-    window.saveSupabaseConfig = function() {
-      const url = document.getElementById('supabaseUrlInput').value.trim();
-      const key = document.getElementById('supabaseKeyInput').value.trim();
-      if (url && key) {
-        localStorage.setItem('dome_sb_url', url);
-        localStorage.setItem('dome_sb_key', key);
-        initSupabase();
-        closeModal('cloudConfigModal');
-        showToast('Supabase 雲端連線成功！', 'success');
-      }
-    };
-
     window.switchMap = (id) => {
       window.currentMapId = id;
       const select = document.getElementById('mapSelect');
@@ -793,7 +789,6 @@
       const mapConfig = window.MAPS[window.currentMapId];
       const mapImg = document.getElementById('mapImage');
       if (mapConfig && mapConfig.cdnUrl && mapImg.src !== mapConfig.cdnUrl) {
-        console.warn("原圖片載入失敗，切換至 CDN 備援");
         mapImg.src = mapConfig.cdnUrl;
       }
     };
@@ -841,7 +836,6 @@
       document.getElementById('totalBadge').innerText = window.pins.length;
     }
 
-    // 互動控制與 RAF 幀率優化 (無卡頓滑動)
     function setupInteractions() {
       const viewport = document.getElementById('viewport');
       const stage = document.getElementById('mapStage');
@@ -882,9 +876,9 @@
       window.addEventListener('touchend', endPan);
 
       stage.onclick = (e) => {
-        if (dragDistance > 8) return; // 避免滑動誤觸
+        if (dragDistance > 8) return;
         if (window.currentRole !== 'admin') {
-          showToast('目前為訪客唯讀模式，請先點擊右上角「權限」進行解鎖！', 'info');
+          showToast('目前為訪客唯讀模式，請點擊右上角「權限」進行解鎖！', 'info');
           openModal('loginModal');
           return;
         }
@@ -923,7 +917,6 @@
       requestUpdateTransform();
     };
 
-    // 多筆檔期抬頭管理邏輯
     function getStoredHeaderList() {
       const raw = localStorage.getItem('dome_project_headers_list');
       try { return raw ? JSON.parse(raw) : []; } catch (e) { return []; }
@@ -1185,12 +1178,16 @@
       localStorage.setItem('dome_pins_cache', JSON.stringify(window.pins));
       
       if (window.supabaseClient) {
-        await window.supabaseClient.from('pins').upsert([pinData]);
+        const { error } = await window.supabaseClient.from('pins').upsert([pinData]);
+        if (error) {
+          showToast('雲端同步失敗，已儲存至本機！', 'error');
+        } else {
+          showToast('巡檢點位已成功同步至雲端！', 'success');
+        }
       }
 
       renderPins();
       closeModal('pinModal');
-      showToast('巡檢點位已成功儲存！', 'success');
     };
 
     window.confirmDeletePin = async function() {
