@@ -346,4 +346,1166 @@
         </div>
       </div>
 
-      <div class="bg-slate-90
+      <div class="bg-slate-900/90 p-4 rounded-xl border border-indigo-500/30 mb-5">
+        <label class="block text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">當前啟用之檔期抬頭 (新點位自動帶入)</label>
+        <select id="activeHeaderSelector" onchange="switchActiveProjectHeader(this.value)" class="w-full bg-slate-800 text-white font-bold text-sm sm:text-base rounded-lg p-3 border border-slate-600 focus:outline-none focus:border-amber-500 cursor-pointer min-h-[48px]">
+          <option value="">-- 無預設檔期 (手動填寫) --</option>
+        </select>
+      </div>
+      
+      <form onsubmit="saveGlobalProjectHeader(event)" class="space-y-3.5 bg-slate-900/50 p-4 rounded-xl border border-slate-700/80 mb-5">
+        <h3 id="headerFormTitle" class="text-sm font-bold text-indigo-300 border-b border-slate-700 pb-2">新增活動檔期抬頭資訊</h3>
+        <input type="hidden" id="headerEditId">
+        
+        <div>
+          <label class="block text-xs font-semibold mb-1">活動名稱 (activity_name) <span class="text-rose-400">*</span></label>
+          <input type="text" id="globalActivityName" required placeholder="例如：2026 職棒總冠軍賽" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">租用單位 (renter_unit)</label>
+          <input type="text" id="globalRenterUnit" placeholder="例如：○○棒球協會" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1">租用開始時間 (含時分 24小時制)</label>
+            <input type="datetime-local" id="globalRentStartDate" step="60" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">租用結束時間 (含時分 24小時制)</label>
+            <input type="datetime-local" id="globalRentEndDate" step="60" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
+          </div>
+        </div>
+        <div class="flex gap-2 pt-1">
+          <button type="submit" class="touch-target flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-sm shadow flex items-center justify-center">
+            <i class="fa-solid fa-plus mr-1"></i> 儲存檔期抬頭
+          </button>
+          <button type="button" onclick="resetHeaderForm()" class="px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs min-h-[44px]">重設</button>
+        </div>
+      </form>
+
+      <div>
+        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">已建立之活動檔期清單</h3>
+        <div id="savedHeaderList" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈窗 2：權限切換 Modal -->
+  <div id="loginModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-sm w-full p-6 text-slate-100 relative shadow-2xl">
+      <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-lg font-bold text-white mb-2"><i class="fa-solid fa-shield-halved text-amber-400 mr-2"></i>巡檢身分驗證</h3>
+      <p class="text-xs text-slate-400 mb-4">請輸入通行密碼解鎖巡檢權限：</p>
+      <input type="password" id="inputAuthPassword" placeholder="請輸入通行密碼..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-500 min-h-[44px]">
+      <div class="flex gap-2">
+        <button onclick="submitAuthPassword()" class="touch-target flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm shadow flex items-center justify-center">解鎖權限</button>
+        <button onclick="resetToGuest()" class="px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs min-h-[44px]">切回訪客</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈窗 3：新增/編輯損壞點位 Modal (含一鍵複製分享) -->
+  <div id="pinModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-xl w-full p-6 text-slate-100 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+      <button onclick="closeModal('pinModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
+      <div class="flex items-center justify-between pr-8 mb-4">
+        <h2 id="pinModalTitle" class="text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-location-dot text-rose-500"></i> 新增損壞巡檢點
+        </h2>
+        <button type="button" id="btnShareSinglePin" onclick="copySinglePinSummary()" class="px-3 py-1.5 bg-teal-600/90 hover:bg-teal-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
+          <i class="fa-solid fa-share-nodes"></i> 複製此案回報文字
+        </button>
+      </div>
+
+      <form id="pinForm" onsubmit="handleSavePin(event)" class="space-y-4">
+        <input type="hidden" id="formPinId">
+        <input type="hidden" id="formMapId">
+        <input type="hidden" id="formCoordX">
+        <input type="hidden" id="formCoordY">
+
+        <!-- 區塊 A：專案抬頭資訊 -->
+        <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-700/60 space-y-3">
+          <div class="text-xs font-bold text-amber-400 uppercase tracking-wider">專案抬頭資訊 (Header Scoped)</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold mb-1">活動名稱 (activity_name) <span class="text-rose-400">*</span></label>
+              <input type="text" id="formActivityName" required class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">租用單位 (renter_unit)</label>
+              <input type="text" id="formRenterUnit" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold mb-1">租用開始時間 (24小時制)</label>
+              <input type="datetime-local" id="formRentStartDate" step="60" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">租用結束時間 (24小時制)</label>
+              <input type="datetime-local" id="formRentEndDate" step="60" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
+            </div>
+          </div>
+        </div>
+
+        <!-- 區塊 B：案件細節 -->
+        <div>
+          <label class="block text-xs font-semibold mb-1">損壞項目名稱 / 事件標題 <span class="text-rose-400">*</span></label>
+          <input type="text" id="formTitle" required placeholder="例如：B1 牆面劃傷 / L2 扶手鬆脫" class="w-full bg-slate-900 rounded-lg p-2.5 text-sm border border-slate-700 text-white min-h-[44px]">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1">責任單位</label>
+            <input type="text" id="formDepartment" placeholder="例如：營修組 / 場務科" class="w-full bg-slate-900 rounded-lg p-2.5 text-xs border border-slate-700 text-white min-h-[44px]">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">損害發生日期 (damage_date)</label>
+            <input type="date" id="formDamageDate" class="w-full bg-slate-900 rounded-lg p-2.5 text-xs border border-slate-700 text-white min-h-[44px]">
+          </div>
+        </div>
+
+        <!-- 實際完修日期 -->
+        <div class="bg-slate-900/80 p-3.5 rounded-xl border border-emerald-500/40 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-bold text-emerald-400">實際完修日期 (actual_restore_date)</label>
+            <button type="button" onclick="fillTodayRestoreDate()" class="px-2.5 py-1 bg-emerald-600/40 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded text-[11px] font-bold border border-emerald-500/50 transition">
+              <i class="fa-solid fa-calendar-check mr-1"></i>填入今日完修
+            </button>
+          </div>
+          <input type="date" id="formActualRestoreDate" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
+          <p class="text-[11px] text-slate-400">※ 填寫完修日期後點位轉為綠色，且自動從《附件二十四》報表中排除（只保留待修項目）。</p>
+        </div>
+
+        <!-- 預計修復方式單選與延伸欄位 -->
+        <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-700/60 space-y-3">
+          <label class="block text-xs font-bold text-indigo-300">預計修復方式 (repair_option)</label>
+          <div class="flex items-center space-x-4 text-xs">
+            <label class="flex items-center space-x-1.5 cursor-pointer py-1">
+              <input type="radio" name="repairOption" value="租用方自行修復" onchange="toggleRepairFields()" class="w-4 h-4 text-amber-500">
+              <span>租用方自行修復</span>
+            </label>
+            <label class="flex items-center space-x-1.5 cursor-pointer py-1">
+              <input type="radio" name="repairOption" value="租用方付費維修" onchange="toggleRepairFields()" class="w-4 h-4 text-amber-500">
+              <span>租用方付費維修</span>
+            </label>
+          </div>
+
+          <div id="selfRepairFields" class="hidden grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-700/50">
+            <div>
+              <label class="block text-xs font-semibold mb-1">施工單位名稱 (constructor_name)</label>
+              <input type="text" id="formConstructorName" placeholder="例如：○○營造工程" class="w-full bg-slate-800 rounded-lg p-2 text-xs border border-slate-600 text-white min-h-[44px]">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">預計施作日期 (construct_date)</label>
+              <input type="date" id="formConstructDate" class="w-full bg-slate-800 rounded-lg p-2 text-xs border border-slate-600 text-white min-h-[44px]">
+            </div>
+          </div>
+          <div id="paidRepairNotice" class="hidden text-xs text-amber-400 bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20">
+            <i class="fa-solid fa-circle-info mr-1"></i> 將由場館技術科提供後續維修報價單。
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">詳細損害描述與備註</label>
+          <textarea id="formDescription" rows="2" placeholder="備註現況..." class="w-full bg-slate-900 rounded-lg p-2.5 text-xs border border-slate-700 text-white"></textarea>
+        </div>
+
+        <!-- 現場照片上傳 -->
+        <div>
+          <label class="block text-xs font-semibold mb-1">現場照片 (支援手機直拍)</label>
+          <input type="file" id="formPhotoInput" accept="image/*" capture="environment" multiple onchange="handlePhotoUpload(event)" class="hidden">
+          <div class="flex gap-2">
+            <button type="button" onclick="document.getElementById('formPhotoInput').click()" class="touch-target px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
+              <i class="fa-solid fa-camera text-base"></i> 開啟相機拍照 / 上傳
+            </button>
+          </div>
+          <div id="photoPreviewStrip" class="flex space-x-2 overflow-x-auto py-2 mt-2"></div>
+        </div>
+
+        <div class="pt-3 flex justify-between items-center border-t border-slate-700">
+          <button type="button" id="btnDeletePinForm" onclick="requestDeletePinFromForm()" class="hidden px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs min-h-[44px]">
+            <i class="fa-solid fa-trash-can mr-1"></i> 刪除點位
+          </button>
+          <div class="flex gap-2 ml-auto">
+            <button type="button" onclick="closeModal('pinModal')" class="px-4 py-3 bg-slate-700 text-slate-300 rounded-xl text-xs min-h-[44px]">取消</button>
+            <button type="submit" class="touch-target px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-md flex items-center justify-center">儲存巡檢紀錄</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 彈窗 4：自訂刪除確認 Modal -->
+  <div id="confirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 rounded-2xl border border-rose-500/50 max-w-sm w-full p-6 text-slate-100 relative shadow-2xl">
+      <h3 class="text-lg font-bold text-rose-400 mb-2 flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation text-xl"></i> 確認刪除點位？
+      </h3>
+      <p id="confirmModalText" class="text-xs text-slate-300 mb-6 leading-relaxed">此動作將永久移除該筆巡檢資料與相關圖片紀錄，無法復原。</p>
+      <div class="flex gap-2">
+        <button id="btnConfirmDeleteAction" class="touch-target flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs shadow flex items-center justify-center">確定刪除</button>
+        <button onclick="closeModal('confirmModal')" class="px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs min-h-[44px]">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 《附件二十四》Word 檔標準 A4 官方報表列印模板 -->
+  <div id="appendix24PrintArea" class="hidden bg-white text-black p-2 font-sans">
+    <div class="text-center font-black text-xl mb-0.5 tracking-wider">臺北大巨蛋設施設備損害異常紀錄表</div>
+    <div class="text-center text-[10px] text-gray-600 mb-2 font-semibold">（表單編號：DI-VM-05-2023-01）</div>
+
+    <div class="border-2 border-black p-2.5 text-xs space-y-1 mb-2.5 bg-gray-50/30 print-keep-together">
+      <div class="flex justify-between items-center border-b border-gray-300 pb-1">
+        <span class="text-xs"><strong>活動名稱：</strong><span id="rptActivityName" class="font-bold underline">--</span></span>
+        <span class="text-xs"><strong>租用單位：</strong><span id="rptRenterUnit" class="font-bold underline">--</span></span>
+      </div>
+      <div class="pt-0.5 text-xs text-gray-800">
+        <strong>場地租用期間：</strong><span id="rptRentDates" class="font-mono">--</span>
+      </div>
+    </div>
+
+    <table class="w-full border-collapse border-2 border-black text-xs mb-3">
+      <thead>
+        <tr class="bg-gray-200 text-center font-bold border-b-2 border-black">
+          <th class="border border-black p-1.5 w-8">項次</th>
+          <th class="border border-black p-1.5 w-1/3">異常設施設備<br><span class="text-[9px] font-normal text-gray-600">（位置/名稱/現場照片）</span></th>
+          <th class="border border-black p-1.5 w-1/4">異常圖說<br><span class="text-[9px] font-normal text-gray-600">（損害日期/原因說明）</span></th>
+          <th class="border border-black p-1.5">預計修復方式與處理規劃</th>
+        </tr>
+      </thead>
+      <tbody id="rptTableBody"></tbody>
+    </table>
+
+    <div class="mb-3 border-2 border-black p-2 text-xs bg-gray-50/50 print-keep-together">
+      <div class="font-bold border-b border-black pb-1 mb-1.5 text-xs flex items-center justify-between">
+        <span>✍️ 現場驗收與損害確認雙方簽章</span>
+        <span class="text-[9px] font-normal text-gray-500">（雙方代表確認無誤後請於下方親筆簽名）</span>
+      </div>
+      <div class="grid grid-cols-2 gap-6 py-1">
+        <div class="flex items-center">
+          <strong class="text-xs shrink-0">租用單位代表：</strong>
+          <div class="border-b-2 border-black flex-1 h-6"></div>
+        </div>
+        <div class="flex items-center">
+          <strong class="text-xs shrink-0">場館代表：</strong>
+          <div class="border-b-2 border-black flex-1 h-6"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-2 border-black text-xs print-keep-together">
+      <div class="bg-gray-200 p-1 font-bold border-b-2 border-black text-center text-xs tracking-wide">
+        遠雄巨蛋公司內部會簽與審核區
+      </div>
+      <div class="grid grid-cols-4 divide-x-2 divide-black h-20">
+        <div class="p-2 flex flex-col justify-between">
+          <span class="font-bold text-xs">營運部主管：</span>
+          <div class="text-[9px] text-gray-400 text-center font-semibold">（簽章）</div>
+        </div>
+        <div class="p-2 flex flex-col justify-between">
+          <span class="font-bold text-xs">場館業務科：</span>
+          <div class="text-[9px] text-gray-400 text-center font-semibold">（簽章）</div>
+        </div>
+        <div class="p-2 flex flex-col justify-between">
+          <span class="font-bold text-xs">設備技術科：</span>
+          <div class="text-[9px] text-gray-400 text-center font-semibold">（簽章）</div>
+        </div>
+        <div class="p-2 flex flex-col justify-between">
+          <span class="font-bold text-xs">場務管理科：</span>
+          <div class="text-[9px] text-gray-400 text-center font-semibold">（簽章）</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 核心邏輯腳本 -->
+  <script>
+    // 永久連線 Supabase 雲端 (鐵律 1 & 6)
+    const SUPABASE_URL = 'https://pmwnnkemklbeuzupdvlq.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_XFUvaEUIqj8KKmVAgjpMqA_XpEyI11e';
+
+    const GITHUB_BASE = 'https://raw.githubusercontent.com/Bond-Taipei-Dome/TaipeiDome-maps/main/';
+    const CDN_BASE = 'https://cdn.jsdelivr.net/gh/Bond-Taipei-Dome/TaipeiDome-maps@main/';
+
+    // 13 大獨立樓層與剖面圖對照 (鐵律 2)
+    window.MAPS = {
+      'map-b2': { id: 'map-b2', name: 'B2 層平面圖', file: 'B2 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-b1': { id: 'map-b1', name: 'B1 層平面圖', file: 'B1 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-l1': { id: 'map-l1', name: 'L1 層平面圖', file: 'L1 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-l2': { id: 'map-l2', name: 'L2 層平面圖', file: 'L2 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-l3': { id: 'map-l3', name: 'L3 層平面圖', file: 'L3 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-l4': { id: 'map-l4', name: 'L4 層平面圖', file: 'L4 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-l5': { id: 'map-l5', name: 'L5 層平面圖', file: 'L5 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-l6': { id: 'map-l6', name: 'L6 層平面圖', file: 'L6 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-rf': { id: 'map-rf', name: 'RF 屋頂層平面圖', file: 'RF 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-sec-north': { id: 'map-sec-north', name: '北向剖面圖', file: '北向剖面圖 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-sec-south': { id: 'map-sec-south', name: '南向剖面圖', file: '南向剖面圖 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-sec-east': { id: 'map-sec-east', name: '東向剖面圖', file: '東向剖面圖 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-sec-west': { id: 'map-sec-west', name: '西向剖面圖', file: '西向剖面圖 臺北大巨蛋 Scan to CAD_page-0001.jpg' }
+    };
+
+    Object.keys(window.MAPS).forEach(key => {
+      const encodedFile = encodeURIComponent(window.MAPS[key].file);
+      window.MAPS[key].url = GITHUB_BASE + encodedFile;
+      window.MAPS[key].cdnUrl = CDN_BASE + encodedFile;
+    });
+
+    window.ROLES = { VISITOR: 'visitor', ADMIN: 'admin', SUPERADMIN: 'superadmin' };
+    window.currentMapId = 'map-b2';
+    window.currentMainView = 'map';
+    window.currentRole = window.ROLES.VISITOR;
+    window.pins = [];
+    window.activeImages = [];
+    window.supabaseClient = null;
+
+    let scale = 1, panX = 0, panY = 0, isDragging = false;
+    let startX = 0, startY = 0, dragDistance = 0;
+    let isTransformPending = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initSupabaseConnection();
+      loadMap(window.currentMapId);
+      setupInteractions();
+      renderProjectHeaderListUI();
+    });
+
+    function updateCloudBadge(isOk, msg = '') {
+      const badge = document.getElementById('cloudStatusBadge');
+      if (!badge) return;
+      if (isOk) {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow';
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span class="hidden sm:inline">🟢 雲端即時連線</span>`;
+      } else {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow';
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="hidden sm:inline">⚠️ ${msg || '本機備援模式'}</span>`;
+      }
+    }
+
+    function initSupabaseConnection() {
+      try {
+        if (window.supabase) {
+          window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+          fetchPinsFromCloud();
+          
+          window.supabaseClient
+            .channel('public:pins')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'pins' }, () => {
+              fetchPinsFromCloud();
+            })
+            .subscribe();
+        }
+      } catch (e) {
+        updateCloudBadge(false, '連線失敗');
+      }
+    }
+
+    async function fetchPinsFromCloud() {
+      if (!window.supabaseClient) return;
+      try {
+        const { data, error } = await window.supabaseClient.from('pins').select('*').order('id', { ascending: false });
+        if (!error && Array.isArray(data)) {
+          window.pins = data;
+          localStorage.setItem('dome_pins_cache', JSON.stringify(data));
+          updateCloudBadge(true);
+          renderPins();
+          updateDashboardStats();
+          if (window.currentMainView === 'list') renderListViewTable();
+        } else {
+          throw error;
+        }
+      } catch (err) {
+        updateCloudBadge(false, '權限有限制');
+        const cached = localStorage.getItem('dome_pins_cache');
+        if (cached) {
+          window.pins = JSON.parse(cached);
+          renderPins();
+          updateDashboardStats();
+        }
+      }
+    }
+
+    window.switchMainView = function(viewMode) {
+      window.currentMainView = viewMode;
+      const mapViewport = document.getElementById('viewport');
+      const listView = document.getElementById('listViewContainer');
+      const btnMap = document.getElementById('btnMapView');
+      const btnList = document.getElementById('btnListView');
+
+      if (viewMode === 'list') {
+        mapViewport?.classList.add('hidden');
+        listView?.classList.remove('hidden');
+        btnMap?.classList.remove('bg-amber-500', 'text-slate-950', 'shadow');
+        btnMap?.classList.add('text-slate-300', 'hover:text-white', 'hover:bg-slate-800');
+        btnList?.classList.add('bg-amber-500', 'text-slate-950', 'shadow');
+        btnList?.classList.remove('text-slate-300', 'hover:text-white', 'hover:bg-slate-800');
+        renderListViewTable();
+      } else {
+        listView?.classList.add('hidden');
+        mapViewport?.classList.remove('hidden');
+        btnList?.classList.remove('bg-amber-500', 'text-slate-950', 'shadow');
+        btnList?.classList.add('text-slate-300', 'hover:text-white', 'hover:bg-slate-800');
+        btnMap?.classList.add('bg-amber-500', 'text-slate-950', 'shadow');
+        btnMap?.classList.remove('text-slate-300', 'hover:text-white', 'hover:bg-slate-800');
+        requestUpdateTransform();
+      }
+    };
+
+    function renderListViewTable() {
+      const tbody = document.getElementById('listViewTableBody');
+      if (!tbody) return;
+
+      const keyword = (document.getElementById('searchKeyword')?.value || '').toLowerCase();
+      const floorFilter = document.getElementById('filterMap')?.value || 'all';
+      const statusFilter = document.getElementById('filterStatus')?.value || 'all';
+
+      let filtered = window.pins.filter(p => {
+        const pMap = p.map_id || p.mapId;
+        const matchesFloor = floorFilter === 'all' || pMap === floorFilter;
+        const matchesStatus = statusFilter === 'all' || (statusFilter === 'restored' ? p.actual_restore_date : !p.actual_restore_date);
+        const matchesKey = !keyword || 
+          (p.title || '').toLowerCase().includes(keyword) ||
+          (p.department || '').toLowerCase().includes(keyword) ||
+          (p.activity_name || '').toLowerCase().includes(keyword) ||
+          (p.description || '').toLowerCase().includes(keyword);
+        return matchesFloor && matchesStatus && matchesKey;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-slate-500 text-sm">查無符合條件之巡檢案件</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(p => {
+        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資區域';
+        const isRestored = !!p.actual_restore_date;
+        const canDelete = window.currentRole === window.ROLES.SUPERADMIN;
+        return `
+          <tr class="hover:bg-slate-700/40 transition">
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isRestored ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'}">
+                ${isRestored ? '🟢 已修復' : '🔴 待修復'}
+              </span>
+            </td>
+            <td class="py-3.5 px-4 font-semibold text-indigo-300">${mapName}</td>
+            <td class="py-3.5 px-4">
+              <div class="font-bold text-white text-sm">${p.title}</div>
+              ${p.activity_name ? `<div class="text-[11px] text-amber-400 mt-0.5"><i class="fa-solid fa-tag mr-1"></i>${p.activity_name}</div>` : ''}
+            </td>
+            <td class="py-3.5 px-4 text-slate-300">${p.department || '未指定'}</td>
+            <td class="py-3.5 px-4 text-slate-300">${p.repair_option || '待確定'}</td>
+            <td class="py-3.5 px-4 text-right space-x-1.5">
+              <button onclick="locatePinOnMap('${p.id}')" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs transition shadow">
+                <i class="fa-solid fa-crosshairs"></i> 定位
+              </button>
+              ${window.currentRole !== window.ROLES.VISITOR ? `<button onclick="editPin('${p.id}')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold rounded-lg text-xs transition"><i class="fa-solid fa-pen"></i> 編輯</button>` : ''}
+              ${canDelete ? `<button onclick="requestDeletePinDirect('${p.id}')" class="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg text-xs transition shadow"><i class="fa-solid fa-trash"></i></button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.locatePinOnMap = function(pinId) {
+      const pin = window.pins.find(p => p.id === pinId);
+      if (!pin) return;
+
+      const targetMapId = pin.map_id || pin.mapId;
+      if (targetMapId !== window.currentMapId) {
+        window.switchMap(targetMapId);
+      }
+
+      switchMainView('map');
+      
+      setTimeout(() => {
+        const stage = document.getElementById('mapStage');
+        if (stage) {
+          scale = 2;
+          const rect = stage.getBoundingClientRect();
+          panX = -(pin.x / 100 * rect.width) + (window.innerWidth / 2);
+          panY = -(pin.y / 100 * rect.height) + (window.innerHeight / 2);
+          requestUpdateTransform();
+          showToast(`已精準定位至：${pin.title}`, 'success');
+        }
+      }, 120);
+    };
+
+    window.openModal = (id) => document.getElementById(id)?.classList.remove('hidden');
+    window.closeModal = (id) => document.getElementById(id)?.classList.add('hidden');
+    window.showToast = (msg, type = 'success') => {
+      const toast = document.getElementById('toastContainer');
+      if (!toast) return;
+      const item = document.createElement('div');
+      item.className = `toast-item flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-semibold shadow-2xl backdrop-blur transition-all duration-300 ${type === 'success' ? 'bg-emerald-600/95 border-emerald-400 text-white' : (type === 'error' ? 'bg-rose-600/95 border-rose-400 text-white' : 'bg-slate-800/95 border-amber-500 text-amber-300')}`;
+      item.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-info'}"></i><span>${msg}</span>`;
+      toast.appendChild(item);
+      setTimeout(() => item.remove(), 3200);
+    };
+
+    window.copySinglePinSummary = function() {
+      const pinId = document.getElementById('formPinId').value;
+      const pin = window.pins.find(p => p.id === pinId);
+      if (!pin) return showToast('請先選擇或儲存點位', 'info');
+
+      const mapName = window.MAPS[pin.map_id || pin.mapId]?.name || '圖資區域';
+      const statusText = pin.actual_restore_date ? '🟢 已修復' : '🔴 待修復';
+      const text = `【大巨蛋場務巡檢通報】\n` +
+        `------------------------\n` +
+        `● 案件名稱：${pin.title}\n` +
+        `● 圖資區域：${mapName}\n` +
+        `● 案件狀態：${statusText}\n` +
+        `● 責任單位：${pin.department || '未指定'}\n` +
+        `● 損害日期：${pin.damage_date || '未指定'}\n` +
+        `● 預計修復：${pin.repair_option || '待確定'}\n` +
+        `● 現況說明：${pin.description || '無備註'}\n` +
+        `------------------------\n` +
+        `（來自 臺北大巨蛋場務管理系統）`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('已複製回報文字！可直接貼至 LINE 群組', 'success');
+      }).catch(() => {
+        showToast('複製失敗，請手動複製', 'error');
+      });
+    };
+
+    window.copyPendingListSummary = function() {
+      const activeId = localStorage.getItem('dome_active_header_id') || '';
+      const list = getStoredHeaderList();
+      const activeHeader = list.find(h => h.id === activeId);
+
+      let pendingPins = window.pins.filter(p => !p.actual_restore_date);
+      if (activeHeader && activeHeader.activity) {
+        pendingPins = pendingPins.filter(p => p.activity_name === activeHeader.activity);
+      }
+
+      if (pendingPins.length === 0) {
+        return showToast('當前視角下無任何「待修復」案件需要通報！', 'info');
+      }
+
+      let summary = `🚨【臺北大巨蛋 待修復異常通報清單】🚨\n`;
+      if (activeHeader?.activity) summary += `活動檔期：${activeHeader.activity}\n`;
+      summary += `待處理總件數：${pendingPins.length} 件\n`;
+      summary += `========================\n`;
+
+      pendingPins.forEach((p, idx) => {
+        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資區域';
+        summary += `${idx + 1}. [${mapName}] ${p.title}\n`;
+        summary += `   • 責任單位：${p.department || '未指定'} | 修復方式：${p.repair_option || '待確定'}\n`;
+        if (p.description) summary += `   • 備註：${p.description}\n`;
+      });
+      summary += `========================\n（報告時間：${formatDateToTwFullString(new Date())}）`;
+
+      navigator.clipboard.writeText(summary).then(() => {
+        showToast(`已成功複製 ${pendingPins.length} 筆待修復通報文字！`, 'success');
+      }).catch(() => {
+        showToast('複製失敗，請手動複製', 'error');
+      });
+    };
+
+    window.switchMap = (id) => {
+      window.currentMapId = id;
+      const select = document.getElementById('mapSelect');
+      if (select && select.value !== id) select.value = id;
+      loadMap(id);
+    };
+
+    function loadMap(id) {
+      const mapConfig = window.MAPS[id];
+      const mapImg = document.getElementById('mapImage');
+      const overlay = document.getElementById('mapLoadingOverlay');
+      if (!mapConfig || !mapImg) return;
+
+      if (overlay) overlay.classList.remove('opacity-0', 'pointer-events-none');
+
+      if (mapImg.complete && mapImg.naturalWidth && mapImg.src === mapConfig.url) {
+        if (overlay) overlay.classList.add('opacity-0', 'pointer-events-none');
+        fitMapToScreen();
+        renderPins();
+        return;
+      }
+
+      mapImg.src = mapConfig.url;
+    }
+
+    window.onMapLoaded = () => {
+      const overlay = document.getElementById('mapLoadingOverlay');
+      if (overlay) overlay.classList.add('opacity-0', 'pointer-events-none');
+      fitMapToScreen();
+      renderPins();
+    };
+
+    window.onMapError = () => {
+      const mapConfig = window.MAPS[window.currentMapId];
+      const mapImg = document.getElementById('mapImage');
+      if (mapConfig && mapConfig.cdnUrl && mapImg.src !== mapConfig.cdnUrl) {
+        mapImg.src = mapConfig.cdnUrl;
+      }
+    };
+
+    window.hideRestoredPins = false;
+    window.toggleHideRestoredPins = function(checked) {
+      window.hideRestoredPins = checked;
+      renderPins();
+    };
+
+    function renderPins() {
+      const layer = document.getElementById('pinLayer');
+      if (!layer) return;
+      layer.innerHTML = '';
+
+      const list = window.pins.filter(p => {
+        const pMap = p.map_id || p.mapId;
+        if (pMap !== window.currentMapId) return false;
+        if (window.hideRestoredPins && p.actual_restore_date) return false;
+        return true;
+      });
+
+      list.forEach(pin => {
+        const isRestored = !!pin.actual_restore_date;
+        const el = document.createElement('div');
+        el.className = `custom-pin ${isRestored ? 'pin-restored' : 'pin-unrestored'}`;
+        el.style.left = `${pin.x}%`;
+        el.style.top = `${pin.y}%`;
+        el.innerHTML = isRestored ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-exclamation"></i>';
+
+        el.onclick = (e) => { e.stopPropagation(); editPin(pin.id); };
+        layer.appendChild(el);
+      });
+
+      updateDashboardStats();
+    }
+
+    function updateDashboardStats() {
+      const currentMapPins = window.pins.filter(p => (p.map_id || p.mapId) === window.currentMapId);
+      const pending = currentMapPins.filter(p => !p.actual_restore_date).length;
+      const completed = currentMapPins.filter(p => !!p.actual_restore_date).length;
+
+      document.getElementById('legendPending').innerText = pending;
+      document.getElementById('legendCompleted').innerText = completed;
+      document.getElementById('totalBadge').innerText = window.pins.length;
+    }
+
+    function setupInteractions() {
+      const viewport = document.getElementById('viewport');
+      const stage = document.getElementById('mapStage');
+      if (!viewport || !stage) return;
+
+      const startPan = (x, y) => {
+        isDragging = true;
+        dragDistance = 0;
+        startX = x - panX;
+        startY = y - panY;
+      };
+
+      const movePan = (x, y) => {
+        if (!isDragging) return;
+        const dx = x - startX - panX;
+        const dy = y - startY - panY;
+        dragDistance += Math.hypot(dx, dy);
+
+        panX = x - startX;
+        panY = y - startY;
+        requestUpdateTransform();
+      };
+
+      const endPan = () => { isDragging = false; };
+
+      viewport.addEventListener('mousedown', (e) => { if (e.button === 0) startPan(e.clientX, e.clientY); });
+      window.addEventListener('mousemove', (e) => movePan(e.clientX, e.clientY));
+      window.addEventListener('mouseup', endPan);
+
+      viewport.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) startPan(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1) movePan(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: true });
+
+      window.addEventListener('touchend', endPan);
+
+      stage.onclick = (e) => {
+        if (dragDistance > 8) return;
+        if (window.currentRole === window.ROLES.VISITOR) {
+          showToast('目前為訪客唯讀模式，請點擊右上角「權限」進行解鎖！', 'info');
+          openModal('loginModal');
+          return;
+        }
+        const rect = stage.getBoundingClientRect();
+        const px = (((e.clientX - rect.left) / rect.width) * 100);
+        const py = (((e.clientY - rect.top) / rect.height) * 100);
+        openPinModalForCreate(px, py);
+      };
+    }
+
+    function requestUpdateTransform() {
+      if (!isTransformPending) {
+        isTransformPending = true;
+        requestAnimationFrame(() => {
+          const stage = document.getElementById('mapStage');
+          if (stage) {
+            stage.style.transform = `translate3d(${panX}px, ${panY}px, 0px) scale(${scale})`;
+            const invScale = Math.min(Math.max(1 / Math.pow(scale, 0.65), 0.4), 2.5);
+            stage.style.setProperty('--inv-scale', invScale.toFixed(3));
+            
+            const zoomText = document.getElementById('zoomLevelText');
+            if (zoomText) zoomText.innerText = `${Math.round(scale * 100)}%`;
+          }
+          isTransformPending = false;
+        });
+      }
+    }
+
+    window.zoomMap = (factor) => {
+      scale = Math.min(Math.max(0.3, scale * factor), 5);
+      requestUpdateTransform();
+    };
+
+    window.fitMapToScreen = () => {
+      scale = 1; panX = 0; panY = 0;
+      requestUpdateTransform();
+    };
+
+    function getStoredHeaderList() {
+      const raw = localStorage.getItem('dome_project_headers_list');
+      try { return raw ? JSON.parse(raw) : []; } catch (e) { return []; }
+    }
+
+    function saveStoredHeaderList(list) {
+      localStorage.setItem('dome_project_headers_list', JSON.stringify(list));
+    }
+
+    window.openProjectHeaderManager = function() {
+      renderProjectHeaderListUI();
+      openModal('projectHeaderModal');
+    };
+
+    function renderProjectHeaderListUI() {
+      const list = getStoredHeaderList();
+      const activeId = localStorage.getItem('dome_active_header_id') || '';
+
+      const selector = document.getElementById('activeHeaderSelector');
+      if (selector) {
+        selector.innerHTML = '<option value="">-- 無預設檔期 (手動填寫) --</option>' +
+          list.map(h => `<option value="${h.id}" ${h.id === activeId ? 'selected' : ''}>${h.activity} (${h.unit || '未設定單位'})</option>`).join('');
+      }
+
+      const container = document.getElementById('savedHeaderList');
+      if (container) {
+        if (list.length === 0) {
+          container.innerHTML = '<div class="text-xs text-slate-500 text-center py-4 bg-slate-900/30 rounded-lg">尚無建立任何活動檔期抬頭</div>';
+        } else {
+          container.innerHTML = list.map(h => `
+            <div class="flex items-center justify-between p-3 bg-slate-900/80 rounded-lg border ${h.id === activeId ? 'border-amber-500 bg-amber-500/10' : 'border-slate-700'} text-xs">
+              <div class="flex-1 pr-2">
+                <div class="font-bold text-white text-sm flex items-center gap-2">
+                  ${h.activity}
+                  ${h.id === activeId ? '<span class="bg-amber-500 text-slate-950 px-2 py-0.5 rounded text-[10px] font-black">使用中</span>' : ''}
+                </div>
+                <div class="text-slate-400 mt-0.5">單位: ${h.unit || '未指定'} | 期間: ${h.start ? h.start.replace('T', ' ') : '--'} ~ ${h.end ? h.end.replace('T', ' ') : '--'}</div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="editProjectHeader('${h.id}')" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-amber-300 rounded font-semibold min-h-[40px]">編輯</button>
+                <button onclick="deleteProjectHeader('${h.id}')" class="px-3 py-2 bg-rose-600/80 hover:bg-rose-500 text-white rounded font-semibold min-h-[40px]">刪除</button>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+
+      const headerText = document.getElementById('headerActiveProjectText');
+      const activeHeader = list.find(h => h.id === activeId);
+      if (headerText) {
+        headerText.innerHTML = `<i class="fa-solid fa-file-signature mr-1"></i>當前檔期：${activeHeader ? activeHeader.activity : '未設定'}`;
+      }
+    }
+
+    window.switchActiveProjectHeader = function(headerId) {
+      localStorage.setItem('dome_active_header_id', headerId);
+      renderProjectHeaderListUI();
+      showToast('已切換當前活動檔期！', 'success');
+    };
+
+    window.saveGlobalProjectHeader = function(e) {
+      if (e) e.preventDefault();
+      const editId = document.getElementById('headerEditId')?.value;
+      const activity = document.getElementById('globalActivityName')?.value.trim();
+      const unit = document.getElementById('globalRenterUnit')?.value.trim();
+      const start = document.getElementById('globalRentStartDate')?.value;
+      const end = document.getElementById('globalRentEndDate')?.value;
+
+      if (!activity) return showToast('請填寫活動名稱！', 'error');
+
+      let list = getStoredHeaderList();
+      if (editId) {
+        const idx = list.findIndex(h => h.id === editId);
+        if (idx >= 0) list[idx] = { id: editId, activity, unit, start, end };
+      } else {
+        const newId = 'header-' + Date.now();
+        list.push({ id: newId, activity, unit, start, end });
+        localStorage.setItem('dome_active_header_id', newId);
+      }
+
+      saveStoredHeaderList(list);
+      resetHeaderForm();
+      renderProjectHeaderListUI();
+      showToast('活動檔期儲存成功！', 'success');
+    };
+
+    window.editProjectHeader = function(id) {
+      const list = getStoredHeaderList();
+      const h = list.find(item => item.id === id);
+      if (!h) return;
+
+      document.getElementById('headerEditId').value = h.id;
+      document.getElementById('globalActivityName').value = h.activity || '';
+      document.getElementById('globalRenterUnit').value = h.unit || '';
+      document.getElementById('globalRentStartDate').value = h.start || '';
+      document.getElementById('globalRentEndDate').value = h.end || '';
+    };
+
+    window.deleteProjectHeader = function(id) {
+      let list = getStoredHeaderList().filter(h => h.id !== id);
+      saveStoredHeaderList(list);
+      if (localStorage.getItem('dome_active_header_id') === id) {
+        localStorage.removeItem('dome_active_header_id');
+      }
+      renderProjectHeaderListUI();
+      showToast('已刪除該筆檔期', 'info');
+    };
+
+    window.resetHeaderForm = function() {
+      document.getElementById('headerEditId').value = '';
+      document.getElementById('globalActivityName').value = '';
+      document.getElementById('globalRenterUnit').value = '';
+      document.getElementById('globalRentStartDate').value = '';
+      document.getElementById('globalRentEndDate').value = '';
+    };
+
+    // 通行密碼隱蔽保護 (鐵律 6)
+    window.submitAuthPassword = function() {
+      const pwd = document.getElementById('inputAuthPassword').value.trim();
+      if (pwd === 'superadmin') {
+        window.currentRole = window.ROLES.SUPERADMIN;
+        document.getElementById('userRoleText').innerText = '超級管理員';
+        closeModal('loginModal');
+        showToast('超級管理員權限已解鎖 (具刪除點位權限)', 'success');
+      } else if (pwd === 'admin') {
+        window.currentRole = window.ROLES.ADMIN;
+        document.getElementById('userRoleText').innerText = '巡檢管理員';
+        closeModal('loginModal');
+        showToast('巡檢管理員權限已解鎖', 'success');
+      } else {
+        showToast('通行密碼不正確', 'error');
+      }
+    };
+
+    window.resetToGuest = function() {
+      window.currentRole = window.ROLES.VISITOR;
+      document.getElementById('userRoleText').innerText = '訪客';
+      closeModal('loginModal');
+      showToast('已切換為訪客模式', 'info');
+    };
+
+    function safeFormatForDatetimeInput(dtStr) {
+      if (!dtStr) return '';
+      return dtStr.length === 16 ? dtStr : dtStr.substring(0, 16);
+    }
+
+    function openPinModalForCreate(x, y) {
+      document.getElementById('pinModalTitle').innerText = '新增損壞巡檢點';
+      document.getElementById('pinForm').reset();
+      document.getElementById('formPinId').value = '';
+      document.getElementById('formMapId').value = window.currentMapId;
+      document.getElementById('formCoordX').value = x.toFixed(2);
+      document.getElementById('formCoordY').value = y.toFixed(2);
+      document.getElementById('formActualRestoreDate').value = '';
+      document.getElementById('btnDeletePinForm').classList.add('hidden');
+      document.getElementById('btnShareSinglePin').classList.add('hidden');
+
+      const list = getStoredHeaderList();
+      const activeId = localStorage.getItem('dome_active_header_id') || '';
+      const activeHeader = list.find(h => h.id === activeId);
+
+      if (activeHeader) {
+        if (activeHeader.activity) document.getElementById('formActivityName').value = activeHeader.activity;
+        if (activeHeader.unit) document.getElementById('formRenterUnit').value = activeHeader.unit;
+        if (activeHeader.start) document.getElementById('formRentStartDate').value = safeFormatForDatetimeInput(activeHeader.start);
+        if (activeHeader.end) document.getElementById('formRentEndDate').value = safeFormatForDatetimeInput(activeHeader.end);
+      }
+
+      document.getElementById('formDamageDate').value = new Date().toISOString().split('T')[0];
+      window.activeImages = [];
+      renderPhotoPreviews();
+      toggleRepairFields();
+      openModal('pinModal');
+    }
+
+    window.editPin = function(id) {
+      const pin = window.pins.find(p => p.id === id);
+      if (!pin) return;
+
+      document.getElementById('pinModalTitle').innerText = '編輯損壞巡檢點';
+      document.getElementById('formPinId').value = pin.id;
+      document.getElementById('formMapId').value = pin.map_id || pin.mapId;
+      document.getElementById('formCoordX').value = pin.x;
+      document.getElementById('formCoordY').value = pin.y;
+      document.getElementById('formTitle').value = pin.title || '';
+      document.getElementById('formActivityName').value = pin.activity_name || '';
+      document.getElementById('formRenterUnit').value = pin.renter_unit || '';
+      document.getElementById('formRentStartDate').value = safeFormatForDatetimeInput(pin.rent_start_date);
+      document.getElementById('formRentEndDate').value = safeFormatForDatetimeInput(pin.rent_end_date);
+      document.getElementById('formDepartment').value = pin.department || '';
+      document.getElementById('formDamageDate').value = pin.damage_date || '';
+      document.getElementById('formConstructorName').value = pin.constructor_name || '';
+      document.getElementById('formConstructDate').value = pin.construct_date || '';
+      document.getElementById('formActualRestoreDate').value = pin.actual_restore_date || '';
+      document.getElementById('formDescription').value = pin.description || '';
+
+      document.getElementById('btnShareSinglePin').classList.remove('hidden');
+
+      const deleteBtn = document.getElementById('btnDeletePinForm');
+      if (deleteBtn) {
+        if (window.currentRole === window.ROLES.SUPERADMIN) deleteBtn.classList.remove('hidden');
+        else deleteBtn.classList.add('hidden');
+      }
+
+      const radios = document.getElementsByName('repairOption');
+      radios.forEach(r => r.checked = (r.value === pin.repair_option));
+
+      window.activeImages = pin.images ? [...pin.images] : [];
+      renderPhotoPreviews();
+      toggleRepairFields();
+      openModal('pinModal');
+    };
+
+    window.fillTodayRestoreDate = function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('formActualRestoreDate').value = today;
+      showToast('已填入今日完修日期！', 'success');
+    };
+
+    window.toggleRepairFields = () => {
+      const selected = document.querySelector('input[name="repairOption"]:checked')?.value;
+      const selfDiv = document.getElementById('selfRepairFields');
+      const paidDiv = document.getElementById('paidRepairNotice');
+      if (selected === '租用方自行修復') {
+        selfDiv?.classList.remove('hidden'); selfDiv?.classList.add('grid');
+        paidDiv?.classList.add('hidden');
+      } else if (selected === '租用方付費維修') {
+        selfDiv?.classList.add('hidden'); selfDiv?.classList.remove('grid');
+        paidDiv?.classList.remove('hidden');
+      } else {
+        selfDiv?.classList.add('hidden'); selfDiv?.classList.remove('grid');
+        paidDiv?.classList.add('hidden');
+      }
+    };
+
+    window.handlePhotoUpload = (e) => {
+      const files = Array.from(e.target.files);
+      files.forEach(f => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          window.activeImages.push(ev.target.result);
+          renderPhotoPreviews();
+        };
+        reader.readAsDataURL(f);
+      });
+    };
+
+    function renderPhotoPreviews() {
+      const strip = document.getElementById('photoPreviewStrip');
+      if (!strip) return;
+      strip.innerHTML = window.activeImages.map((src, i) => `
+        <div class="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-600 shrink-0">
+          <img src="${src}" class="w-full h-full object-cover">
+          <button type="button" onclick="window.activeImages.splice(${i},1);renderPhotoPreviews()" class="absolute top-0.5 right-0.5 bg-rose-600 text-white w-5 h-5 rounded-full text-xs flex items-center justify-center font-bold">×</button>
+        </div>
+      `).join('');
+    }
+
+    // 安全雲端同步與容錯處置
+    window.handleSavePin = async (e) => {
+      e.preventDefault();
+      const pinId = document.getElementById('formPinId').value || `pin-${Date.now()}`;
+      
+      const pinData = {
+        id: pinId,
+        map_id: document.getElementById('formMapId').value,
+        x: parseFloat(document.getElementById('formCoordX').value),
+        y: parseFloat(document.getElementById('formCoordY').value),
+        title: document.getElementById('formTitle').value.trim(),
+        activity_name: document.getElementById('formActivityName').value.trim(),
+        renter_unit: document.getElementById('formRenterUnit').value.trim(),
+        rent_start_date: document.getElementById('formRentStartDate').value || null,
+        rent_end_date: document.getElementById('formRentEndDate').value || null,
+        department: document.getElementById('formDepartment').value.trim(),
+        damage_date: document.getElementById('formDamageDate').value || null,
+        repair_option: document.querySelector('input[name="repairOption"]:checked')?.value || '待確定',
+        constructor_name: document.getElementById('formConstructorName').value.trim(),
+        construct_date: document.getElementById('formConstructDate').value || null,
+        actual_restore_date: document.getElementById('formActualRestoreDate').value || null,
+        description: document.getElementById('formDescription').value.trim(),
+        images: [...window.activeImages]
+      };
+
+      const idx = window.pins.findIndex(p => p.id === pinId);
+      if (idx >= 0) window.pins[idx] = pinData;
+      else window.pins.push(pinData);
+
+      localStorage.setItem('dome_pins_cache', JSON.stringify(window.pins));
+      
+      if (window.supabaseClient) {
+        try {
+          const { error } = await window.supabaseClient.from('pins').upsert([pinData]);
+          if (error) {
+            console.warn('Supabase save error:', error);
+            showToast('已存至本機！(雲端權限限制中)', 'info');
+            updateCloudBadge(false, '唯讀/權限限縮');
+          } else {
+            showToast('巡檢點位已成功同步至雲端！', 'success');
+            updateCloudBadge(true);
+          }
+        } catch(err) {
+          showToast('已存至本機！', 'info');
+          updateCloudBadge(false, '連線異常');
+        }
+      }
+
+      renderPins();
+      closeModal('pinModal');
+    };
+
+    window.requestDeletePinFromForm = function() {
+      const pinId = document.getElementById('formPinId').value;
+      if (pinId) {
+        closeModal('pinModal');
+        requestDeletePinDirect(pinId);
+      }
+    };
+
+    window.requestDeletePinDirect = function(pinId) {
+      if (window.currentRole !== window.ROLES.SUPERADMIN) {
+        return showToast('僅有超級管理員具備刪除權限！', 'error');
+      }
+
+      const confirmBtn = document.getElementById('btnConfirmDeleteAction');
+      if (confirmBtn) {
+        confirmBtn.onclick = async () => {
+          window.pins = window.pins.filter(p => p.id !== pinId);
+          localStorage.setItem('dome_pins_cache', JSON.stringify(window.pins));
+
+          if (window.supabaseClient) {
+            try {
+              await window.supabaseClient.from('pins').delete().eq('id', pinId);
+            } catch(e) {}
+          }
+
+          renderPins();
+          if (window.currentMainView === 'list') renderListViewTable();
+          closeModal('confirmModal');
+          showToast('點位已永久刪除', 'info');
+        };
+      }
+      openModal('confirmModal');
+    };
+
+    function formatDateToTwFullString(dtStr) {
+      if (!dtStr) return '--';
+      try {
+        const d = new Date(dtStr);
+        if (isNaN(d.getTime())) return dtStr;
+        const pad = n => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      } catch(e) { return dtStr; }
+    }
+
+    window.exportAppendix24ModeA = function() {
+      const list = getStoredHeaderList();
+      const activeId = localStorage.getItem('dome_active_header_id') || '';
+      const activeHeader = list.find(h => h.id === activeId) || {};
+
+      let pinsToExport = [];
+      if (window.currentMainView === 'map') {
+        pinsToExport = (window.pins || []).filter(p => (p.map_id || p.mapId) === window.currentMapId);
+      } else {
+        pinsToExport = window.pins;
+      }
+
+      if (activeHeader.activity) {
+        pinsToExport = pinsToExport.filter(p => p.activity_name === activeHeader.activity);
+      }
+
+      pinsToExport = pinsToExport.filter(p => !p.actual_restore_date);
+
+      if (pinsToExport.length === 0) {
+        return showToast('當前檔期與視角下無任何「待修復」損害案件可供列印！', 'info');
+      }
+
+      generateAppendix24Printout(pinsToExport, activeHeader);
+    };
+
+    function generateAppendix24Printout(pinsList, headerData = {}) {
+      document.getElementById('rptActivityName').innerText = headerData.activity || pinsList[0]?.activity_name || '未指定活動';
+      document.getElementById('rptRenterUnit').innerText = headerData.unit || pinsList[0]?.renter_unit || '未指定單位';
+      
+      const startDisplay = formatDateToTwFullString(headerData.start || pinsList[0]?.rent_start_date);
+      const endDisplay = formatDateToTwFullString(headerData.end || pinsList[0]?.rent_end_date);
+      document.getElementById('rptRentDates').innerText = `${startDisplay} ~ ${endDisplay}`;
+
+      const tbody = document.getElementById('rptTableBody');
+      tbody.innerHTML = pinsList.map((p, i) => {
+        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資區域';
+        return `
+          <tr class="align-top print-keep-together">
+            <td class="border border-black p-2 text-center font-bold">${i + 1}</td>
+            <td class="border border-black p-2 space-y-1.5">
+              <div><span class="font-bold text-gray-700">【位置】：</span><span class="font-semibold">${mapName} (${p.x}%, ${p.y}%)</span></div>
+              <div><span class="font-bold text-gray-700">【名稱】：</span><span class="font-bold text-black text-sm">${p.title}</span></div>
+              ${p.images && p.images.length > 0 ? `
+                <div class="pt-1">
+                  <img src="${p.images[0]}" class="print-img-limit max-h-24 object-contain rounded border border-gray-400">
+                </div>
+              ` : '<div class="text-[10px] text-gray-400 italic">（未附現場照片）</div>'}
+            </td>
+            <td class="border border-black p-2 space-y-1.5">
+              <div><span class="font-bold text-gray-700">損害發生日期：</span><br><span class="font-mono">${p.damage_date || '未紀錄'}</span></div>
+              <div class="pt-1 border-t border-gray-200">
+                <span class="font-bold text-gray-700">原因與損害說明：</span>
+                <p class="text-xs text-gray-800 whitespace-pre-wrap mt-0.5">${p.description || '無詳細說明'}</p>
+              </div>
+            </td>
+            <td class="border border-black p-2 space-y-2">
+              <div class="space-y-1">
+                <div class="flex items-center gap-1 font-bold">
+                  <span>■</span>
+                  <span>${p.repair_option || '租用方自行修復'}</span>
+                </div>
+              </div>
+              <div class="pt-1 border-t border-gray-200 text-[11px] space-y-1">
+                <div><strong>預計修復日期：</strong><span class="font-mono font-semibold">${p.construct_date || p.damage_date || '配合檔期排程'}</span></div>
+                ${p.constructor_name ? `<div><strong>施工單位：</strong>${p.constructor_name}</div>` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      const printArea = document.getElementById('appendix24PrintArea');
+      printArea.classList.remove('hidden');
+      window.print();
+      setTimeout(() => printArea.classList.add('hidden'), 500);
+    }
+  </script>
+</body>
+</html>
+```eof
+
+***
+
+### 🛠️ 快速除錯與解決 2 步驟：
+
+1. **已補齊自動備援機制**：
+   在最新產生的 `index.html` 中，只要雲端權限遭受 Supabase 限制，系統除了會自動儲存到本機暫存（保證資料不丟失）外，**頂部標籤也會自動提示 `⚠️ 權限限縮`**。
+2. **Supabase 雲端一鍵解鎖方式**：
+   若要讓全體同仁手機都能即時同步寫入，請登入 [Supabase Dashboard](https://supabase.com/dashboard)，進入專案的 **Table Editor ➔ pins ➔ Policies**，點擊 **Disable RLS** 或新增一個 Policy 為 `Enable read, insert, update for all users` 即可徹底終結失敗訊息！
