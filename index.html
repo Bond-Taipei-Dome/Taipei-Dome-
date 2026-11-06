@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>臺北大巨蛋場務管理與巡檢點位系統 v2026.11.06</title>
+  <title>臺北大巨蛋場務管理系統 v2026.11.06</title>
 
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase JS v2 CDN -->
+  <!-- Supabase JS v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- FontAwesome 6 圖示庫 -->
+  <!-- FontAwesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
@@ -22,7 +22,6 @@
       background-color: #090d16;
     }
 
-    /* 日期選擇器視覺美化 (深色模式) */
     input[type="date"]::-webkit-calendar-picker-indicator,
     input[type="datetime-local"]::-webkit-calendar-picker-indicator {
       filter: brightness(0) invert(1);
@@ -31,17 +30,14 @@
       transform: scale(1.2);
     }
 
-    /* 隱藏捲動條但維持滾動功能 */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* 觸控目標尺寸優化 (防誤觸) */
     .touch-target {
-      min-width: 48px;
-      min-height: 48px;
+      min-width: 44px;
+      min-height: 44px;
     }
 
-    /* 地圖地標 Pin 動態與高對比樣式 */
     .custom-pin {
       position: absolute;
       width: 44px;
@@ -69,12 +65,10 @@
       border-color: #fde68a;
     }
 
-    /* 🔴 待修復脈衝紅點 */
     .pin-unrestored {
       background: radial-gradient(circle at 30% 30%, #f87171, #dc2626);
       animation: pulse-red 2.2s infinite;
     }
-    /* 🟢 已完修靜態綠點 */
     .pin-restored {
       background: radial-gradient(circle at 30% 30%, #34d399, #059669);
     }
@@ -134,23 +128,24 @@
 </head>
 <body class="bg-slate-950 text-slate-100 flex flex-col h-screen select-none">
 
-  <!-- Toast 訊息通知容器 -->
+  <!-- Toast 提示容器 -->
   <div id="toastContainer"></div>
 
-  <!-- 頂部主導覽列 -->
+  <!-- 頂部導覽列 -->
   <header class="h-20 bg-slate-900/95 backdrop-blur border-b border-slate-800 flex items-center justify-between px-3 sm:px-6 z-30 shrink-0 shadow-md">
-    <!-- 左側：系統 LOGO 與當前檔期抬頭 -->
+    <!-- 左側：標誌與樓層剖面選單 -->
     <div class="flex items-center space-x-3 sm:space-x-4">
-      <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-inner shrink-0">
-        <i class="fa-solid fa-building-shield text-2xl"></i>
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-blue-600 flex items-center justify-center text-white shadow-inner shrink-0">
+        <i class="fa-solid fa-stadium text-2xl"></i>
       </div>
       <div>
         <div class="flex items-center gap-2">
           <h1 class="font-bold text-base sm:text-lg tracking-wide text-white leading-tight">臺北大巨蛋場務管理系統</h1>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">v2026.11.06</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v2026.11.06</span>
+          <!-- 恆久雲端連線狀態標籤 -->
           <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>🟢 雲端連線</span>
+            <span class="hidden sm:inline">🟢 雲端即時連線</span>
           </span>
         </div>
         <p id="headerActiveProjectText" class="text-xs text-amber-400/90 truncate max-w-[180px] sm:max-w-xs mt-0.5 font-medium">
@@ -158,17 +153,32 @@
         </p>
       </div>
 
-      <!-- 樓層選擇下拉選單 -->
+      <!-- 13 大獨立樓層與剖面圖選擇下拉選單 -->
       <div class="relative ml-2">
         <select id="mapSelect" onchange="switchMap(this.value)" class="bg-slate-800 hover:bg-slate-750 text-amber-400 font-bold text-xs sm:text-sm rounded-lg pl-3 pr-8 py-2.5 border border-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer transition appearance-none min-h-[44px]">
-          <option value="map-b2-b1">B2 / B1 地下層區</option>
-          <option value="map-l1-l5">L1 ~ L5 看台與場館區</option>
+          <optgroup label="🏢 樓層平面圖 (Floor Plans)">
+            <option value="map-b2">B2 層平面圖</option>
+            <option value="map-b1">B1 層平面圖</option>
+            <option value="map-l1">L1 層平面圖</option>
+            <option value="map-l2">L2 層平面圖</option>
+            <option value="map-l3">L3 層平面圖</option>
+            <option value="map-l4">L4 層平面圖</option>
+            <option value="map-l5">L5 層平面圖</option>
+            <option value="map-l6">L6 層平面圖</option>
+            <option value="map-rf">RF 屋頂層平面圖</option>
+          </optgroup>
+          <optgroup label="📐 剖面立面圖 (Section Views)">
+            <option value="map-sec-north">北向剖面圖</option>
+            <option value="map-sec-south">南向剖面圖</option>
+            <option value="map-sec-east">東向剖面圖</option>
+            <option value="map-sec-west">西向剖面圖</option>
+          </optgroup>
         </select>
         <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
       </div>
     </div>
 
-    <!-- 中間：視圖切換按鈕 (地圖 / 清單) -->
+    <!-- 中間：視圖切換 (地圖 / 清單) -->
     <div class="flex items-center space-x-3">
       <div class="flex bg-slate-800 rounded-lg p-1 border border-slate-700 text-sm">
         <button id="btnMapView" onclick="switchMainView('map')" class="px-3.5 sm:px-4 py-2 rounded-md bg-amber-500 text-slate-950 font-bold transition flex items-center gap-1.5 shadow min-h-[44px]">
@@ -181,14 +191,13 @@
       </div>
     </div>
 
-    <!-- 右側：功能操作選單 -->
+    <!-- 右側：功能按鈕群 -->
     <div class="flex items-center space-x-2">
-      <!-- 快捷一鍵複製全待修通報按鈕 -->
-      <button onclick="copyPendingListSummary()" class="flex items-center bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="一鍵複製所有待修復案件通報文字（貼至 LINE）">
+      <button onclick="copyPendingListSummary()" class="flex items-center bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="一鍵複製待修復案件通報文字（可貼至 LINE）">
         <i class="fa-solid fa-share-nodes mr-1.5"></i> <span class="hidden lg:inline">通報分享</span>
       </button>
 
-      <button onclick="openProjectHeaderManager()" class="flex items-center bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="管理與切換活動檔期抬頭">
+      <button onclick="openProjectHeaderManager()" class="flex items-center bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="管理與切換多筆活動檔期抬頭">
         <i class="fa-solid fa-folder-tree mr-1.5"></i> <span class="hidden md:inline">檔期抬頭</span>
       </button>
 
@@ -198,39 +207,37 @@
 
       <button id="btnLogin" onclick="openModal('loginModal')" class="flex items-center bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-slate-700 transition min-h-[44px]">
         <i class="fa-solid fa-shield-halved mr-1.5 text-amber-400"></i>
-        <span id="userRoleText">訪客(唯讀)</span>
+        <span id="userRoleText">訪客</span>
       </button>
     </div>
   </header>
 
-  <!-- 主畫面內容容器 -->
+  <!-- 主要內容區 -->
   <main class="flex-1 relative overflow-hidden flex flex-col">
 
-    <!-- 1. 地圖檢視區 -->
+    <!-- 1. 地圖視窗 -->
     <div id="viewport" class="w-full h-full relative overflow-hidden bg-slate-950 touch-none cursor-grab active:cursor-grabbing">
       
       <div class="absolute top-3 left-3 z-20 pointer-events-none flex items-center gap-2">
         <div id="mapHintBanner" class="bg-slate-900/90 backdrop-blur-md border border-slate-700/80 text-slate-100 px-3.5 py-2 rounded-lg text-xs sm:text-sm flex items-center gap-2 shadow-lg">
           <i class="fa-solid fa-circle-info text-amber-400"></i>
-          <span id="mapActionHint">點擊地圖任意位置可新增損壞巡檢點位</span>
+          <span id="mapActionHint">點擊圖面任意位置可新增損壞巡檢點位</span>
         </div>
       </div>
 
-      <!-- 地圖載入中遮罩 -->
       <div id="mapLoadingOverlay" class="absolute inset-0 z-20 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-300">
         <div class="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-        <p class="text-sm font-bold text-amber-400">正在同步雲端資料與載入高畫質圖資...</p>
+        <p class="text-sm font-bold text-amber-400">正在同步雲端資料與載入最新高畫質圖資...</p>
       </div>
 
-      <!-- GPU 硬體加速地圖 Stage -->
       <div id="mapStage" class="absolute top-0 left-0 origin-top-left will-change-transform select-none">
         <div id="mapWrapper" class="relative inline-block">
-          <img id="mapImage" src="" alt="臺北大巨蛋巡檢平面圖" class="block max-w-none select-none pointer-events-none" onload="onMapLoaded()" onerror="onMapError()">
+          <img id="mapImage" src="" alt="臺北大巨蛋巡檢平面/剖面圖" class="block max-w-none select-none pointer-events-none" onload="onMapLoaded()" onerror="onMapError()">
           <div id="pinLayer" class="absolute inset-0 pointer-events-auto"></div>
         </div>
       </div>
 
-      <!-- 地圖圖例與縮放控制列 -->
+      <!-- 地圖縮放與圖例按鈕 -->
       <div class="absolute bottom-5 right-5 z-20 flex flex-col gap-2.5">
         <div class="bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl p-3 text-xs sm:text-sm space-y-2 shadow-xl">
           <div class="flex items-center justify-between gap-4">
@@ -238,7 +245,7 @@
             <strong id="legendPending" class="text-rose-400 text-base">0</strong>
           </div>
           <div class="flex items-center justify-between gap-4">
-            <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block border border-white"></span> 已完修</span>
+            <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block border border-white"></span> 已修復</span>
             <strong id="legendCompleted" class="text-emerald-400 text-base">0</strong>
           </div>
           <div class="pt-2 border-t border-slate-700/80">
@@ -257,27 +264,42 @@
           <button onclick="zoomMap(0.8)" class="touch-target hover:bg-slate-800 text-slate-200 hover:text-amber-400 transition border-t border-b border-slate-800 text-lg flex items-center justify-center" title="縮小">
             <i class="fa-solid fa-magnifying-glass-minus"></i>
           </button>
-          <button onclick="fitMapToScreen()" class="touch-target hover:bg-slate-800 text-slate-200 hover:text-amber-400 transition text-lg flex items-center justify-center" title="重設畫布">
+          <button onclick="fitMapToScreen()" class="touch-target hover:bg-slate-800 text-slate-200 hover:text-amber-400 transition text-lg flex items-center justify-center" title="適應螢幕">
             <i class="fa-solid fa-expand"></i>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- 2. 案件清單 View (可多維度搜尋過濾與定位) -->
+    <!-- 2. 列表視窗 -->
     <div id="listViewContainer" class="hidden w-full h-full p-4 sm:p-6 overflow-y-auto bg-slate-900 select-text">
       <div class="max-w-7xl mx-auto space-y-4">
         <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
           <div class="flex flex-wrap items-center gap-3">
             <select id="filterMap" onchange="renderListViewTable()" class="bg-slate-700 text-white text-xs sm:text-sm rounded-lg px-3.5 py-2.5 border border-slate-600 focus:outline-none focus:border-amber-500 min-h-[44px]">
-              <option value="all">全部樓層區域</option>
-              <option value="map-b2-b1">B2 / B1 地下層</option>
-              <option value="map-l1-l5">L1 ~ L5 看台區</option>
+              <option value="all">全部樓層與剖面圖</option>
+              <optgroup label="樓層平面圖">
+                <option value="map-b2">B2 層</option>
+                <option value="map-b1">B1 層</option>
+                <option value="map-l1">L1 層</option>
+                <option value="map-l2">L2 層</option>
+                <option value="map-l3">L3 層</option>
+                <option value="map-l4">L4 層</option>
+                <option value="map-l5">L5 層</option>
+                <option value="map-l6">L6 層</option>
+                <option value="map-rf">RF 屋頂層</option>
+              </optgroup>
+              <optgroup label="剖面圖">
+                <option value="map-sec-north">北向剖面</option>
+                <option value="map-sec-south">南向剖面</option>
+                <option value="map-sec-east">東向剖面</option>
+                <option value="map-sec-west">西向剖面</option>
+              </optgroup>
             </select>
             <select id="filterStatus" onchange="renderListViewTable()" class="bg-slate-700 text-white text-xs sm:text-sm rounded-lg px-3.5 py-2.5 border border-slate-600 focus:outline-none focus:border-amber-500 min-h-[44px]">
               <option value="all">全部狀態</option>
               <option value="unrestored">🔴 待修復案件</option>
-              <option value="restored">🟢 已完修案件</option>
+              <option value="restored">🟢 已修復案件</option>
             </select>
             <button onclick="copyPendingListSummary()" class="bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-teal-500 transition min-h-[44px] flex items-center gap-1.5 shadow">
               <i class="fa-solid fa-copy"></i> 一鍵複製待修清單
@@ -295,7 +317,7 @@
               <thead class="bg-slate-700/80 text-slate-100 uppercase text-xs border-b border-slate-600">
                 <tr>
                   <th class="py-3.5 px-4">狀態</th>
-                  <th class="py-3.5 px-4">樓層</th>
+                  <th class="py-3.5 px-4">圖資區域</th>
                   <th class="py-3.5 px-4">活動抬頭與損壞標題</th>
                   <th class="py-3.5 px-4">責任單位</th>
                   <th class="py-3.5 px-4">修復方式</th>
@@ -303,7 +325,7 @@
                 </tr>
               </thead>
               <tbody id="listViewTableBody" class="divide-y divide-slate-700/70">
-                <!-- 動態載入點位清單 -->
+                <!-- 動態渲染 -->
               </tbody>
             </table>
           </div>
@@ -312,7 +334,7 @@
     </div>
   </main>
 
-  <!-- 彈窗 1：多筆活動檔期抬頭管理 -->
+  <!-- 彈窗 1：多筆專案抬頭管理 -->
   <div id="projectHeaderModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-slate-800 rounded-2xl border border-indigo-500/50 max-w-2xl w-full p-6 text-slate-100 relative shadow-2xl max-h-[92vh] overflow-y-auto">
       <button onclick="closeModal('projectHeaderModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
@@ -320,7 +342,7 @@
         <div class="w-10 h-10 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-folder-tree"></i></div>
         <div>
           <h2 class="text-xl font-bold text-white">多檔期專案抬頭與責任歸屬管理</h2>
-          <p class="text-xs text-slate-300">建立與選擇不同活動檔期的租用抬頭，自動連帶分類損害案件。</p>
+          <p class="text-xs text-slate-300">建立與選擇不同活動檔期的租用抬頭，自動分類損害案件。</p>
         </div>
       </div>
 
@@ -345,11 +367,11 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold mb-1">租用開始時間 (24小時制)</label>
+            <label class="block text-xs font-semibold mb-1">租用開始時間 (含時分 24小時制)</label>
             <input type="datetime-local" id="globalRentStartDate" step="60" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
           </div>
           <div>
-            <label class="block text-xs font-semibold mb-1">租用結束時間 (24小時制)</label>
+            <label class="block text-xs font-semibold mb-1">租用結束時間 (含時分 24小時制)</label>
             <input type="datetime-local" id="globalRentEndDate" step="60" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
           </div>
         </div>
@@ -373,7 +395,7 @@
     <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-sm w-full p-6 text-slate-100 relative shadow-2xl">
       <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
       <h3 class="text-lg font-bold text-white mb-2"><i class="fa-solid fa-shield-halved text-amber-400 mr-2"></i>巡檢身分驗證</h3>
-      <p class="text-xs text-slate-400 mb-4">輸入通行密碼以解鎖權限：</p>
+      <p class="text-xs text-slate-400 mb-4">請輸入通行密碼解鎖巡檢權限：</p>
       <input type="password" id="inputAuthPassword" placeholder="請輸入通行密碼..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-500 min-h-[44px]">
       <div class="flex gap-2">
         <button onclick="submitAuthPassword()" class="touch-target flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm shadow flex items-center justify-center">解鎖權限</button>
@@ -382,18 +404,16 @@
     </div>
   </div>
 
-  <!-- 彈窗 3：新增與編輯損壞點位 Modal -->
+  <!-- 彈窗 3：新增/編輯損壞點位 Modal (含一鍵複製分享) -->
   <div id="pinModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-xl w-full p-6 text-slate-100 relative shadow-2xl max-h-[90vh] overflow-y-auto">
       <button onclick="closeModal('pinModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
-      
-      <!-- 視窗頂部標題區與一鍵複製按鈕 -->
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-4 border-b border-slate-700 pb-3 pr-6">
+      <div class="flex items-center justify-between pr-8 mb-4">
         <h2 id="pinModalTitle" class="text-lg font-bold text-white flex items-center gap-2">
           <i class="fa-solid fa-location-dot text-rose-500"></i> 新增損壞巡檢點
         </h2>
-        <button type="button" onclick="copySinglePinSummary()" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow">
-          <i class="fa-solid fa-copy"></i> 複製此案回報文字
+        <button type="button" id="btnShareSinglePin" onclick="copySinglePinSummary()" class="px-3 py-1.5 bg-teal-600/90 hover:bg-teal-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
+          <i class="fa-solid fa-share-nodes"></i> 複製此案回報文字
         </button>
       </div>
 
@@ -403,9 +423,9 @@
         <input type="hidden" id="formCoordX">
         <input type="hidden" id="formCoordY">
 
-        <!-- 專案檔期資訊 -->
+        <!-- 區塊 A：專案抬頭資訊 -->
         <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-700/60 space-y-3">
-          <div class="text-xs font-bold text-amber-400 uppercase tracking-wider">專案抬頭資訊 (HEADER SCOPED)</div>
+          <div class="text-xs font-bold text-amber-400 uppercase tracking-wider">專案抬頭資訊 (Header Scoped)</div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold mb-1">活動名稱 (activity_name) <span class="text-rose-400">*</span></label>
@@ -428,7 +448,7 @@
           </div>
         </div>
 
-        <!-- 案件細節 -->
+        <!-- 區塊 B：案件細節 -->
         <div>
           <label class="block text-xs font-semibold mb-1">損壞項目名稱 / 事件標題 <span class="text-rose-400">*</span></label>
           <input type="text" id="formTitle" required placeholder="例如：B1 牆面劃傷 / L2 扶手鬆脫" class="w-full bg-slate-900 rounded-lg p-2.5 text-sm border border-slate-700 text-white min-h-[44px]">
@@ -446,15 +466,15 @@
         </div>
 
         <!-- 實際完修日期 -->
-        <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700/80 space-y-2">
+        <div class="bg-slate-900/80 p-3.5 rounded-xl border border-emerald-500/40 space-y-2">
           <div class="flex items-center justify-between">
             <label class="block text-xs font-bold text-emerald-400">實際完修日期 (actual_restore_date)</label>
-            <button type="button" onclick="document.getElementById('formActualRestoreDate').value = new Date().toISOString().split('T')[0]" class="text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 px-2.5 py-1 rounded border border-emerald-500/30 font-semibold">
-              填入今日完修
+            <button type="button" onclick="fillTodayRestoreDate()" class="px-2.5 py-1 bg-emerald-600/40 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded text-[11px] font-bold border border-emerald-500/50 transition">
+              <i class="fa-solid fa-calendar-check mr-1"></i>填入今日完修
             </button>
           </div>
-          <input type="date" id="formActualRestoreDate" class="w-full bg-slate-800 rounded-lg p-2.5 text-sm border border-slate-600 text-white focus:outline-none focus:border-emerald-500 min-h-[44px]">
-          <p class="text-[11px] text-slate-400">※ 填寫完修日期後點位轉為綠色，並將<strong>自動從《附件二十四》報表中排除</strong>。</p>
+          <input type="date" id="formActualRestoreDate" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
+          <p class="text-[11px] text-slate-400">※ 填寫完修日期後點位轉為綠色，且自動從《附件二十四》報表中排除（只保留待修項目）。</p>
         </div>
 
         <!-- 預計修復方式單選與延伸欄位 -->
@@ -491,9 +511,9 @@
           <textarea id="formDescription" rows="2" placeholder="備註現況..." class="w-full bg-slate-900 rounded-lg p-2.5 text-xs border border-slate-700 text-white"></textarea>
         </div>
 
-        <!-- 原生手機相機直拍支援 -->
+        <!-- 現場照片上傳 -->
         <div>
-          <label class="block text-xs font-semibold mb-1">現場照片 (可直接點擊開啟手機相機拍照)</label>
+          <label class="block text-xs font-semibold mb-1">現場照片 (支援手機直拍)</label>
           <input type="file" id="formPhotoInput" accept="image/*" capture="environment" multiple onchange="handlePhotoUpload(event)" class="hidden">
           <div class="flex gap-2">
             <button type="button" onclick="document.getElementById('formPhotoInput').click()" class="touch-target px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
@@ -503,32 +523,29 @@
           <div id="photoPreviewStrip" class="flex space-x-2 overflow-x-auto py-2 mt-2"></div>
         </div>
 
-        <div class="pt-3 flex flex-wrap gap-2 justify-between items-center border-t border-slate-700">
-          <button type="button" id="btnDeletePin" onclick="confirmDeletePin()" class="hidden px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs min-h-[44px]">刪除點位</button>
-
+        <div class="pt-3 flex justify-between items-center border-t border-slate-700">
+          <button type="button" id="btnDeletePinForm" onclick="requestDeletePinFromForm()" class="hidden px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs min-h-[44px]">
+            <i class="fa-solid fa-trash-can mr-1"></i> 刪除點位
+          </button>
           <div class="flex gap-2 ml-auto">
-            <button type="button" onclick="copySinglePinSummary()" class="px-3.5 py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-xs min-h-[44px] shadow flex items-center gap-1">
-              <i class="fa-solid fa-copy"></i> 複製回報文字
-            </button>
             <button type="button" onclick="closeModal('pinModal')" class="px-4 py-3 bg-slate-700 text-slate-300 rounded-xl text-xs min-h-[44px]">取消</button>
-            <button type="submit" class="touch-target px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-md flex items-center justify-center">儲存點位資料</button>
+            <button type="submit" class="touch-target px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-md flex items-center justify-center">儲存巡檢紀錄</button>
           </div>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- 刪除點位確認對話框 -->
+  <!-- 彈窗 4：自訂刪除確認 Modal -->
   <div id="confirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 text-center space-y-4 shadow-2xl">
-      <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center text-xl">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-      </div>
-      <h3 class="text-base font-bold text-white">確定刪除此點位？</h3>
-      <p class="text-xs text-slate-400">刪除後該筆巡檢點位紀錄將無法恢復。</p>
-      <div class="flex gap-2 pt-1">
-        <button onclick="closeConfirmModal(false)" class="flex-1 py-2.5 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">取消</button>
-        <button onclick="closeConfirmModal(true)" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs">確定刪除</button>
+    <div class="bg-slate-800 rounded-2xl border border-rose-500/50 max-w-sm w-full p-6 text-slate-100 relative shadow-2xl">
+      <h3 class="text-lg font-bold text-rose-400 mb-2 flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation text-xl"></i> 確認刪除點位？
+      </h3>
+      <p id="confirmModalText" class="text-xs text-slate-300 mb-6 leading-relaxed">此動作將永久移除該筆巡檢資料與相關圖片紀錄，無法復原。</p>
+      <div class="flex gap-2">
+        <button id="btnConfirmDeleteAction" class="touch-target flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs shadow flex items-center justify-center">確定刪除</button>
+        <button onclick="closeModal('confirmModal')" class="px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs min-h-[44px]">取消</button>
       </div>
     </div>
   </div>
@@ -538,7 +555,6 @@
     <div class="text-center font-black text-xl mb-0.5 tracking-wider">臺北大巨蛋設施設備損害異常紀錄表</div>
     <div class="text-center text-[10px] text-gray-600 mb-2 font-semibold">（表單編號：DI-VM-05-2023-01）</div>
 
-    <!-- 抬頭檔期資訊區塊 -->
     <div class="border-2 border-black p-2.5 text-xs space-y-1 mb-2.5 bg-gray-50/30 print-keep-together">
       <div class="flex justify-between items-center border-b border-gray-300 pb-1">
         <span class="text-xs"><strong>活動名稱：</strong><span id="rptActivityName" class="font-bold underline">--</span></span>
@@ -549,7 +565,6 @@
       </div>
     </div>
 
-    <!-- 損害異常表格 -->
     <table class="w-full border-collapse border-2 border-black text-xs mb-3">
       <thead>
         <tr class="bg-gray-200 text-center font-bold border-b-2 border-black">
@@ -562,7 +577,6 @@
       <tbody id="rptTableBody"></tbody>
     </table>
 
-    <!-- 雙方代表簽署欄 -->
     <div class="mb-3 border-2 border-black p-2 text-xs bg-gray-50/50 print-keep-together">
       <div class="font-bold border-b border-black pb-1 mb-1.5 text-xs flex items-center justify-between">
         <span>✍️ 現場驗收與損害確認雙方簽章</span>
@@ -580,7 +594,6 @@
       </div>
     </div>
 
-    <!-- 四科室會簽與審核欄位 -->
     <div class="border-2 border-black text-xs print-keep-together">
       <div class="bg-gray-200 p-1 font-bold border-b-2 border-black text-center text-xs tracking-wide">
         遠雄巨蛋公司內部會簽與審核區
@@ -606,29 +619,43 @@
     </div>
   </div>
 
-  <!-- 系統核心前端控制邏輯 -->
+  <!-- 核心邏輯腳本 -->
   <script>
+    // 永久連線 Supabase 雲端
     const SUPABASE_URL = 'https://pmwnnkemklbeuzupdvlq.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_XFUvaEUIqj8KKmVAgjpMqA_XpEyI11e';
 
+    const GITHUB_BASE = 'https://raw.githubusercontent.com/Bond-Taipei-Dome/TaipeiDome-maps/main/';
+    const CDN_BASE = 'https://cdn.jsdelivr.net/gh/Bond-Taipei-Dome/TaipeiDome-maps@main/';
+
+    // 13 大獨立樓層與剖面圖配置對照表
     window.MAPS = {
-      'map-b2-b1': {
-        id: 'map-b2-b1',
-        name: 'B2 / B1層 專有共用區分圖',
-        url: 'https://raw.githubusercontent.com/Bond-Taipei-Dome/TaipeiDome-maps/main/taipeidome-map-b2%26b1.jpg',
-        cdnUrl: 'https://cdn.jsdelivr.net/gh/Bond-Taipei-Dome/TaipeiDome-maps@main/taipeidome-map-b2%26b1.jpg'
-      },
-      'map-l1-l5': {
-        id: 'map-l1-l5',
-        name: 'L1 ~ L5層 專有共用區分圖',
-        url: 'https://raw.githubusercontent.com/Bond-Taipei-Dome/TaipeiDome-maps/main/taipeidome-map-L1toL5.jpg',
-        cdnUrl: 'https://cdn.jsdelivr.net/gh/Bond-Taipei-Dome/TaipeiDome-maps@main/taipeidome-map-L1toL5.jpg'
-      }
+      'map-b2': { id: 'map-b2', name: 'B2 層平面圖', file: 'B2 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-b1': { id: 'map-b1', name: 'B1 層平面圖', file: 'B1 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-l1': { id: 'map-l1', name: 'L1 層平面圖', file: 'L1 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-l2': { id: 'map-l2', name: 'L2 層平面圖', file: 'L2 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-l3': { id: 'map-l3', name: 'L3 層平面圖', file: 'L3 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-l4': { id: 'map-l4', name: 'L4 層平面圖', file: 'L4 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-l5': { id: 'map-l5', name: 'L5 層平面圖', file: 'L5 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-l6': { id: 'map-l6', name: 'L6 層平面圖', file: 'L6 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-rf': { id: 'map-rf', name: 'RF 屋頂層平面圖', file: 'RF 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-sec-north': { id: 'map-sec-north', name: '北向剖面圖', file: '北向剖面圖 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-sec-south': { id: 'map-sec-south', name: '南向剖面圖', file: '南向剖面圖 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-sec-east': { id: 'map-sec-east', name: '東向剖面圖', file: '東向剖面圖 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
+      'map-sec-west': { id: 'map-sec-west', name: '西向剖面圖', file: '西向剖面圖 臺北大巨蛋 Scan to CAD_page-0001.jpg' }
     };
 
-    window.currentMapId = 'map-b2-b1';
+    // 動態補齊完整的 Raw 與 CDN 連結
+    Object.keys(window.MAPS).forEach(key => {
+      const encodedFile = encodeURIComponent(window.MAPS[key].file);
+      window.MAPS[key].url = GITHUB_BASE + encodedFile;
+      window.MAPS[key].cdnUrl = CDN_BASE + encodedFile;
+    });
+
+    window.ROLES = { VISITOR: 'visitor', ADMIN: 'admin', SUPERADMIN: 'superadmin' };
+    window.currentMapId = 'map-b2';
     window.currentMainView = 'map';
-    window.currentRole = 'visitor';
+    window.currentRole = window.ROLES.VISITOR;
     window.pins = [];
     window.activeImages = [];
     window.supabaseClient = null;
@@ -674,7 +701,6 @@
           if (window.currentMainView === 'list') renderListViewTable();
         }
       } catch (err) {
-        console.warn('Cloud fetch warning, using local cache:', err);
         const cached = localStorage.getItem('dome_pins_cache');
         if (cached) {
           window.pins = JSON.parse(cached);
@@ -721,7 +747,7 @@
       let filtered = window.pins.filter(p => {
         const pMap = p.map_id || p.mapId;
         const matchesFloor = floorFilter === 'all' || pMap === floorFilter;
-        const matchesStatus = statusFilter === 'all' || (statusFilter === 'restored' ? !!p.actual_restore_date : !p.actual_restore_date);
+        const matchesStatus = statusFilter === 'all' || (statusFilter === 'restored' ? p.actual_restore_date : !p.actual_restore_date);
         const matchesKey = !keyword || 
           (p.title || '').toLowerCase().includes(keyword) ||
           (p.department || '').toLowerCase().includes(keyword) ||
@@ -736,29 +762,29 @@
       }
 
       tbody.innerHTML = filtered.map(p => {
-        const mapName = window.MAPS[p.map_id || p.mapId]?.name.split(' ')[0] || '樓層';
+        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資區域';
         const isRestored = !!p.actual_restore_date;
+        const canDelete = window.currentRole === window.ROLES.SUPERADMIN;
         return `
           <tr class="hover:bg-slate-700/40 transition">
             <td class="py-3.5 px-4 whitespace-nowrap">
               <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isRestored ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'}">
-                ${isRestored ? '🟢 已完修' : '🔴 待修復'}
+                ${isRestored ? '🟢 已修復' : '🔴 待修復'}
               </span>
             </td>
             <td class="py-3.5 px-4 font-semibold text-indigo-300">${mapName}</td>
             <td class="py-3.5 px-4">
-              <div class="font-bold text-white text-sm">${escapeHtml(p.title)}</div>
-              ${p.activity_name ? `<div class="text-[11px] text-amber-400 mt-0.5"><i class="fa-solid fa-tag mr-1"></i>${escapeHtml(p.activity_name)}</div>` : ''}
+              <div class="font-bold text-white text-sm">${p.title}</div>
+              ${p.activity_name ? `<div class="text-[11px] text-amber-400 mt-0.5"><i class="fa-solid fa-tag mr-1"></i>${p.activity_name}</div>` : ''}
             </td>
-            <td class="py-3.5 px-4 text-slate-300">${escapeHtml(p.department || '未指定')}</td>
-            <td class="py-3.5 px-4 text-slate-300">${escapeHtml(p.repair_option || '待確定')}</td>
-            <td class="py-3.5 px-4 text-right space-x-2">
-              <button onclick="locatePinOnMap('${p.id}')" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs transition shadow">
+            <td class="py-3.5 px-4 text-slate-300">${p.department || '未指定'}</td>
+            <td class="py-3.5 px-4 text-slate-300">${p.repair_option || '待確定'}</td>
+            <td class="py-3.5 px-4 text-right space-x-1.5">
+              <button onclick="locatePinOnMap('${p.id}')" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs transition shadow">
                 <i class="fa-solid fa-crosshairs"></i> 定位
               </button>
-              <button onclick="editPin('${p.id}')" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold rounded-lg text-xs transition">
-                <i class="fa-solid fa-pen"></i> 編輯
-              </button>
+              ${window.currentRole !== window.ROLES.VISITOR ? `<button onclick="editPin('${p.id}')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold rounded-lg text-xs transition"><i class="fa-solid fa-pen"></i> 編輯</button>` : ''}
+              ${canDelete ? `<button onclick="requestDeletePinDirect('${p.id}')" class="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg text-xs transition shadow"><i class="fa-solid fa-trash"></i></button>` : ''}
             </td>
           </tr>
         `;
@@ -791,52 +817,42 @@
 
     window.openModal = (id) => document.getElementById(id)?.classList.remove('hidden');
     window.closeModal = (id) => document.getElementById(id)?.classList.add('hidden');
-    
     window.showToast = (msg, type = 'success') => {
       const toast = document.getElementById('toastContainer');
       if (!toast) return;
       const item = document.createElement('div');
-      item.className = `toast-item flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-semibold shadow-2xl backdrop-blur transition-all duration-300 ${type === 'success' ? 'bg-emerald-600/95 border-emerald-400 text-white' : 'bg-slate-800/95 border-amber-500 text-amber-300'}`;
-      item.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check text-emerald-300' : 'fa-circle-exclamation text-amber-400'}"></i><span>${escapeHtml(msg)}</span>`;
+      item.className = `toast-item flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-semibold shadow-2xl backdrop-blur transition-all duration-300 ${type === 'success' ? 'bg-emerald-600/95 border-emerald-400 text-white' : (type === 'error' ? 'bg-rose-600/95 border-rose-400 text-white' : 'bg-slate-800/95 border-amber-500 text-amber-300')}`;
+      item.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-info'}"></i><span>${msg}</span>`;
       toast.appendChild(item);
       setTimeout(() => item.remove(), 3200);
     };
 
-    // 一鍵複製單筆案件回報文字
     window.copySinglePinSummary = function() {
-      const title = document.getElementById('formTitle').value.trim();
-      const activity = document.getElementById('formActivityName').value.trim();
-      const dept = document.getElementById('formDepartment').value.trim();
-      const date = document.getElementById('formDamageDate').value;
-      const repair = document.querySelector('input[name="repairOption"]:checked')?.value || '待確定';
-      const desc = document.getElementById('formDescription').value.trim();
-      const mapName = window.MAPS[window.currentMapId]?.name || '場館平面';
+      const pinId = document.getElementById('formPinId').value;
+      const pin = window.pins.find(p => p.id === pinId);
+      if (!pin) return showToast('請先選擇或儲存點位', 'info');
 
-      if (!title) {
-        showToast('請先填寫或選擇巡檢點位項目！', 'info');
-        return;
-      }
-
+      const mapName = window.MAPS[pin.map_id || pin.mapId]?.name || '圖資區域';
+      const statusText = pin.actual_restore_date ? '🟢 已修復' : '🔴 待修復';
       const text = `【大巨蛋場務巡檢通報】\n` +
         `------------------------\n` +
-        `● 損壞項目：${title}\n` +
-        `● 樓層位置：${mapName}\n` +
-        `● 責任單位：${dept || '未指定'}\n` +
-        `● 損害日期：${date || '未指定'}\n` +
-        `● 修復方式：${repair}\n` +
-        (activity ? `● 活動檔期：${activity}\n` : '') +
-        `● 現況描述：${desc || '無備註'}\n` +
+        `● 案件名稱：${pin.title}\n` +
+        `● 圖資區域：${mapName}\n` +
+        `● 案件狀態：${statusText}\n` +
+        `● 責任單位：${pin.department || '未指定'}\n` +
+        `● 損害日期：${pin.damage_date || '未指定'}\n` +
+        `● 預計修復：${pin.repair_option || '待確定'}\n` +
+        `● 現況說明：${pin.description || '無備註'}\n` +
         `------------------------\n` +
         `（來自 臺北大巨蛋場務管理系統）`;
 
       navigator.clipboard.writeText(text).then(() => {
         showToast('已複製回報文字！可直接貼至 LINE 群組', 'success');
       }).catch(() => {
-        showToast('複製失敗，請手動選取文字', 'info');
+        showToast('複製失敗，請手動複製', 'error');
       });
     };
 
-    // 一鍵複製全場館待修清單
     window.copyPendingListSummary = function() {
       const activeId = localStorage.getItem('dome_active_header_id') || '';
       const list = getStoredHeaderList();
@@ -848,7 +864,7 @@
       }
 
       if (pendingPins.length === 0) {
-        return showToast('當前檔期下無任何「待修復」案件需要通報！', 'info');
+        return showToast('當前視角下無任何「待修復」案件需要通報！', 'info');
       }
 
       let summary = `🚨【臺北大巨蛋 待修復異常通報清單】🚨\n`;
@@ -857,17 +873,17 @@
       summary += `========================\n`;
 
       pendingPins.forEach((p, idx) => {
-        const mapName = window.MAPS[p.map_id || p.mapId]?.name.split(' ')[0] || '樓層';
+        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資區域';
         summary += `${idx + 1}. [${mapName}] ${p.title}\n`;
         summary += `   • 責任單位：${p.department || '未指定'} | 修復方式：${p.repair_option || '待確定'}\n`;
         if (p.description) summary += `   • 備註：${p.description}\n`;
       });
-      summary += `========================\n（報告發出時間：${new Date().toLocaleString()}）`;
+      summary += `========================\n（報告時間：${formatDateToTwFullString(new Date())}）`;
 
       navigator.clipboard.writeText(summary).then(() => {
         showToast(`已成功複製 ${pendingPins.length} 筆待修復通報文字！`, 'success');
       }).catch(() => {
-        showToast('複製失敗，請手動複製', 'info');
+        showToast('複製失敗，請手動複製', 'error');
       });
     };
 
@@ -995,8 +1011,8 @@
 
       stage.onclick = (e) => {
         if (dragDistance > 8) return;
-        if (window.currentRole === 'visitor') {
-          showToast('目前為訪客唯讀模式，請點擊右上角解鎖權限！', 'info');
+        if (window.currentRole === window.ROLES.VISITOR) {
+          showToast('目前為訪客唯讀模式，請點擊右上角「權限」進行解鎖！', 'info');
           openModal('loginModal');
           return;
         }
@@ -1056,7 +1072,7 @@
       const selector = document.getElementById('activeHeaderSelector');
       if (selector) {
         selector.innerHTML = '<option value="">-- 無預設檔期 (手動填寫) --</option>' +
-          list.map(h => `<option value="${h.id}" ${h.id === activeId ? 'selected' : ''}>${escapeHtml(h.activity)} (${escapeHtml(h.unit || '未設定單位')})</option>`).join('');
+          list.map(h => `<option value="${h.id}" ${h.id === activeId ? 'selected' : ''}>${h.activity} (${h.unit || '未設定單位'})</option>`).join('');
       }
 
       const container = document.getElementById('savedHeaderList');
@@ -1068,10 +1084,10 @@
             <div class="flex items-center justify-between p-3 bg-slate-900/80 rounded-lg border ${h.id === activeId ? 'border-amber-500 bg-amber-500/10' : 'border-slate-700'} text-xs">
               <div class="flex-1 pr-2">
                 <div class="font-bold text-white text-sm flex items-center gap-2">
-                  ${escapeHtml(h.activity)}
+                  ${h.activity}
                   ${h.id === activeId ? '<span class="bg-amber-500 text-slate-950 px-2 py-0.5 rounded text-[10px] font-black">使用中</span>' : ''}
                 </div>
-                <div class="text-slate-400 mt-0.5">單位: ${escapeHtml(h.unit || '未指定')} | 期間: ${h.start ? h.start.replace('T', ' ') : '--'} ~ ${h.end ? h.end.replace('T', ' ') : '--'}</div>
+                <div class="text-slate-400 mt-0.5">單位: ${h.unit || '未指定'} | 期間: ${h.start ? h.start.replace('T', ' ') : '--'} ~ ${h.end ? h.end.replace('T', ' ') : '--'}</div>
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
                 <button onclick="editProjectHeader('${h.id}')" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-amber-300 rounded font-semibold min-h-[40px]">編輯</button>
@@ -1085,7 +1101,7 @@
       const headerText = document.getElementById('headerActiveProjectText');
       const activeHeader = list.find(h => h.id === activeId);
       if (headerText) {
-        headerText.innerHTML = `<i class="fa-solid fa-file-signature mr-1"></i>當前檔期：${activeHeader ? escapeHtml(activeHeader.activity) : '未設定'}`;
+        headerText.innerHTML = `<i class="fa-solid fa-file-signature mr-1"></i>當前檔期：${activeHeader ? activeHeader.activity : '未設定'}`;
       }
     }
 
@@ -1103,7 +1119,7 @@
       const start = document.getElementById('globalRentStartDate')?.value;
       const end = document.getElementById('globalRentEndDate')?.value;
 
-      if (!activity) return showToast('請填寫活動名稱！', 'info');
+      if (!activity) return showToast('請填寫活動名稱！', 'error');
 
       let list = getStoredHeaderList();
       if (editId) {
@@ -1154,26 +1170,31 @@
     window.submitAuthPassword = function() {
       const pwd = document.getElementById('inputAuthPassword').value.trim();
       if (pwd === 'superadmin') {
-        window.currentRole = 'superadmin';
+        window.currentRole = window.ROLES.SUPERADMIN;
         document.getElementById('userRoleText').innerText = '超級管理員';
         closeModal('loginModal');
-        showToast('超級管理員權限已解鎖！(具刪除權限)', 'success');
+        showToast('超級管理員權限已解鎖 (具刪除點位權限)', 'success');
       } else if (pwd === 'admin') {
-        window.currentRole = 'admin';
+        window.currentRole = window.ROLES.ADMIN;
         document.getElementById('userRoleText').innerText = '巡檢管理員';
         closeModal('loginModal');
-        showToast('巡檢管理員權限已解鎖！', 'success');
+        showToast('巡檢管理員權限已解鎖', 'success');
       } else {
-        showToast('密碼錯誤 (管理員: admin / 超級管理員: superadmin)', 'info');
+        showToast('通行密碼不正確', 'error');
       }
     };
 
     window.resetToGuest = function() {
-      window.currentRole = 'visitor';
-      document.getElementById('userRoleText').innerText = '訪客(唯讀)';
+      window.currentRole = window.ROLES.VISITOR;
+      document.getElementById('userRoleText').innerText = '訪客';
       closeModal('loginModal');
       showToast('已切換為訪客模式', 'info');
     };
+
+    function safeFormatForDatetimeInput(dtStr) {
+      if (!dtStr) return '';
+      return dtStr.length === 16 ? dtStr : dtStr.substring(0, 16);
+    }
 
     function openPinModalForCreate(x, y) {
       document.getElementById('pinModalTitle').innerText = '新增損壞巡檢點';
@@ -1183,7 +1204,8 @@
       document.getElementById('formCoordX').value = x.toFixed(2);
       document.getElementById('formCoordY').value = y.toFixed(2);
       document.getElementById('formActualRestoreDate').value = '';
-      document.getElementById('btnDeletePin').classList.add('hidden');
+      document.getElementById('btnDeletePinForm').classList.add('hidden');
+      document.getElementById('btnShareSinglePin').classList.add('hidden');
 
       const list = getStoredHeaderList();
       const activeId = localStorage.getItem('dome_active_header_id') || '';
@@ -1192,8 +1214,8 @@
       if (activeHeader) {
         if (activeHeader.activity) document.getElementById('formActivityName').value = activeHeader.activity;
         if (activeHeader.unit) document.getElementById('formRenterUnit').value = activeHeader.unit;
-        if (activeHeader.start) document.getElementById('formRentStartDate').value = activeHeader.start;
-        if (activeHeader.end) document.getElementById('formRentEndDate').value = activeHeader.end;
+        if (activeHeader.start) document.getElementById('formRentStartDate').value = safeFormatForDatetimeInput(activeHeader.start);
+        if (activeHeader.end) document.getElementById('formRentEndDate').value = safeFormatForDatetimeInput(activeHeader.end);
       }
 
       document.getElementById('formDamageDate').value = new Date().toISOString().split('T')[0];
@@ -1204,7 +1226,7 @@
     }
 
     window.editPin = function(id) {
-      const pin = window.pins.find(p => String(p.id) === String(id));
+      const pin = window.pins.find(p => p.id === id);
       if (!pin) return;
 
       document.getElementById('pinModalTitle').innerText = '編輯損壞巡檢點';
@@ -1215,20 +1237,21 @@
       document.getElementById('formTitle').value = pin.title || '';
       document.getElementById('formActivityName').value = pin.activity_name || '';
       document.getElementById('formRenterUnit').value = pin.renter_unit || '';
-      document.getElementById('formRentStartDate').value = pin.rent_start_date || '';
-      document.getElementById('formRentEndDate').value = pin.rent_end_date || '';
+      document.getElementById('formRentStartDate').value = safeFormatForDatetimeInput(pin.rent_start_date);
+      document.getElementById('formRentEndDate').value = safeFormatForDatetimeInput(pin.rent_end_date);
       document.getElementById('formDepartment').value = pin.department || '';
       document.getElementById('formDamageDate').value = pin.damage_date || '';
-      document.getElementById('formActualRestoreDate').value = pin.actual_restore_date || '';
       document.getElementById('formConstructorName').value = pin.constructor_name || '';
       document.getElementById('formConstructDate').value = pin.construct_date || '';
+      document.getElementById('formActualRestoreDate').value = pin.actual_restore_date || '';
       document.getElementById('formDescription').value = pin.description || '';
 
-      const btnDelete = document.getElementById('btnDeletePin');
-      if (window.currentRole === 'superadmin') {
-        btnDelete.classList.remove('hidden');
-      } else {
-        btnDelete.classList.add('hidden');
+      document.getElementById('btnShareSinglePin').classList.remove('hidden');
+
+      const deleteBtn = document.getElementById('btnDeletePinForm');
+      if (deleteBtn) {
+        if (window.currentRole === window.ROLES.SUPERADMIN) deleteBtn.classList.remove('hidden');
+        else deleteBtn.classList.add('hidden');
       }
 
       const radios = document.getElementsByName('repairOption');
@@ -1238,6 +1261,12 @@
       renderPhotoPreviews();
       toggleRepairFields();
       openModal('pinModal');
+    };
+
+    window.fillTodayRestoreDate = function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('formActualRestoreDate').value = today;
+      showToast('已填入今日完修日期！', 'success');
     };
 
     window.toggleRepairFields = () => {
@@ -1258,10 +1287,6 @@
 
     window.handlePhotoUpload = (e) => {
       const files = Array.from(e.target.files);
-      if (window.activeImages.length + files.length > 5) {
-        showToast('最多上傳 5 張現場巡檢照片！', 'info');
-        return;
-      }
       files.forEach(f => {
         const reader = new FileReader();
         reader.onload = (ev) => {
@@ -1285,8 +1310,7 @@
 
     window.handleSavePin = async (e) => {
       e.preventDefault();
-      const rawId = document.getElementById('formPinId').value;
-      const pinId = rawId || `pin-${Date.now()}`;
+      const pinId = document.getElementById('formPinId').value || `pin-${Date.now()}`;
       
       const pinData = {
         id: pinId,
@@ -1300,15 +1324,15 @@
         rent_end_date: document.getElementById('formRentEndDate').value,
         department: document.getElementById('formDepartment').value.trim(),
         damage_date: document.getElementById('formDamageDate').value,
-        actual_restore_date: document.getElementById('formActualRestoreDate').value || null,
         repair_option: document.querySelector('input[name="repairOption"]:checked')?.value || '待確定',
         constructor_name: document.getElementById('formConstructorName').value.trim(),
         construct_date: document.getElementById('formConstructDate').value,
+        actual_restore_date: document.getElementById('formActualRestoreDate').value || null,
         description: document.getElementById('formDescription').value.trim(),
         images: [...window.activeImages]
       };
 
-      const idx = window.pins.findIndex(p => String(p.id) === String(pinId));
+      const idx = window.pins.findIndex(p => p.id === pinId);
       if (idx >= 0) window.pins[idx] = pinData;
       else window.pins.push(pinData);
 
@@ -1317,7 +1341,7 @@
       if (window.supabaseClient) {
         const { error } = await window.supabaseClient.from('pins').upsert([pinData]);
         if (error) {
-          showToast('雲端同步中，已同步至本地快取！', 'info');
+          showToast('雲端同步失敗，已儲存至本機！', 'error');
         } else {
           showToast('巡檢點位已成功同步至雲端！', 'success');
         }
@@ -1327,72 +1351,90 @@
       closeModal('pinModal');
     };
 
-    let targetDeletePinId = null;
-    window.confirmDeletePin = function() {
-      if (window.currentRole !== 'superadmin') {
-        showToast('權限不足：僅有超級管理員具備刪除點位權限！', 'info');
-        return;
-      }
-      targetDeletePinId = document.getElementById('formPinId').value;
-      if (targetDeletePinId) {
-        openModal('confirmModal');
-      }
-    };
-
-    window.closeConfirmModal = async function(confirmed) {
-      closeModal('confirmModal');
-      if (confirmed && targetDeletePinId) {
-        window.pins = window.pins.filter(p => String(p.id) !== String(targetDeletePinId));
-        localStorage.setItem('dome_pins_cache', JSON.stringify(window.pins));
-
-        if (window.supabaseClient) {
-          await window.supabaseClient.from('pins').delete().eq('id', targetDeletePinId);
-        }
-
-        renderPins();
+    window.requestDeletePinFromForm = function() {
+      const pinId = document.getElementById('formPinId').value;
+      if (pinId) {
         closeModal('pinModal');
-        showToast('點位已順利刪除', 'info');
+        requestDeletePinDirect(pinId);
       }
-      targetDeletePinId = null;
     };
 
-    // 《附件二十四》Word 檔標準 A4 官方報表匯出引擎
+    window.requestDeletePinDirect = function(pinId) {
+      if (window.currentRole !== window.ROLES.SUPERADMIN) {
+        return showToast('僅有超級管理員具備刪除權限！', 'error');
+      }
+
+      const confirmBtn = document.getElementById('btnConfirmDeleteAction');
+      if (confirmBtn) {
+        confirmBtn.onclick = async () => {
+          window.pins = window.pins.filter(p => p.id !== pinId);
+          localStorage.setItem('dome_pins_cache', JSON.stringify(window.pins));
+
+          if (window.supabaseClient) {
+            await window.supabaseClient.from('pins').delete().eq('id', pinId);
+          }
+
+          renderPins();
+          if (window.currentMainView === 'list') renderListViewTable();
+          closeModal('confirmModal');
+          showToast('點位已永久刪除', 'info');
+        };
+      }
+      openModal('confirmModal');
+    };
+
+    function formatDateToTwFullString(dtStr) {
+      if (!dtStr) return '--';
+      try {
+        const d = new Date(dtStr);
+        if (isNaN(d.getTime())) return dtStr;
+        const pad = n => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      } catch(e) { return dtStr; }
+    }
+
     window.exportAppendix24ModeA = function() {
       const list = getStoredHeaderList();
       const activeId = localStorage.getItem('dome_active_header_id') || '';
       const activeHeader = list.find(h => h.id === activeId) || {};
 
-      let pendingPins = window.pins.filter(p => !p.actual_restore_date);
+      let pinsToExport = [];
+      if (window.currentMainView === 'map') {
+        pinsToExport = (window.pins || []).filter(p => (p.map_id || p.mapId) === window.currentMapId);
+      } else {
+        pinsToExport = window.pins;
+      }
 
       if (activeHeader.activity) {
-        pendingPins = pendingPins.filter(p => p.activity_name === activeHeader.activity);
+        pinsToExport = pinsToExport.filter(p => p.activity_name === activeHeader.activity);
       }
 
-      if (pendingPins.length === 0) {
-        showToast('當前檔期下無任何「待修復」案件需要產製《附件二十四》！', 'info');
-        return;
+      pinsToExport = pinsToExport.filter(p => !p.actual_restore_date);
+
+      if (pinsToExport.length === 0) {
+        return showToast('當前檔期與視角下無任何「待修復」損害案件可供列印！', 'info');
       }
 
-      generateAppendix24Printout(pendingPins, activeHeader);
+      generateAppendix24Printout(pinsToExport, activeHeader);
     };
 
     function generateAppendix24Printout(pinsList, headerData = {}) {
       document.getElementById('rptActivityName').innerText = headerData.activity || pinsList[0]?.activity_name || '未指定活動';
       document.getElementById('rptRenterUnit').innerText = headerData.unit || pinsList[0]?.renter_unit || '未指定單位';
       
-      const startDisplay = headerData.start ? headerData.start.replace('T', ' ') : (pinsList[0]?.rent_start_date ? pinsList[0].rent_start_date.replace('T', ' ') : '--');
-      const endDisplay = headerData.end ? headerData.end.replace('T', ' ') : (pinsList[0]?.rent_end_date ? pinsList[0].rent_end_date.replace('T', ' ') : '--');
+      const startDisplay = formatDateToTwFullString(headerData.start || pinsList[0]?.rent_start_date);
+      const endDisplay = formatDateToTwFullString(headerData.end || pinsList[0]?.rent_end_date);
       document.getElementById('rptRentDates').innerText = `${startDisplay} ~ ${endDisplay}`;
 
       const tbody = document.getElementById('rptTableBody');
       tbody.innerHTML = pinsList.map((p, i) => {
-        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '專有共用區';
+        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資區域';
         return `
           <tr class="align-top print-keep-together">
             <td class="border border-black p-2 text-center font-bold">${i + 1}</td>
             <td class="border border-black p-2 space-y-1.5">
               <div><span class="font-bold text-gray-700">【位置】：</span><span class="font-semibold">${mapName} (${p.x}%, ${p.y}%)</span></div>
-              <div><span class="font-bold text-gray-700">【名稱】：</span><span class="font-bold text-black text-sm">${escapeHtml(p.title)}</span></div>
+              <div><span class="font-bold text-gray-700">【名稱】：</span><span class="font-bold text-black text-sm">${p.title}</span></div>
               ${p.images && p.images.length > 0 ? `
                 <div class="pt-1">
                   <img src="${p.images[0]}" class="print-img-limit max-h-24 object-contain rounded border border-gray-400">
@@ -1403,20 +1445,19 @@
               <div><span class="font-bold text-gray-700">損害發生日期：</span><br><span class="font-mono">${p.damage_date || '未紀錄'}</span></div>
               <div class="pt-1 border-t border-gray-200">
                 <span class="font-bold text-gray-700">原因與損害說明：</span>
-                <p class="text-xs text-gray-800 whitespace-pre-wrap mt-0.5">${escapeHtml(p.description || '無詳細說明')}</p>
+                <p class="text-xs text-gray-800 whitespace-pre-wrap mt-0.5">${p.description || '無詳細說明'}</p>
               </div>
             </td>
             <td class="border border-black p-2 space-y-2">
               <div class="space-y-1">
                 <div class="flex items-center gap-1 font-bold">
                   <span>■</span>
-                  <span>${escapeHtml(p.repair_option || '租用方自行修復')}</span>
+                  <span>${p.repair_option || '租用方自行修復'}</span>
                 </div>
               </div>
-
               <div class="pt-1 border-t border-gray-200 text-[11px] space-y-1">
                 <div><strong>預計修復日期：</strong><span class="font-mono font-semibold">${p.construct_date || p.damage_date || '配合檔期排程'}</span></div>
-                ${p.constructor_name ? `<div><strong>施工單位：</strong>${escapeHtml(p.constructor_name)}</div>` : ''}
+                ${p.constructor_name ? `<div><strong>施工單位：</strong>${p.constructor_name}</div>` : ''}
               </div>
             </td>
           </tr>
@@ -1428,25 +1469,11 @@
       window.print();
       setTimeout(() => printArea.classList.add('hidden'), 500);
     }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-    }
   </script>
 </body>
 </html>
-```
+```eof
 
----
+***
 
-### 💡 修正後的位置說明與操作指南
-
-1. **單筆案件一鍵複製（在視窗右上角與右下角）**：
-   * 當您點擊地圖上的紅點（例如您截圖中的 **`88格車擋`** 案件）開啟視窗時，現在在**視窗右上角標題旁邊**（【編輯損壞巡檢點】右側），以及**視窗右下角【取消】按鈕左邊**，都會出現青綠色的 **`[ 📋 複製回報文字 ]`** 按鈕！
-   * 點擊後，系統會自動生成排版好的文字，直接貼至 LINE 即可發送通報。
-
-2. **全場館待修案件一鍵複製（在頁面最上方）**：
-   * 點擊系統最上方導覽列右側的 **`[ 📋 通報分享 ]`** 按鈕，即可一次複製當前檔期所有未修復的案件清單。
-
-請您重新點擊 **`Preview`**（預覽）開啓，就能看到這兩個貼心的複製按鈕了！
+預覽檔案 `index.html` 已成功生成完成！現在您可以直接點擊畫面上方的 **Preview** 按鈕開啓視覺化頁面。
