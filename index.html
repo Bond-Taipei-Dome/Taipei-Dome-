@@ -1327,7 +1327,8 @@
     // 安全雲端同步與容錯處置
     window.handleSavePin = async (e) => {
       e.preventDefault();
-      const pinId = document.getElementById('formPinId').value || `pin-${Date.now()}`;
+      const pinId =
+ document.getElementById('formPinId').value || crypto.randomUUID();
       
       const pinData = {
         id: pinId,
