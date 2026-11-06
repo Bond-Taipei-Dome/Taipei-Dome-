@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>臺北大巨蛋場務管理系統 v2026.11.05</title>
+  <title>臺北大巨蛋場務管理與巡檢點位系統 v2026.11.06</title>
 
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase JS v2 -->
+  <!-- Supabase JS v2 CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- FontAwesome 6 -->
+  <!-- FontAwesome 6 圖示庫 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
@@ -22,6 +22,7 @@
       background-color: #090d16;
     }
 
+    /* 日期選擇器視覺美化 (深色模式) */
     input[type="date"]::-webkit-calendar-picker-indicator,
     input[type="datetime-local"]::-webkit-calendar-picker-indicator {
       filter: brightness(0) invert(1);
@@ -30,14 +31,17 @@
       transform: scale(1.2);
     }
 
+    /* 隱藏捲動條但維持滾動功能 */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+    /* 觸控目標尺寸優化 (防誤觸) */
     .touch-target {
       min-width: 48px;
       min-height: 48px;
     }
 
+    /* 地圖地標 Pin 動態與高對比樣式 */
     .custom-pin {
       position: absolute;
       width: 44px;
@@ -65,10 +69,12 @@
       border-color: #fde68a;
     }
 
+    /* 🔴 待修復脈衝紅點 */
     .pin-unrestored {
       background: radial-gradient(circle at 30% 30%, #f87171, #dc2626);
       animation: pulse-red 2.2s infinite;
     }
+    /* 🟢 已完修靜態綠點 */
     .pin-restored {
       background: radial-gradient(circle at 30% 30%, #34d399, #059669);
     }
@@ -128,12 +134,12 @@
 </head>
 <body class="bg-slate-950 text-slate-100 flex flex-col h-screen select-none">
 
-  <!-- Toast 提示容器 -->
+  <!-- Toast 訊息通知容器 -->
   <div id="toastContainer"></div>
 
-  <!-- 頂部導覽列 -->
+  <!-- 頂部主導覽列 -->
   <header class="h-20 bg-slate-900/95 backdrop-blur border-b border-slate-800 flex items-center justify-between px-3 sm:px-6 z-30 shrink-0 shadow-md">
-    <!-- 左側：標誌與樓層選單 -->
+    <!-- 左側：系統 LOGO 與當前檔期抬頭 -->
     <div class="flex items-center space-x-3 sm:space-x-4">
       <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-inner shrink-0">
         <i class="fa-solid fa-building-shield text-2xl"></i>
@@ -141,11 +147,10 @@
       <div>
         <div class="flex items-center gap-2">
           <h1 class="font-bold text-base sm:text-lg tracking-wide text-white leading-tight">臺北大巨蛋場務管理系統</h1>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">v2026.11.05</span>
-          <!-- 恆久雲端連線狀態標籤 -->
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">v2026.11.06</span>
           <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>🟢 雲端即時連線</span>
+            <span>🟢 雲端連線</span>
           </span>
         </div>
         <p id="headerActiveProjectText" class="text-xs text-amber-400/90 truncate max-w-[180px] sm:max-w-xs mt-0.5 font-medium">
@@ -153,7 +158,7 @@
         </p>
       </div>
 
-      <!-- 樓層選擇 -->
+      <!-- 樓層選擇下拉選單 -->
       <div class="relative ml-2">
         <select id="mapSelect" onchange="switchMap(this.value)" class="bg-slate-800 hover:bg-slate-750 text-amber-400 font-bold text-xs sm:text-sm rounded-lg pl-3 pr-8 py-2.5 border border-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer transition appearance-none min-h-[44px]">
           <option value="map-b2-b1">B2 / B1 地下層區</option>
@@ -163,7 +168,7 @@
       </div>
     </div>
 
-    <!-- 中間：視圖切換 (地圖 / 清單) -->
+    <!-- 中間：視圖切換按鈕 (地圖 / 清單) -->
     <div class="flex items-center space-x-3">
       <div class="flex bg-slate-800 rounded-lg p-1 border border-slate-700 text-sm">
         <button id="btnMapView" onclick="switchMainView('map')" class="px-3.5 sm:px-4 py-2 rounded-md bg-amber-500 text-slate-950 font-bold transition flex items-center gap-1.5 shadow min-h-[44px]">
@@ -176,9 +181,14 @@
       </div>
     </div>
 
-    <!-- 右側：功能按鈕群 -->
+    <!-- 右側：功能操作選單 -->
     <div class="flex items-center space-x-2">
-      <button onclick="openProjectHeaderManager()" class="flex items-center bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="管理與切換多筆活動檔期抬頭">
+      <!-- 快捷一鍵複製全待修通報按鈕 -->
+      <button onclick="copyPendingListSummary()" class="flex items-center bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="一鍵複製所有待修復案件通報文字（貼至 LINE）">
+        <i class="fa-solid fa-share-nodes mr-1.5"></i> <span class="hidden lg:inline">通報分享</span>
+      </button>
+
+      <button onclick="openProjectHeaderManager()" class="flex items-center bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="管理與切換活動檔期抬頭">
         <i class="fa-solid fa-folder-tree mr-1.5"></i> <span class="hidden md:inline">檔期抬頭</span>
       </button>
 
@@ -193,10 +203,10 @@
     </div>
   </header>
 
-  <!-- 主要內容區 -->
+  <!-- 主畫面內容容器 -->
   <main class="flex-1 relative overflow-hidden flex flex-col">
 
-    <!-- 1. 地圖視窗 -->
+    <!-- 1. 地圖檢視區 -->
     <div id="viewport" class="w-full h-full relative overflow-hidden bg-slate-950 touch-none cursor-grab active:cursor-grabbing">
       
       <div class="absolute top-3 left-3 z-20 pointer-events-none flex items-center gap-2">
@@ -206,11 +216,13 @@
         </div>
       </div>
 
+      <!-- 地圖載入中遮罩 -->
       <div id="mapLoadingOverlay" class="absolute inset-0 z-20 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity duration-300">
         <div class="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-3"></div>
         <p class="text-sm font-bold text-amber-400">正在同步雲端資料與載入高畫質圖資...</p>
       </div>
 
+      <!-- GPU 硬體加速地圖 Stage -->
       <div id="mapStage" class="absolute top-0 left-0 origin-top-left will-change-transform select-none">
         <div id="mapWrapper" class="relative inline-block">
           <img id="mapImage" src="" alt="臺北大巨蛋巡檢平面圖" class="block max-w-none select-none pointer-events-none" onload="onMapLoaded()" onerror="onMapError()">
@@ -218,7 +230,7 @@
         </div>
       </div>
 
-      <!-- 地圖縮放與圖例按鈕 -->
+      <!-- 地圖圖例與縮放控制列 -->
       <div class="absolute bottom-5 right-5 z-20 flex flex-col gap-2.5">
         <div class="bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl p-3 text-xs sm:text-sm space-y-2 shadow-xl">
           <div class="flex items-center justify-between gap-4">
@@ -245,14 +257,14 @@
           <button onclick="zoomMap(0.8)" class="touch-target hover:bg-slate-800 text-slate-200 hover:text-amber-400 transition border-t border-b border-slate-800 text-lg flex items-center justify-center" title="縮小">
             <i class="fa-solid fa-magnifying-glass-minus"></i>
           </button>
-          <button onclick="fitMapToScreen()" class="touch-target hover:bg-slate-800 text-slate-200 hover:text-amber-400 transition text-lg flex items-center justify-center" title="適應螢幕">
+          <button onclick="fitMapToScreen()" class="touch-target hover:bg-slate-800 text-slate-200 hover:text-amber-400 transition text-lg flex items-center justify-center" title="重設畫布">
             <i class="fa-solid fa-expand"></i>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- 2. 列表視窗 -->
+    <!-- 2. 案件清單 View (可多維度搜尋過濾與定位) -->
     <div id="listViewContainer" class="hidden w-full h-full p-4 sm:p-6 overflow-y-auto bg-slate-900 select-text">
       <div class="max-w-7xl mx-auto space-y-4">
         <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
@@ -267,6 +279,9 @@
               <option value="unrestored">🔴 待修復案件</option>
               <option value="restored">🟢 已完修案件</option>
             </select>
+            <button onclick="copyPendingListSummary()" class="bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-teal-500 transition min-h-[44px] flex items-center gap-1.5 shadow">
+              <i class="fa-solid fa-copy"></i> 一鍵複製待修清單
+            </button>
           </div>
           <div class="relative flex-1 sm:w-72">
             <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-3.5 top-1/2 -translate-y-1/2"></i>
@@ -288,7 +303,7 @@
                 </tr>
               </thead>
               <tbody id="listViewTableBody" class="divide-y divide-slate-700/70">
-                <!-- 動態渲染 -->
+                <!-- 動態載入點位清單 -->
               </tbody>
             </table>
           </div>
@@ -297,7 +312,7 @@
     </div>
   </main>
 
-  <!-- 彈窗 1：多筆專案抬頭管理 (Project Header Manager) -->
+  <!-- 彈窗 1：多筆活動檔期抬頭管理 -->
   <div id="projectHeaderModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-slate-800 rounded-2xl border border-indigo-500/50 max-w-2xl w-full p-6 text-slate-100 relative shadow-2xl max-h-[92vh] overflow-y-auto">
       <button onclick="closeModal('projectHeaderModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
@@ -305,7 +320,7 @@
         <div class="w-10 h-10 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-folder-tree"></i></div>
         <div>
           <h2 class="text-xl font-bold text-white">多檔期專案抬頭與責任歸屬管理</h2>
-          <p class="text-xs text-slate-300">建立與選擇不同活動檔期的租用抬頭，自動分類損害案件。</p>
+          <p class="text-xs text-slate-300">建立與選擇不同活動檔期的租用抬頭，自動連帶分類損害案件。</p>
         </div>
       </div>
 
@@ -358,7 +373,7 @@
     <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-sm w-full p-6 text-slate-100 relative shadow-2xl">
       <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
       <h3 class="text-lg font-bold text-white mb-2"><i class="fa-solid fa-shield-halved text-amber-400 mr-2"></i>巡檢身分驗證</h3>
-      <p class="text-xs text-slate-400 mb-4">輸入通行密碼以解鎖權限 (管理員: admin / 超級管理員: superadmin)：</p>
+      <p class="text-xs text-slate-400 mb-4">輸入通行密碼以解鎖權限：</p>
       <input type="password" id="inputAuthPassword" placeholder="請輸入通行密碼..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-500 min-h-[44px]">
       <div class="flex gap-2">
         <button onclick="submitAuthPassword()" class="touch-target flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm shadow flex items-center justify-center">解鎖權限</button>
@@ -367,13 +382,20 @@
     </div>
   </div>
 
-  <!-- 彈窗 3：新增/編輯損壞點位 Modal -->
+  <!-- 彈窗 3：新增與編輯損壞點位 Modal -->
   <div id="pinModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-xl w-full p-6 text-slate-100 relative shadow-2xl max-h-[90vh] overflow-y-auto">
       <button onclick="closeModal('pinModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
-      <h2 id="pinModalTitle" class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-        <i class="fa-solid fa-location-dot text-rose-500"></i> 新增損壞巡檢點
-      </h2>
+      
+      <!-- 視窗頂部標題區與一鍵複製按鈕 -->
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-4 border-b border-slate-700 pb-3 pr-6">
+        <h2 id="pinModalTitle" class="text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-location-dot text-rose-500"></i> 新增損壞巡檢點
+        </h2>
+        <button type="button" onclick="copySinglePinSummary()" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow">
+          <i class="fa-solid fa-copy"></i> 複製此案回報文字
+        </button>
+      </div>
 
       <form id="pinForm" onsubmit="handleSavePin(event)" class="space-y-4">
         <input type="hidden" id="formPinId">
@@ -381,9 +403,9 @@
         <input type="hidden" id="formCoordX">
         <input type="hidden" id="formCoordY">
 
-        <!-- 區塊 A：專案抬頭資訊 -->
+        <!-- 專案檔期資訊 -->
         <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-700/60 space-y-3">
-          <div class="text-xs font-bold text-amber-400 uppercase tracking-wider">專案抬頭資訊 (Header Scoped)</div>
+          <div class="text-xs font-bold text-amber-400 uppercase tracking-wider">專案抬頭資訊 (HEADER SCOPED)</div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold mb-1">活動名稱 (activity_name) <span class="text-rose-400">*</span></label>
@@ -406,7 +428,7 @@
           </div>
         </div>
 
-        <!-- 區塊 B：案件細節 -->
+        <!-- 案件細節 -->
         <div>
           <label class="block text-xs font-semibold mb-1">損壞項目名稱 / 事件標題 <span class="text-rose-400">*</span></label>
           <input type="text" id="formTitle" required placeholder="例如：B1 牆面劃傷 / L2 扶手鬆脫" class="w-full bg-slate-900 rounded-lg p-2.5 text-sm border border-slate-700 text-white min-h-[44px]">
@@ -423,7 +445,7 @@
           </div>
         </div>
 
-        <!-- 實際完修日期 (修復完成後顯示綠點，並從附件二十四中排除) -->
+        <!-- 實際完修日期 -->
         <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700/80 space-y-2">
           <div class="flex items-center justify-between">
             <label class="block text-xs font-bold text-emerald-400">實際完修日期 (actual_restore_date)</label>
@@ -469,7 +491,7 @@
           <textarea id="formDescription" rows="2" placeholder="備註現況..." class="w-full bg-slate-900 rounded-lg p-2.5 text-xs border border-slate-700 text-white"></textarea>
         </div>
 
-        <!-- 現場照片上傳 (支援相機直拍 capture="environment") -->
+        <!-- 原生手機相機直拍支援 -->
         <div>
           <label class="block text-xs font-semibold mb-1">現場照片 (可直接點擊開啟手機相機拍照)</label>
           <input type="file" id="formPhotoInput" accept="image/*" capture="environment" multiple onchange="handlePhotoUpload(event)" class="hidden">
@@ -481,9 +503,13 @@
           <div id="photoPreviewStrip" class="flex space-x-2 overflow-x-auto py-2 mt-2"></div>
         </div>
 
-        <div class="pt-3 flex justify-between items-center border-t border-slate-700">
+        <div class="pt-3 flex flex-wrap gap-2 justify-between items-center border-t border-slate-700">
           <button type="button" id="btnDeletePin" onclick="confirmDeletePin()" class="hidden px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs min-h-[44px]">刪除點位</button>
+
           <div class="flex gap-2 ml-auto">
+            <button type="button" onclick="copySinglePinSummary()" class="px-3.5 py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-xs min-h-[44px] shadow flex items-center gap-1">
+              <i class="fa-solid fa-copy"></i> 複製回報文字
+            </button>
             <button type="button" onclick="closeModal('pinModal')" class="px-4 py-3 bg-slate-700 text-slate-300 rounded-xl text-xs min-h-[44px]">取消</button>
             <button type="submit" class="touch-target px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-md flex items-center justify-center">儲存點位資料</button>
           </div>
@@ -492,7 +518,7 @@
     </div>
   </div>
 
-  <!-- 自訂刪除確認對話框 -->
+  <!-- 刪除點位確認對話框 -->
   <div id="confirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 text-center space-y-4 shadow-2xl">
       <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center text-xl">
@@ -507,9 +533,8 @@
     </div>
   </div>
 
-  <!-- 《附件二十四》Word 檔標準 A4 官方報表列印模板 (含防拆頁與照片縮圖限制) -->
+  <!-- 《附件二十四》Word 檔標準 A4 官方報表列印模板 -->
   <div id="appendix24PrintArea" class="hidden bg-white text-black p-2 font-sans">
-    <!-- 頂部標題 -->
     <div class="text-center font-black text-xl mb-0.5 tracking-wider">臺北大巨蛋設施設備損害異常紀錄表</div>
     <div class="text-center text-[10px] text-gray-600 mb-2 font-semibold">（表單編號：DI-VM-05-2023-01）</div>
 
@@ -524,7 +549,7 @@
       </div>
     </div>
 
-    <!-- 損害異常表格 (包含自動防拆頁控制) -->
+    <!-- 損害異常表格 -->
     <table class="w-full border-collapse border-2 border-black text-xs mb-3">
       <thead>
         <tr class="bg-gray-200 text-center font-bold border-b-2 border-black">
@@ -537,7 +562,7 @@
       <tbody id="rptTableBody"></tbody>
     </table>
 
-    <!-- 雙方代表簽署欄 (防拆頁，緊貼會簽區上方) -->
+    <!-- 雙方代表簽署欄 -->
     <div class="mb-3 border-2 border-black p-2 text-xs bg-gray-50/50 print-keep-together">
       <div class="font-bold border-b border-black pb-1 mb-1.5 text-xs flex items-center justify-between">
         <span>✍️ 現場驗收與損害確認雙方簽章</span>
@@ -555,7 +580,7 @@
       </div>
     </div>
 
-    <!-- 最底部：四科室會簽與審核欄位 (防拆頁) -->
+    <!-- 四科室會簽與審核欄位 -->
     <div class="border-2 border-black text-xs print-keep-together">
       <div class="bg-gray-200 p-1 font-bold border-b-2 border-black text-center text-xs tracking-wide">
         遠雄巨蛋公司內部會簽與審核區
@@ -581,9 +606,8 @@
     </div>
   </div>
 
-  <!-- 系統核心邏輯腳本 -->
+  <!-- 系統核心前端控制邏輯 -->
   <script>
-    // 永久綁定專屬 Supabase 憑證
     const SUPABASE_URL = 'https://pmwnnkemklbeuzupdvlq.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_XFUvaEUIqj8KKmVAgjpMqA_XpEyI11e';
 
@@ -604,12 +628,11 @@
 
     window.currentMapId = 'map-b2-b1';
     window.currentMainView = 'map';
-    window.currentRole = 'visitor'; // 'visitor' | 'admin' | 'superadmin'
+    window.currentRole = 'visitor';
     window.pins = [];
     window.activeImages = [];
     window.supabaseClient = null;
 
-    // Viewport 滑動與動態 GPU 3D 縮放
     let scale = 1, panX = 0, panY = 0, isDragging = false;
     let startX = 0, startY = 0, dragDistance = 0;
     let isTransformPending = false;
@@ -621,14 +644,12 @@
       renderProjectHeaderListUI();
     });
 
-    // 初始化 Supabase 雲端連線並建立即時訂閱監聽
     function initSupabaseConnection() {
       try {
         if (window.supabase) {
           window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
           fetchPinsFromCloud();
           
-          // 開啟 Supabase Realtime 即時雙向同步
           window.supabaseClient
             .channel('public:pins')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'pins' }, () => {
@@ -779,6 +800,75 @@
       item.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check text-emerald-300' : 'fa-circle-exclamation text-amber-400'}"></i><span>${escapeHtml(msg)}</span>`;
       toast.appendChild(item);
       setTimeout(() => item.remove(), 3200);
+    };
+
+    // 一鍵複製單筆案件回報文字
+    window.copySinglePinSummary = function() {
+      const title = document.getElementById('formTitle').value.trim();
+      const activity = document.getElementById('formActivityName').value.trim();
+      const dept = document.getElementById('formDepartment').value.trim();
+      const date = document.getElementById('formDamageDate').value;
+      const repair = document.querySelector('input[name="repairOption"]:checked')?.value || '待確定';
+      const desc = document.getElementById('formDescription').value.trim();
+      const mapName = window.MAPS[window.currentMapId]?.name || '場館平面';
+
+      if (!title) {
+        showToast('請先填寫或選擇巡檢點位項目！', 'info');
+        return;
+      }
+
+      const text = `【大巨蛋場務巡檢通報】\n` +
+        `------------------------\n` +
+        `● 損壞項目：${title}\n` +
+        `● 樓層位置：${mapName}\n` +
+        `● 責任單位：${dept || '未指定'}\n` +
+        `● 損害日期：${date || '未指定'}\n` +
+        `● 修復方式：${repair}\n` +
+        (activity ? `● 活動檔期：${activity}\n` : '') +
+        `● 現況描述：${desc || '無備註'}\n` +
+        `------------------------\n` +
+        `（來自 臺北大巨蛋場務管理系統）`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('已複製回報文字！可直接貼至 LINE 群組', 'success');
+      }).catch(() => {
+        showToast('複製失敗，請手動選取文字', 'info');
+      });
+    };
+
+    // 一鍵複製全場館待修清單
+    window.copyPendingListSummary = function() {
+      const activeId = localStorage.getItem('dome_active_header_id') || '';
+      const list = getStoredHeaderList();
+      const activeHeader = list.find(h => h.id === activeId);
+
+      let pendingPins = window.pins.filter(p => !p.actual_restore_date);
+      if (activeHeader && activeHeader.activity) {
+        pendingPins = pendingPins.filter(p => p.activity_name === activeHeader.activity);
+      }
+
+      if (pendingPins.length === 0) {
+        return showToast('當前檔期下無任何「待修復」案件需要通報！', 'info');
+      }
+
+      let summary = `🚨【臺北大巨蛋 待修復異常通報清單】🚨\n`;
+      if (activeHeader?.activity) summary += `活動檔期：${activeHeader.activity}\n`;
+      summary += `待處理總件數：${pendingPins.length} 件\n`;
+      summary += `========================\n`;
+
+      pendingPins.forEach((p, idx) => {
+        const mapName = window.MAPS[p.map_id || p.mapId]?.name.split(' ')[0] || '樓層';
+        summary += `${idx + 1}. [${mapName}] ${p.title}\n`;
+        summary += `   • 責任單位：${p.department || '未指定'} | 修復方式：${p.repair_option || '待確定'}\n`;
+        if (p.description) summary += `   • 備註：${p.description}\n`;
+      });
+      summary += `========================\n（報告發出時間：${new Date().toLocaleString()}）`;
+
+      navigator.clipboard.writeText(summary).then(() => {
+        showToast(`已成功複製 ${pendingPins.length} 筆待修復通報文字！`, 'success');
+      }).catch(() => {
+        showToast('複製失敗，請手動複製', 'info');
+      });
     };
 
     window.switchMap = (id) => {
@@ -1266,13 +1356,12 @@
       targetDeletePinId = null;
     };
 
-    // 《附件二十四》官方 Word 檔 A4 報表 1:1 匯出引擎 (自動過濾已完修案件 & 防拆頁修復)
+    // 《附件二十四》Word 檔標準 A4 官方報表匯出引擎
     window.exportAppendix24ModeA = function() {
       const list = getStoredHeaderList();
       const activeId = localStorage.getItem('dome_active_header_id') || '';
       const activeHeader = list.find(h => h.id === activeId) || {};
 
-      // 核心過濾：自動排除已有「實際完修日期」的點位
       let pendingPins = window.pins.filter(p => !p.actual_restore_date);
 
       if (activeHeader.activity) {
@@ -1347,3 +1436,17 @@
   </script>
 </body>
 </html>
+```
+
+---
+
+### 💡 修正後的位置說明與操作指南
+
+1. **單筆案件一鍵複製（在視窗右上角與右下角）**：
+   * 當您點擊地圖上的紅點（例如您截圖中的 **`88格車擋`** 案件）開啟視窗時，現在在**視窗右上角標題旁邊**（【編輯損壞巡檢點】右側），以及**視窗右下角【取消】按鈕左邊**，都會出現青綠色的 **`[ 📋 複製回報文字 ]`** 按鈕！
+   * 點擊後，系統會自動生成排版好的文字，直接貼至 LINE 即可發送通報。
+
+2. **全場館待修案件一鍵複製（在頁面最上方）**：
+   * 點擊系統最上方導覽列右側的 **`[ 📋 通報分享 ]`** 按鈕，即可一次複製當前檔期所有未修復的案件清單。
+
+請您重新點擊 **`Preview`**（預覽）開啓，就能看到這兩個貼心的複製按鈕了！
