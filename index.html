@@ -1421,6 +1421,84 @@
       } catch(e) { return dtStr; }
     }
 
+
+// ==========================================
+    // 📢 【一鍵快速複製通報功能補丁】
+    // ==========================================
+
+    // 1. 產生完整中文日期時間字串的輔助工具
+    function formatDateToTwFullString(dtStr) {
+      if (!dtStr) return '--';
+      try {
+        const d = new Date(dtStr);
+        if (isNaN(d.getTime())) return dtStr;
+        const pad = n => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      } catch(e) { return dtStr; }
+    }
+
+    // 2. 一鍵複製「全部待修復案件」摘要（可貼至 LINE 進行群組通報）
+    window.copyPendingListSummary = function() {
+      const activeId = localStorage.getItem('dome_active_header_id') || '';
+      const list = getStoredHeaderList();
+      const activeHeader = list.find(h => h.id === activeId);
+
+      let pendingPins = window.pins.filter(p => !p.actual_restore_date);
+      if (activeHeader && activeHeader.activity) {
+        pendingPins = pendingPins.filter(p => p.activity_name === activeHeader.activity);
+      }
+
+      if (pendingPins.length === 0) {
+        return showToast('當前視角下無任何「待修復」案件需要通報！', 'info');
+      }
+
+      let summary = `🚨【臺北大巨蛋 待修復異常通報清單】🚨\n`;
+      if (activeHeader?.activity) summary += `活動檔期：${activeHeader.activity}\n`;
+      summary += `待處理總件數：${pendingPins.length} 件\n`;
+      summary += `========================\n`;
+
+      pendingPins.forEach((p, idx) => {
+        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資區域';
+        summary += `${idx + 1}. [${mapName}] ${p.title}\n`;
+        summary += `   • 責任單位：${p.department || '未指定'} | 修復方式：${p.repair_option || '待確定'}\n`;
+        if (p.description) summary += `   • 備註：${p.description}\n`;
+      });
+      summary += `========================\n（報告時間：${formatDateToTwFullString(new Date())}）`;
+
+      navigator.clipboard.writeText(summary).then(() => {
+        showToast(`已成功複製 ${pendingPins.length} 筆待修復通報文字！`, 'success');
+      }).catch(() => {
+        showToast('複製失敗，請手動複製', 'error');
+      });
+    };
+
+    // 3. 一鍵複製「單一案件」詳細資訊（在點位編輯彈窗中使用）
+    window.copySinglePinSummary = function() {
+      const pinId = document.getElementById('formPinId').value;
+      const pin = window.pins.find(p => p.id === pinId);
+      if (!pin) return showToast('請先選擇或儲存點位', 'info');
+
+      const mapName = window.MAPS[pin.map_id || pin.mapId]?.name || '圖資區域';
+      const statusText = pin.actual_restore_date ? '🟢 已修復' : '🔴 待修復';
+      const text = `【大巨蛋場務巡檢通報】\n` +
+        `------------------------\n` +
+        `● 案件名稱：${pin.title}\n` +
+        `● 圖資區域：${mapName}\n` +
+        `● 案件狀態：${statusText}\n` +
+        `● 責任單位：${pin.department || '未指定'}\n` +
+        `● 損害日期：${pin.damage_date || '未指定'}\n` +
+        `● 預計修復：${pin.repair_option || '待確定'}\n` +
+        `● 現況說明：${pin.description || '無備註'}\n` +
+        `------------------------\n` +
+        `（來自 臺北大巨蛋場務管理系統）`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('已複製回報文字！可直接貼至 LINE 群組', 'success');
+      }).catch(() => {
+        showToast('複製失敗，請手動複製', 'error');
+      });
+    };
+
     window.exportAppendix24ModeA = function() {
       const list = getStoredHeaderList();
       const activeId = localStorage.getItem('dome_active_header_id') || '';
@@ -1503,10 +1581,3 @@
 ```eof
 
 ***
-
-### 🛠️ 快速除錯與解決 2 步驟：
-
-1. **已補齊自動備援機制**：
-   在最新產生的 `index.html` 中，只要雲端權限遭受 Supabase 限制，系統除了會自動儲存到本機暫存（保證資料不丟失）外，**頂部標籤也會自動提示 `⚠️ 權限限縮`**。
-2. **Supabase 雲端一鍵解鎖方式**：
-   若要讓全體同仁手機都能即時同步寫入，請登入 [Supabase Dashboard](https://supabase.com/dashboard)，進入專案的 **Table Editor ➔ pins ➔ Policies**，點擊 **Disable RLS** 或新增一個 Policy 為 `Enable read, insert, update for all users` 即可徹底終結失敗訊息！
