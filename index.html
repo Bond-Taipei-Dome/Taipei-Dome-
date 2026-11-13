@@ -91,7 +91,7 @@
     }
     .toast-item { pointer-events: auto; }
 
-    /* 《附件二十四》Word 檔標準 A4 官方報表列印防超頁與防拆分控制 */
+    /* 《設施設備損害異常紀錄表》Word 檔標準 A4 官方報表列印防超頁與防拆分控制 */
     @media print {
       @page {
         size: A4 portrait;
@@ -202,8 +202,8 @@
         <i class="fa-solid fa-folder-tree mr-1.5"></i> <span class="hidden md:inline">檔期抬頭</span>
       </button>
 
-      <button onclick="exportAppendix24ModeA()" class="flex items-center bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="匯出附件二十四 A4 紙本報表">
-        <i class="fa-solid fa-file-export mr-1.5"></i> <span class="hidden md:inline">附件二十四</span>
+      <button onclick="exportAppendix24ModeA()" class="flex items-center bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="匯出設施設備損害異常紀錄表 A4 紙本報表">
+        <i class="fa-solid fa-file-export mr-1.5"></i> <span class="hidden md:inline">設施設備損害異常紀錄表</span>
       </button>
 
       <button id="btnLogin" onclick="openModal('loginModal')" class="flex items-center bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-slate-700 transition min-h-[44px]">
@@ -475,7 +475,7 @@
             </button>
           </div>
           <input type="date" id="formActualRestoreDate" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
-          <p class="text-[11px] text-slate-400">※ 填寫完修日期後點位轉為綠色，且自動從《附件二十四》報表中排除（只保留待修項目）。</p>
+          <p class="text-[11px] text-slate-400">※ 填寫完修日期後點位轉為綠色，且自動從《設施設備損害異常紀錄表》報表中排除（只保留待修項目）。</p>
         </div>
 
         <!-- 預計修復方式單選與延伸欄位 -->
@@ -551,7 +551,7 @@
     </div>
   </div>
 
-  <!-- 《附件二十四》Word 檔標準 A4 官方報表列印模板 -->
+  <!-- 《設施設備損害異常紀錄表》Word 檔標準 A4 官方報表列印模板 -->
   <div id="appendix24PrintArea" class="hidden bg-white text-black p-2 font-sans">
     <div class="text-center font-black text-xl mb-0.5 tracking-wider">臺北大巨蛋設施設備損害異常紀錄表</div>
     <div class="text-center text-[10px] text-gray-600 mb-2 font-semibold">（表單編號：DI-VM-05-2023-01）</div>
