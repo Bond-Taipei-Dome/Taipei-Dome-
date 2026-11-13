@@ -1,9 +1,22 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+<style>
+  /* 隱藏標題左側的漸層方塊 LOGO */
+  header div:first-child:empty,
+  header span:first-child:empty,
+  .logo, [class*="logo"], [class*="icon-box"], [class*="brand"] {
+    display: none !important;
+  }
+  header::before, h1::before, [class*="header"]::before {
+    display: none !important;
+    content: none !important;
+  }
+</style>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>臺北大巨蛋場館滲漏管理系統 v2026.11.06</title>
+  <title>臺北大巨蛋場館滲漏管理系統 </title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -116,39 +129,113 @@
     .toast-item { pointer-events: auto; }
 
     /* 《CSV匯出》Word 檔標準 A4 官方報表列印防超頁與防拆分控制 */
+/* 🖨️ A3 橫式官方列印排版設定（乾淨單頁、無多餘文字與空白） */
     @media print {
       @page {
-        size: A4 portrait;
-        margin: 8mm 10mm;
+        size: A3 landscape;
+        margin: 5mm;
       }
       body, html {
-        height: auto !important;
-        overflow: visible !important;
+        height: 100% !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
         background-color: #ffffff !important;
         color: #000000 !important;
       }
-      header, #viewport, #toastContainer, .no-print,
-      #loginModal, #pinModal, #projectHeaderModal, #listViewContainer, #confirmModal {
+      /* 列印時強制隱藏所有導覽列、按鈕、側邊欄、提示框與所有彈窗 */
+      header, #toastContainer, .no-print,
+      #loginModal, #pinModal, #projectHeaderModal, #listViewContainer, #confirmModal,
+      .absolute.bottom-5.right-5,
+      #mapHintBanner {
         display: none !important;
       }
-      #appendix24PrintArea {
-        display: block !important;
-        position: static !important;
+      #viewport {
+        position: fixed !important;
+        inset: 0 !important;
         width: 100% !important;
+        height: 100% !important;
         background: #ffffff !important;
-        color: #000000 !important;
-        padding: 0 !important;
+        overflow: hidden !important;
       }
-      .print-keep-together {
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
+      #mapStage {
+        transform: none !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
       }
-      .print-img-limit {
-        max-height: 22mm !important;
+      #mapImage {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 100vh !important;
         object-fit: contain !important;
+      }
+      .custom-pin {
+        border: 2px solid #000 !important;
+        box-shadow: none !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
     }
   </style>
+
+<style>
+/* --- 手機與平板響應式排版自動調整 (螢幕寬度小於 768px 時啟動) --- */
+@media screen and (max-width: 768px) {
+  /* 1. 防止整個網頁左右晃動或超出螢幕 */
+  body, html {
+    overflow-x: hidden;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* 2. 讓標題、導覽列與樓層按鈕自動換行排列 */
+  header, nav, .toolbar, .floor-buttons, div[class*="menu"], div[class*="nav"] {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 3. 讓所有按鈕與下拉選單大小適中，方便手指點擊 */
+  button, select, input[type="button"], input[type="submit"] {
+    padding: 8px 10px !important;
+    font-size: 14px !important;
+    max-width: 100% !important;
+  }
+
+  /* 4. 讓「案件清單」表格在手機上可以左右滑動，不會擠壓變形 */
+  table {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+  }
+
+  /* 5. 調整「新增滴漏紀錄」與「身分驗證」等彈出視窗的寬度，避免切邊 */
+  div[class*="modal"], div[class*="dialog"], div[class*="popup"], form {
+    width: 92% !important;
+    max-width: 92vw !important;
+    left: 4% !important;
+    right: 4% !important;
+    margin: 10px auto !important;
+    padding: 15px !important;
+    box-sizing: border-box !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* 6. 讓表單內的文字輸入框與日期選單在手機上佔滿整行，更好填寫 */
+  input[type="text"], input[type="date"], input[type="password"], textarea {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 16px !important; /* 防止 iPhone 點擊輸入框時畫面自動放大 */
+  }
+}
+</style>
+
 </head>
 <body class="bg-slate-950 text-slate-100 flex flex-col h-screen select-none">
 
@@ -158,14 +245,22 @@
   <!-- 頂部導覽列 -->
   <header class="h-20 bg-slate-900/95 backdrop-blur border-b border-slate-800 flex items-center justify-between px-3 sm:px-6 z-30 shrink-0 shadow-md">
     <!-- 左側：標誌與樓層剖面選單 -->
-    <div class="flex items-center space-x-3 sm:space-x-4">
-      <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-blue-600 flex items-center justify-center text-white shadow-inner shrink-0">
-        <i class="fa-solid fa-stadium text-2xl"></i>
-      </div>
+    <div class="flex items-center">
+      
       <div>
-        <div class="flex items-center gap-2">
-          <h1 class="font-bold text-base sm:text-lg tracking-wide text-white leading-tight">臺北大巨蛋滴漏點位追蹤系統</h1>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v2026.11.06</span>
+        <div class="header-title" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+  <h1 style="margin: 0;">臺北大巨蛋滴漏點位追蹤系統</h1>
+  <span id="auto-ver"></span> ｜ 開發與維護：陳啟民
+<script>
+  (function() {
+    var d = new Date(document.lastModified);
+    var yyyy = d.getFullYear();
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    var dd = String(d.getDate()).padStart(2, '0');
+    document.getElementById('auto-ver').textContent = 'v' + yyyy + '.' + mm + '.' + dd;
+  })();
+</script>
+</div>
           <!-- 恆久雲端連線狀態標籤 -->
           <span id="cloudStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -215,7 +310,10 @@
         <i class="fa-solid fa-share-nodes mr-1.5"></i> <span class="hidden lg:inline">通報分享</span>
       </button>
 
-
+      
+      <button onclick="printCurrentMap()" class="flex items-center bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="列印當前樓層圖面與點位">
+        <i class="fa-solid fa-print mr-1.5"></i> <span class="hidden md:inline">列印圖面</span>
+      </button>
       <button onclick="exportCsv()" class="flex items-center bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="匯出CSV資料">
         <i class="fa-solid fa-file-export mr-1.5"></i> <span class="hidden md:inline">CSV匯出</span>
       </button>
@@ -1651,9 +1749,17 @@ document.getElementById('rptRentDates').innerText =
       window.print();
       setTimeout(() => printArea.classList.add('hidden'), 500);
     }
+  // 🖨️ A3 橫式列印當前樓層圖面與點位功能
+    window.printCurrentMap = function() {
+      if (window.currentMainView !== 'map') {
+        switchMainView('map');
+      }
+      const mapConfig = window.MAPS[window.currentMapId];
+      if (!mapConfig) return showToast('目前無可列印的圖資', 'error');
+      window.print();
+    };
   </script>
+<footer style="text-align: center; padding: 16px 10px; margin-top: 24px; border-top: 1px solid #e0e0e0; font-size: 13px; color: #666666;">
+ </footer>
 </body>
 </html>
-```eof
-
-***
