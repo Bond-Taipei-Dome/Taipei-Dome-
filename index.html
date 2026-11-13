@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>臺北大巨蛋場務管理系統 v2026.11.06</title>
+  <title>臺北大巨蛋場務管理系統</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -133,15 +133,16 @@
 
   <!-- 頂部導覽列 -->
   <header class="h-20 bg-slate-900/95 backdrop-blur border-b border-slate-800 flex items-center justify-between px-3 sm:px-6 z-30 shrink-0 shadow-md">
-    <!-- 左側：標誌與樓層剖面選單 -->
+    <!-- 左側：樓層剖面選單與標題 -->
     <div class="flex items-center space-x-3 sm:space-x-4">
-      <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-blue-600 flex items-center justify-center text-white shadow-inner shrink-0">
-        <i class="fa-solid fa-stadium text-2xl"></i>
-      </div>
       <div>
-        <div class="flex items-center gap-2">
-          <h1 class="font-bold text-base sm:text-lg tracking-wide text-white leading-tight">臺北大巨蛋場務管理系統</h1>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v2026.11.06</span>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h1 class="font-bold text-sm sm:text-lg tracking-wide text-white leading-tight">臺北大巨蛋場務管理系統</h1>
+          <!-- 自動化版本標籤 -->
+          <span id="autoVersionBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v2026.11.13</span>
+          <!-- 開發者資訊標籤 -->
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">開發與維護：陳啟民</span>
+
           <!-- 恆久雲端連線狀態標籤 -->
           <span id="cloudStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -450,7 +451,7 @@
 
         <!-- 區塊 B：案件細節 -->
         <div>
-          <label class="block text-xs font-semibold mb-1">損壞項目名稱 / 事件標題 <span class="text-rose-400">*</span></label>
+          <label class="block text-xs font-semibold mb-1">損壞項目名稱 / 位置地點 <span class="text-rose-400">*</span></label>
           <input type="text" id="formTitle" required placeholder="例如：B1 牆面劃傷 / L2 扶手鬆脫" class="w-full bg-slate-900 rounded-lg p-2.5 text-sm border border-slate-700 text-white min-h-[44px]">
         </div>
 
@@ -669,6 +670,17 @@
       setupInteractions();
       renderProjectHeaderListUI();
     });
+
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const versionBadge = document.getElementById('autoVersionBadge');
+  if (versionBadge) {
+    versionBadge.innerText = `v${yyyy}.${mm}.${dd}`;
+  }
+});
 
     function updateCloudBadge(isOk, msg = '') {
       const badge = document.getElementById('cloudStatusBadge');
@@ -1411,15 +1423,7 @@
       openModal('confirmModal');
     };
 
-    function formatDateToTwFullString(dtStr) {
-      if (!dtStr) return '--';
-      try {
-        const d = new Date(dtStr);
-        if (isNaN(d.getTime())) return dtStr;
-        const pad = n => n.toString().padStart(2, '0');
-        return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      } catch(e) { return dtStr; }
-    }
+    
 
 
 // ==========================================
