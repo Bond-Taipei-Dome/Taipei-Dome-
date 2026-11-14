@@ -1638,7 +1638,12 @@ document
     // 2. 一鍵複製「全部滴漏點位案件」摘要（可貼至 LINE 進行群組通報）
     window.copyPendingListSummary = function() {
 
-  let pendingPins = window.pins;
+  const today =
+  new Date().toISOString().split('T')[0];
+
+let pendingPins = window.pins.filter(p =>
+  (p.history_dates || []).includes(today)
+);
 
   if (pendingPins.length === 0) {
     return showToast(
@@ -1648,7 +1653,7 @@ document
   }
 
    let summary =
-   '【臺北大巨蛋滴漏點位清單】\n';
+   '【臺北大巨蛋今日滴漏點位清單】\n';
 
  summary +=
    `點位數量：${pendingPins.length}\n`;
@@ -1679,7 +1684,7 @@ document
      `   備註：${p.department || '-'}\n`;
 
    summary +=
-     `   日期：${p.damage_date || '-'}\n`;
+     `   通報日期：${today}\n`;
 
    summary +=
      '------------------------\n';
