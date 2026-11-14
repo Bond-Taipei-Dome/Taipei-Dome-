@@ -315,8 +315,17 @@
         <i class="fa-solid fa-print mr-1.5"></i> <span class="hidden md:inline">列印圖面</span>
       </button>
       <button onclick="exportCsv()" class="flex items-center bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="匯出CSV資料">
-        <i class="fa-solid fa-file-export mr-1.5"></i> <span class="hidden md:inline">CSV匯出</span>
+        <i class="fa-solid fa-file-export mr-1.5"></i> <span class="hidden md:inline">統計匯出CSV</span>
       </button>
+
+     <button
+  onclick="exportEventCsv()"
+  class="flex items-center bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]"
+  title="匯出事件明細CSV"
+>
+  <i class="fa-solid fa-calendar-days mr-1.5"></i>
+  <span class="hidden md:inline">逐次事件CSV</span>
+</button>
 
       <button id="btnLogin" onclick="openModal('loginModal')" class="flex items-center bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-slate-700 transition min-h-[44px]">
         <i class="fa-solid fa-shield-halved mr-1.5 text-amber-400"></i>
@@ -1693,7 +1702,100 @@ document
 };
     
 
-     window.exportCsv = function() {   let rows = [];   rows.push([  '樓層',  '發現位置',  '區',  '排',  '號',  '備註',  '紀錄日期',  '發生次數'  ]);   window.pins.forEach(p => {   const mapName =  window.MAPS[p.map_id || p.mapId]?.name || '';   rows.push([  mapName,  p.title || '',  p.area || '',  p.row || '',  p.seat || '',  p.department || '',  p.damage_date || '',  p.occurrence_count || 1  ]);   });   const csv =  rows.map(r =>  r.map(x =>  `"${String(x).replace(/"/g, '""')}"`  ).join(',')  ).join('\n');   const blob =  new Blob(  ['\ufeff' + csv],  {  type:'text/csv;charset=utf-8;'  }  );   const link =  document.createElement('a');   link.href =  URL.createObjectURL(blob);   link.download =  'taipei_dome_leak_points.csv';   link.click();   };
+     window.exportCsv = function() {   let rows = [];   const maxDateCount = Math.max(
+  ...window.pins.map(
+    p => (p.history_dates || []).length
+  ),
+  1
+);
+
+const headers = [
+  '樓層',
+  '發現位置',
+  '區',
+  '排',
+  '號',
+  '備註',
+  '首次紀錄日期',
+  '發生次數'
+];
+
+for (let i = 1; i <= maxDateCount; i++) {
+  headers.push(`日期${i}`);
+}
+
+rows.push(headers);   window.pins.forEach(p => { const sortedDates = [...(p.history_dates || [])]
+  .sort((a, b) => b.localeCompare(a));  const mapName =  window.MAPS[p.map_id || p.mapId]?.name || '';   rows.push([  mapName,  p.title || '',  p.area || '',  p.row || '',  p.seat || '',  p.department || '',  p.damage_date || '',  p.occurrence_count || 1, ...sortedDates,
+  ...Array(maxDateCount - sortedDates.length).fill('')  ]);   });   const csv =  rows.map(r =>  r.map(x =>  `"${String(x).replace(/"/g, '""')}"`  ).join(',')  ).join('\n');   const blob =  new Blob(  ['\ufeff' + csv],  {  type:'text/csv;charset=utf-8;'  }  );   const link =  document.createElement('a');   link.href =  URL.createObjectURL(blob);   link.download =  'taipei_dome_leak_points.csv';   link.click();   };
+
+window.exportEventCsv = function() {
+
+  const rows = [];
+
+  rows.push([
+    '發生日期',
+    '樓層',
+    '發現位置',
+    '區',
+    '排',
+    '號',
+    '部門',
+    '首次發現日期',
+    '累計次數'
+  ]);
+
+  window.pins.forEach(p => {
+
+    const mapName =
+      window.MAPS[p.map_id || p.mapId]?.name || '';
+
+    const sortedDates = [...(p.history_dates || [])]
+      .sort((a, b) => b.localeCompare(a));
+
+    sortedDates.forEach(date => {
+
+      rows.push([
+        date,
+        mapName,
+        p.title || '',
+        p.area || '',
+        p.row || '',
+        p.seat || '',
+        p.department || '',
+        p.damage_date || '',
+        p.occurrence_count || 1
+      ]);
+
+    });
+
+  });
+
+  const csv = rows
+    .map(r =>
+      r.map(v =>
+        `"${String(v ?? '').replace(/"/g, '""')}"`
+      ).join(',')
+    )
+    .join('\n');
+
+  const blob = new Blob(
+    ['\uFEFF' + csv],
+    { type: 'text/csv;charset=utf-8;' }
+  );
+
+  const link = document.createElement('a');
+
+  link.href = URL.createObjectURL(blob);
+
+  link.download =
+    `漏水事件明細_${new Date().toISOString().slice(0,10)}.csv`;
+
+  link.click();
+
+  URL.revokeObjectURL(link.href);
+
+};
+
 
 // TODO: 未來移除（已由 CSV 匯出取代）    
 function generateAppendix24Printout(pinsList, headerData = {}) {
