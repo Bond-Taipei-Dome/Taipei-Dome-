@@ -446,16 +446,27 @@
         </div>
       </div>
 
-      <!-- 底部按鈕 -->
-      <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
-        <button type="button" onclick="closeModal('allVenueModal')" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-bold">取消</button>
-        <button type="button" onclick="confirmAndPrintAllVenueReport()" class="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-slate-950 font-black rounded-xl text-xs shadow flex items-center gap-1.5 text-white">
-          <i class="fa-solid fa-print"></i> 確認簽名並列印全場館待修總表
-        </button>
+<!-- 簽名介面結束 -->
+        </div>
       </div>
-    </div>
+    </div> <!-- 👈 這裡原本多了一個或少了一個閉合標籤導致錯置 -->
+
+  <!-- 🌟 新增：儲存全館總表簽名按鈕 -->
+  <div class="flex justify-end pt-2 mb-3">
+    <button type="button" onclick="saveAllVenueSignatures()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg text-xs shadow flex items-center gap-1.5 min-h-[36px]">
+      <i class="fa-solid fa-signature"></i> 儲存全館總表雙方簽名
+    </button>
   </div>
 
+  <!-- 底部按鈕 -->
+  <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
+    <button type="button" onclick="closeModal('allVenueModal')" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-bold">取消</button>
+    <button type="button" onclick="confirmAndPrintAllVenueReport()" class="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-slate-950 font-black rounded-xl text-xs shadow flex items-center gap-1.5 text-white">
+      <i class="fa-solid fa-print"></i> 確認簽名並列印全場館待修總表
+    </button>
+  </div>
+</div>
+</div> <!-- 確保 Modal 內層與外層 div 正確閉合 -->
   </main>
 
   <!-- 彈窗 1：多筆專案抬頭管理 -->
@@ -2563,9 +2574,9 @@
       pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
     };
 
-    window.confirmAndPrintAllVenueReport = function() {
-      const imgA = sigPadAllVenueA ? sigPadAllVenueA.canvas.toDataURL('image/png') : '';
-      const imgB = sigPadAllVenueB ? sigPadAllVenueB.canvas.toDataURL('image/png') : '';
+window.confirmAndPrintAllVenueReport = function() {
+      const imgA = window.savedAllVenueSigA || (sigPadAllVenueA ? sigPadAllVenueA.canvas.toDataURL('image/png') : '');
+      const imgB = window.savedAllVenueSigB || (sigPadAllVenueB ? sigPadAllVenueB.canvas.toDataURL('image/png') : '');
 
       closeModal('allVenueModal');
       generateAllVenuePrintout(window.allVenueExportPins, { sigA, sigB });
@@ -2621,6 +2632,13 @@ function generateAllVenuePrintout(pinsList, sigData = {}) {
               <div class="font-bold text-gray-700 text-[11px]">狀況說明與備註：</div>
               <p class="text-xs text-gray-900 whitespace-pre-wrap">${p.description || '無詳細說明'}</p>
             </td>
+            <td class="border border-black p-2 space-y-1 text-[11px]">
+              <div><strong>原屬活動檔期：</strong><br><span class="text-amber-800 font-bold">${p.activity_name || '未指定'}</span></div>
+              <div><strong>損害發生日期：</strong><span class="font-mono">${p.damage_date || '未紀錄'}</span></div>
+              <div class="pt-1 border-t border-gray-200">
+                <strong>處理方式：</strong><br>
+                <span class="font-bold text-black">${p.repair_option || '租用方自行修復'}</span>
+                ${p.construct_date ? `<br><span>預定完修：${p.construct_date}</span>` : ''}
               </div>
             </td>
           </tr>
@@ -2641,6 +2659,17 @@ function generateAllVenuePrintout(pinsList, sigData = {}) {
         }, 100);
       });
     }
+
+window.saveAllVenueSignatures = function() {
+      const imgA = sigPadAllVenueA ? sigPadAllVenueA.canvas.toDataURL('image/png') : '';
+      const imgB = sigPadAllVenueB ? sigPadAllVenueB.canvas.toDataURL('image/png') : '';
+      
+      // 將全館總表簽名暫存於全域或 localStorage，以便後續點擊確認列印時直接帶入
+      window.savedAllVenueSigA = imgA;
+      window.savedAllVenueSigB = imgB;
+      showToast('全館總表雙方電子簽名已暫存！', 'success');
+    };
+
   </script>
  </body>
 </html>
