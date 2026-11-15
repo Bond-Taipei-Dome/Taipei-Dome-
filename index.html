@@ -1625,7 +1625,7 @@
       }
     }
 
-    // 🌟 匯出器材點交與點退紙本報表
+// 🌟 匯出器材點交與點退紙本報表
     window.exportAssetPrintoutForm = function() {
       const selectedActivity = document.getElementById('assetManagerActivitySelect').value;
       if (!selectedActivity) {
@@ -1640,21 +1640,36 @@
 
       const imgElA = document.getElementById('printSigPartyA');
       const placeholderA = document.getElementById('printSigPlaceholderA');
+      const imgElB = document.getElementById('printSigPartyB');
+      const placeholderB = document.getElementById('printSigPlaceholderB');
+
+      const loadPromises = [];
+
       if (headerData.sigA && imgElA && placeholderA) {
-        imgElA.src = headerData.sigA;
-        imgElA.classList.remove('hidden');
-        placeholderA.classList.add('hidden');
+        loadPromises.push(new Promise((resolve) => {
+          imgElA.onload = () => {
+            imgElA.classList.remove('hidden');
+            placeholderA.classList.add('hidden');
+            resolve();
+          };
+          imgElA.onerror = resolve;
+          imgElA.src = headerData.sigA;
+        }));
       } else if (imgElA && placeholderA) {
         imgElA.classList.add('hidden');
         placeholderA.classList.remove('hidden');
       }
 
-      const imgElB = document.getElementById('printSigPartyB');
-      const placeholderB = document.getElementById('printSigPlaceholderB');
       if (headerData.sigB && imgElB && placeholderB) {
-        imgElB.src = headerData.sigB;
-        imgElB.classList.remove('hidden');
-        placeholderB.classList.add('hidden');
+        loadPromises.push(new Promise((resolve) => {
+          imgElB.onload = () => {
+            imgElB.classList.remove('hidden');
+            placeholderB.classList.add('hidden');
+            resolve();
+          };
+          imgElB.onerror = resolve;
+          imgElB.src = headerData.sigB;
+        }));
       } else if (imgElB && placeholderB) {
         imgElB.classList.add('hidden');
         placeholderB.classList.remove('hidden');
@@ -1731,11 +1746,17 @@
       const printArea = document.getElementById('assetPrintArea');
       printArea.classList.remove('hidden');
       printArea.classList.add('print-active-area'); 
-      window.print();
-      setTimeout(() => {
-        printArea.classList.remove('print-active-area'); 
-        printArea.classList.add('hidden');
-      }, 500);
+
+      // 確保簽名圖片讀取完畢後再列印
+      Promise.all(loadPromises).then(() => {
+        setTimeout(() => {
+          window.print();
+          setTimeout(() => {
+            printArea.classList.remove('print-active-area'); 
+            printArea.classList.add('hidden');
+          }, 500);
+        }, 100);
+      });
     };
 
     function renderProjectHeaderListUI() {
