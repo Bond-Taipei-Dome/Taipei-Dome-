@@ -697,7 +697,7 @@
     </table>
   </div>
 
-  <!-- 🌟 官方活動器材點交與點退紀錄表列印模板 -->
+  <!-- 🌟 官方活動器材點交與點退紀錄表列印模板 (支援留用軌跡呈現) -->
   <div id="assetPrintArea" class="hidden bg-white text-black p-4 font-sans text-xs">
     <div class="text-center font-black text-xl mb-1 tracking-wider">臺北大巨蛋活動器材點交與點退紀錄表</div>
     <div class="text-center text-[10px] text-gray-600 mb-3 font-semibold">（表單編號：DI-AST-02-2026-01）</div>
@@ -712,12 +712,12 @@
       <thead>
         <tr class="bg-gray-200 text-center font-bold">
           <th class="border border-black p-2 w-12">項次</th>
-          <th class="border border-black p-2 w-48">配置位置與點位名稱</th>
-          <th class="border border-black p-2">器材品項名稱</th>
-          <th class="border border-black p-2 w-24 text-right">進場點交數</th>
-          <th class="border border-black p-2 w-24 text-right">離場點退數</th>
-          <th class="border border-black p-2 w-24 text-right">目前在庫數</th>
-          <th class="border border-black p-2 w-32">備註 / 差異說明</th>
+          <th class="border border-black p-2 w-40">配置位置與點位名稱</th>
+          <th class="border border-black p-2 w-28">器材品項名稱</th>
+          <th class="border border-black p-2 w-16 text-right">進場點交</th>
+          <th class="border border-black p-2 w-16 text-right">離場點退</th>
+          <th class="border border-black p-2 w-16 text-right">目前在庫</th>
+          <th class="border border-black p-2">🔄 器材留用 / 跨檔期轉移軌跡明細</th>
         </tr>
       </thead>
       <tbody id="assetRptTableBody"></tbody>
@@ -886,7 +886,6 @@
       const statusFilter = document.getElementById('filterStatus')?.value || 'all';
 
       let filtered = window.pins.filter(p => {
-        // 🌟 列表視窗專門管理毀損異常案件，在此排除器材點位
         if (p.pin_type === 'asset') return false;
 
         const pMap = p.map_id || p.mapId;
@@ -900,7 +899,6 @@
         return matchesFloor && matchesStatus && matchesKey;
       });
 
- 
       if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-slate-500 text-sm">查無符合條件之巡檢案件</td></tr>`;
         return;
@@ -1120,7 +1118,6 @@
 
     function updateDashboardStats() {
       const currentMapPins = window.pins.filter(p => (p.map_id || p.mapId) === window.currentMapId);
-      // 🌟 僅計算毀損點位（排除器材點位）
       const damagePins = currentMapPins.filter(p => p.pin_type !== 'asset');
       const pending = damagePins.filter(p => !p.actual_restore_date).length;
       const completed = damagePins.filter(p => !!p.actual_restore_date).length;
@@ -1211,21 +1208,20 @@
       requestUpdateTransform();
     };
 
-function getStoredHeaderList() {
-  const raw = localStorage.getItem('dome_project_headers_list');
-  try { 
-    let list = raw ? JSON.parse(raw) : [];
-    // 🌟 依照租用開始時間（start）由遠到近進行時間序列排序
-    list.sort((a, b) => {
-      if (!a.start) return 1;
-      if (!b.start) return -1;
-      return new Date(a.start) - new Date(b.start);
-    });
-    return list;
-  } catch (e) { 
-    return []; 
-  }
-}
+    function getStoredHeaderList() {
+      const raw = localStorage.getItem('dome_project_headers_list');
+      try { 
+        let list = raw ? JSON.parse(raw) : [];
+        list.sort((a, b) => {
+          if (!a.start) return 1;
+          if (!b.start) return -1;
+          return new Date(a.start) - new Date(b.start);
+        });
+        return list;
+      } catch (e) { 
+        return []; 
+      }
+    }
     function saveStoredHeaderList(list) {
       localStorage.setItem('dome_project_headers_list', JSON.stringify(list));
     }
@@ -1313,6 +1309,7 @@ function getStoredHeaderList() {
       }
     };
 
+    // 🌟 自動載入前一檔點退數量（建立留用軌跡）
     window.autoLoadPreviousCheckOut = function() {
       const currentActivity = document.getElementById('assetManagerActivitySelect').value;
       if (!currentActivity) {
@@ -1325,7 +1322,8 @@ function getStoredHeaderList() {
         return showToast('找不到前一檔活動記錄，無法自動載入前一檔點退數量！', 'info');
       }
 
-      const prevActivity = list[currentIndex - 1].activity;
+      const prevHeader = list[currentIndex - 1];
+      const prevActivity = prevHeader.activity;
       const prevTxs = window.assetTransactions.filter(tx => tx.activity_name === prevActivity);
       if (prevTxs.length === 0) {
         return showToast(`前一檔「${prevActivity}」無任何器材點交/點退紀錄！`, 'info');
@@ -1333,9 +1331,15 @@ function getStoredHeaderList() {
 
       const balanceMap = {};
       prevTxs.forEach(tx => {
-        const key = `${tx.pin_location || '主倉庫區'}_${tx.asset_name}`;
+        const key = `${tx.pin_location || '主倉庫`區'}_${tx.asset_name}`;
         if (!balanceMap[key]) {
-          balanceMap[key] = { pin_location: tx.pin_location || '主倉庫區', asset_name: tx.asset_name, qty: 0 };
+          balanceMap[key] = { 
+            pin_location: tx.pin_location || '主倉庫區', 
+            asset_name: tx.asset_name, 
+            qty: 0,
+            origin_activity: tx.origin_activity || prevActivity,
+            path_history: tx.path_history ? `${tx.path_history} ➔ ${prevActivity}` : prevActivity
+          };
         }
         balanceMap[key].qty += parseInt(tx.change_qty || 0);
       });
@@ -1350,6 +1354,8 @@ function getStoredHeaderList() {
             asset_name: item.asset_name,
             transaction_type: 'check_in',
             change_qty: item.qty,
+            origin_activity: item.origin_activity,
+            path_history: item.path_history,
             created_at: new Date().toISOString()
           };
           window.assetTransactions.unshift(newTx);
@@ -1359,7 +1365,7 @@ function getStoredHeaderList() {
 
       localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
       renderAssetInventoryUI();
-      showToast(`成功從前一檔「${prevActivity}」帶入 ${loadedCount} 筆器材點退結算餘額作為本檔點交起算！`, 'success');
+      showToast(`成功從前一檔「${prevActivity}」帶入 ${loadedCount} 筆留用器材數量！`, 'success');
     };
 
     window.handleSaveAssetTransaction = async function(e) {
@@ -1383,6 +1389,8 @@ function getStoredHeaderList() {
         asset_name,
         transaction_type,
         change_qty,
+        origin_activity: activity_name,
+        path_history: activity_name,
         created_at: new Date().toISOString()
       };
 
@@ -1418,7 +1426,7 @@ function getStoredHeaderList() {
         const mapKey = `${loc}___${name}`;
 
         if (!inventoryMap[mapKey]) {
-          inventoryMap[mapKey] = { pin_location: loc, asset_name: name, totalIn: 0, totalOut: 0, balance: 0 };
+          inventoryMap[mapKey] = { pin_location: loc, asset_name: name, totalIn: 0, totalOut: 0, balance: 0, origin: tx.origin_activity, path: tx.path_history };
         }
         const qty = parseInt(tx.change_qty || 0);
         if (qty > 0) {
@@ -1427,6 +1435,7 @@ function getStoredHeaderList() {
           inventoryMap[mapKey].totalOut += Math.abs(qty);
         }
         inventoryMap[mapKey].balance += qty;
+        if (tx.path_history) inventoryMap[mapKey].path = tx.path_history;
       });
 
       const keys = Object.keys(inventoryMap);
@@ -1470,7 +1479,7 @@ function getStoredHeaderList() {
       }
     }
 
-    // 🌟 匯出器材點交與點退紙本報表
+    // 🌟 匯出器材點交與點退紙本報表 (明確呈現留用起始與經過哪些檔、留用給哪一檔)
     window.exportAssetPrintoutForm = function() {
       const selectedActivity = document.getElementById('assetManagerActivitySelect').value;
       if (!selectedActivity) {
@@ -1478,7 +1487,10 @@ function getStoredHeaderList() {
       }
 
       const list = getStoredHeaderList();
-      const headerData = list.find(h => h.activity === selectedActivity) || {};
+      const currentIndex = list.findIndex(h => h.activity === selectedActivity);
+      const headerData = list[currentIndex] || {};
+      const nextHeader = (currentIndex >= 0 && currentIndex < list.length - 1) ? list[currentIndex + 1] : null;
+      const nextActivityName = nextHeader ? nextHeader.activity : '下一檔活動 (尚未排定)';
 
       const targetTxs = window.assetTransactions.filter(tx => tx.activity_name === selectedActivity);
       if (targetTxs.length === 0) {
@@ -1492,7 +1504,15 @@ function getStoredHeaderList() {
         const mapKey = `${loc}___${name}`;
 
         if (!inventoryMap[mapKey]) {
-          inventoryMap[mapKey] = { pin_location: loc, asset_name: name, totalIn: 0, totalOut: 0, balance: 0 };
+          inventoryMap[mapKey] = { 
+            pin_location: loc, 
+            asset_name: name, 
+            totalIn: 0, 
+            totalOut: 0, 
+            balance: 0, 
+            origin_activity: tx.origin_activity || selectedActivity,
+            path_history: tx.path_history || selectedActivity
+          };
         }
         const qty = parseInt(tx.change_qty || 0);
         if (qty > 0) {
@@ -1501,6 +1521,7 @@ function getStoredHeaderList() {
           inventoryMap[mapKey].totalOut += Math.abs(qty);
         }
         inventoryMap[mapKey].balance += qty;
+        if (tx.path_history) inventoryMap[mapKey].path_history = tx.path_history;
       });
 
       document.getElementById('assetRptActivityName').innerText = selectedActivity;
@@ -1513,19 +1534,31 @@ function getStoredHeaderList() {
       const tbody = document.getElementById('assetRptTableBody');
       const items = Object.values(inventoryMap);
 
-      tbody.innerHTML = items.map((item, idx) => `
-        <tr class="align-middle print-keep-together">
-          <td class="border border-black p-2 text-center font-bold">${idx + 1}</td>
-          <td class="border border-black p-2 font-semibold text-gray-800"><i class="fa-solid fa-location-dot mr-1"></i>${item.pin_location}</td>
-          <td class="border border-black p-2 font-bold text-black">${item.asset_name}</td>
-          <td class="border border-black p-2 text-right font-mono text-emerald-700 font-bold">${item.totalIn > 0 ? '+' + item.totalIn : '0'}</td>
-          <td class="border border-black p-2 text-right font-mono text-rose-700 font-bold">${item.totalOut > 0 ? '-' + item.totalOut : '0'}</td>
-          <td class="border border-black p-2 text-right font-mono text-black font-black text-sm">${item.balance}</td>
-          <td class="border border-black p-2 text-gray-700 text-[11px]">
-            ${item.totalOut === 0 && item.balance > 0 ? '本批器材跨檔期連續使用，不隨本檔離場點退，轉入下檔續用' : ''}
-          </td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = items.map((item, idx) => {
+        const hasPath = item.path_history && item.path_history.includes('➔');
+        const lineageText = hasPath 
+          ? `📥 <strong>【點交留用來源】</strong>：從 <span class="text-blue-700 font-bold">${item.origin_activity}</span> 開始留用，經中間檔期 [ <span class="text-indigo-700">${item.path_history}</span> ] 轉入本檔。`
+          : `📥 <strong>【本檔首發進場】</strong>：自主倉庫常態配置點交。`;
+
+        const outboundText = item.balance > 0
+          ? `📤 <strong>【點退留用去向】</strong>：本檔結束後<span class="text-purple-700 font-bold">不點還撤場</span>，直接<strong>留用給下一檔 [ ${nextActivityName} ]</strong> 續用。`
+          : `✅ <strong>【正常歸還】</strong>：本檔離場全數點退歸還倉庫。`;
+
+        return `
+          <tr class="align-middle print-keep-together">
+            <td class="border border-black p-2 text-center font-bold">${idx + 1}</td>
+            <td class="border border-black p-2 font-semibold text-gray-800"><i class="fa-solid fa-location-dot mr-1"></i>${item.pin_location}</td>
+            <td class="border border-black p-2 font-bold text-black">${item.asset_name}</td>
+            <td class="border border-black p-2 text-right font-mono text-emerald-700 font-bold">${item.totalIn > 0 ? '+' + item.totalIn : '0'}</td>
+            <td class="border border-black p-2 text-right font-mono text-rose-700 font-bold">${item.totalOut > 0 ? '-' + item.totalOut : '0'}</td>
+            <td class="border border-black p-2 text-right font-mono text-black font-black text-sm">${item.balance}</td>
+            <td class="border border-black p-2 text-[11px] space-y-1">
+              <div>${lineageText}</div>
+              <div class="border-t border-gray-300 pt-1">${outboundText}</div>
+            </td>
+          </tr>
+        `;
+      }).join('');
 
       const printArea = document.getElementById('assetPrintArea');
       printArea.classList.remove('hidden');
