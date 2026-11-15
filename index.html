@@ -588,6 +588,7 @@
         </div>
       </div>
 
+
       <!-- 點交 / 點退表單 -->
       <form onsubmit="handleSaveAssetTransaction(event)" class="bg-slate-900/80 p-4 rounded-xl border border-purple-500/30 mb-5 space-y-3">
         <div class="flex items-center justify-between border-b border-slate-700 pb-2">
@@ -655,6 +656,42 @@
           </div>
         </div>
 
+        
+<!-- 🌟 點交雙方電子簽名介面 -->
+<div class="bg-slate-900/90 p-4 rounded-xl border border-purple-500/30 my-4 space-y-3">
+  <div class="flex items-center justify-between">
+    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider">✍️ 點交雙方電子簽名</h3>
+    <span class="text-[11px] text-slate-400">※ 可直接在下方方框內用手指或滑鼠簽名</span>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
+      <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-indigo-300">
+        <span>甲方 (場館點交人員) 簽名</span>
+        <button type="button" onclick="clearSignature('partyA')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
+      </div>
+      <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
+        <canvas id="canvasPartyA" class="w-full h-full touch-none cursor-crosshair"></canvas>
+      </div>
+    </div>
+
+    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
+      <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-purple-300">
+        <span>乙方 (租用單位代表) 簽名</span>
+        <button type="button" onclick="clearSignature('partyB')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
+      </div>
+      <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
+        <canvas id="canvasPartyB" class="w-full h-full touch-none cursor-crosshair"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex justify-end pt-2">
+    <button type="button" onclick="saveSignaturesToActiveHeader()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg text-xs shadow flex items-center gap-1.5 min-h-[36px]">
+      <i class="fa-solid fa-signature"></i> 儲存雙方簽名至本檔期
+    </button>
+  </div>
+</div>
         <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider pt-2">詳細異動歷史紀錄與跨檔期流轉明細</h3>
         <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden max-h-56 overflow-y-auto">
           <table class="w-full text-left text-xs text-slate-200">
@@ -675,7 +712,7 @@
     </div>
   </div>
 
-  <!-- 官方設施設備損害異常報表列印模板 -->
+<!-- 官方設施設備損害異常報表列印模板 (已加入電子簽名) -->
   <div id="appendix24PrintArea" class="hidden bg-white text-black p-2 font-sans">
     <div class="text-center font-black text-xl mb-0.5 tracking-wider">臺北大巨蛋設施設備損害異常紀錄表</div>
     <div class="text-center text-[10px] text-gray-600 mb-2 font-semibold">（表單編號：DI-VM-05-2023-01）</div>
@@ -684,7 +721,7 @@
       <div><strong>租用單位：</strong><span id="rptRenterUnit">--</span></div>
       <div><strong>租用期間：</strong><span id="rptRentDates">--</span></div>
     </div>
-    <table class="w-full text-xs border-collapse border border-black">
+    <table class="w-full text-xs border-collapse border border-black mb-6">
       <thead>
         <tr class="bg-gray-200 text-center">
           <th class="border border-black p-1.5 w-10">項次</th>
@@ -695,9 +732,30 @@
       </thead>
       <tbody id="rptTableBody"></tbody>
     </table>
+
+    <!-- 底部雙方簽章區 -->
+    <div class="grid grid-cols-2 gap-8 pt-4 border-t-2 border-black print-keep-together mt-8">
+      <div class="border border-black p-4 h-32 flex flex-col justify-between relative">
+        <div class="font-bold z-10">場館管理人員（甲方）簽章：</div>
+        <div class="absolute inset-0 flex items-center justify-center p-2">
+          <img id="rptSigPartyA" class="max-h-24 object-contain hidden" alt="甲方簽名">
+          <span id="rptSigPlaceholderA" class="text-gray-300 text-xs italic">（尚未簽名）</span>
+        </div>
+        <div class="text-right text-gray-400 text-[10px] z-10">日期：______年______月______日</div>
+      </div>
+      <div class="border border-black p-4 h-32 flex flex-col justify-between relative">
+        <div class="font-bold z-10">租用單位代表（乙方）簽章：</div>
+        <div class="absolute inset-0 flex items-center justify-center p-2">
+          <img id="rptSigPartyB" class="max-h-24 object-contain hidden" alt="乙方簽名">
+          <span id="rptSigPlaceholderB" class="text-gray-300 text-xs italic">（尚未簽名）</span>
+        </div>
+        <div class="text-right text-gray-400 text-[10px] z-10">日期：______年______月______日</div>
+      </div>
+    </div>
   </div>
 
-  <!-- 🌟 官方活動器材點交與點退紀錄表列印模板 (支援留用軌跡呈現) -->
+
+<!-- 🌟 官方活動器材點交與點退紀錄表列印模板 (支援留用軌跡呈現與電子簽名) -->
   <div id="assetPrintArea" class="hidden bg-white text-black p-4 font-sans text-xs">
     <div class="text-center font-black text-xl mb-1 tracking-wider">臺北大巨蛋活動器材點交與點退紀錄表</div>
     <div class="text-center text-[10px] text-gray-600 mb-3 font-semibold">（表單編號：DI-AST-02-2026-01）</div>
@@ -723,18 +781,27 @@
       <tbody id="assetRptTableBody"></tbody>
     </table>
 
-    <!-- 底部雙方簽章區 -->
+    <!-- 底部雙方簽章區 (已綁定電子簽名) -->
     <div class="grid grid-cols-2 gap-8 pt-4 border-t-2 border-black print-keep-together mt-8">
-      <div class="border border-black p-4 h-28 flex flex-col justify-between">
-        <div class="font-bold">場館點交人員（甲方）簽章：</div>
-        <div class="text-right text-gray-400 text-[10px]">日期：______年______月______日</div>
+      <div class="border border-black p-4 h-32 flex flex-col justify-between relative">
+        <div class="font-bold z-10">場館點交人員（甲方）簽章：</div>
+        <div class="absolute inset-0 flex items-center justify-center p-2">
+          <img id="printSigPartyA" class="max-h-24 object-contain hidden" alt="甲方簽名">
+          <span id="printSigPlaceholderA" class="text-gray-300 text-xs italic">（尚未簽名）</span>
+        </div>
+        <div class="text-right text-gray-400 text-[10px] z-10">日期：______年______月______日</div>
       </div>
-      <div class="border border-black p-4 h-28 flex flex-col justify-between">
-        <div class="font-bold">租用單位代表（乙方）簽章：</div>
-        <div class="text-right text-gray-400 text-[10px]">日期：______年______月______日</div>
+      <div class="border border-black p-4 h-32 flex flex-col justify-between relative">
+        <div class="font-bold z-10">租用單位代表（乙方）簽章：</div>
+        <div class="absolute inset-0 flex items-center justify-center p-2">
+          <img id="printSigPartyB" class="max-h-24 object-contain hidden" alt="乙方簽名">
+          <span id="printSigPlaceholderB" class="text-gray-300 text-xs italic">（尚未簽名）</span>
+        </div>
+        <div class="text-right text-gray-400 text-[10px] z-10">日期：______年______月______日</div>
       </div>
     </div>
   </div>
+
 
   <!-- 核心邏輯腳本 -->
   <script>
@@ -1235,10 +1302,11 @@
     window.assetTransactions = [];
 
     window.openAssetManagerModal = async function() {
-      await fetchAssetTransactionsFromCloud();
-      renderAssetManagerActivitySelector();
-      openModal('assetManagerModal');
-    };
+  await fetchAssetTransactionsFromCloud();
+  renderAssetManagerActivitySelector();
+  openModal('assetManagerModal');
+  setTimeout(initSignaturePads, 100); // 👈 加上這行，確保彈窗打開時 Canvas 能正確載入寬高
+};
 
     async function fetchAssetTransactionsFromCloud() {
       if (!window.supabaseClient) return;
@@ -1479,7 +1547,11 @@
       }
     }
 
-    // 🌟 匯出器材點交與點退紙本報表 (明確呈現留用起始與經過哪些檔、留用給哪一檔)
+   
+    
+
+
+// 🌟 匯出器材點交與點退紙本報表 (明確呈現留用起始與經過哪些檔、留用給哪一檔)
     window.exportAssetPrintoutForm = function() {
       const selectedActivity = document.getElementById('assetManagerActivitySelect').value;
       if (!selectedActivity) {
@@ -1491,6 +1563,30 @@
       const headerData = list[currentIndex] || {};
       const nextHeader = (currentIndex >= 0 && currentIndex < list.length - 1) ? list[currentIndex + 1] : null;
       const nextActivityName = nextHeader ? nextHeader.activity : '下一檔活動 (尚未排定)';
+
+      // 綁定甲方簽名
+      const imgElA = document.getElementById('printSigPartyA');
+      const placeholderA = document.getElementById('printSigPlaceholderA');
+      if (headerData.sigA && imgElA && placeholderA) {
+        imgElA.src = headerData.sigA;
+        imgElA.classList.remove('hidden');
+        placeholderA.classList.add('hidden');
+      } else if (imgElA && placeholderA) {
+        imgElA.classList.add('hidden');
+        placeholderA.classList.remove('hidden');
+      }
+
+      // 綁定乙方簽名
+      const imgElB = document.getElementById('printSigPartyB');
+      const placeholderB = document.getElementById('printSigPlaceholderB');
+      if (headerData.sigB && imgElB && placeholderB) {
+        imgElB.src = headerData.sigB;
+        imgElB.classList.remove('hidden');
+        placeholderB.classList.add('hidden');
+      } else if (imgElB && placeholderB) {
+        imgElB.classList.add('hidden');
+        placeholderB.classList.remove('hidden');
+      }
 
       const targetTxs = window.assetTransactions.filter(tx => tx.activity_name === selectedActivity);
       if (targetTxs.length === 0) {
@@ -1565,6 +1661,8 @@
       window.print();
       setTimeout(() => printArea.classList.add('hidden'), 500);
     };
+
+
 
     function renderProjectHeaderListUI() {
       const list = getStoredHeaderList();
@@ -1672,14 +1770,14 @@
       const pwd = document.getElementById('inputAuthPassword').value.trim();
       if (pwd === 'superadmin') {
         window.currentRole = window.ROLES.SUPERADMIN;
-        document.getElementById('userRoleText').innerText = '超級管理員';
+        document.getElementById('userRoleText').innerText = '超級場務管理員';
         closeModal('loginModal');
-        showToast('超級管理員權限已解鎖 (具刪除點位權限)', 'success');
+        showToast('超級場務管理員權限已解鎖 (具刪除點位權限)', 'success');
       } else if (pwd === 'admin') {
         window.currentRole = window.ROLES.ADMIN;
-        document.getElementById('userRoleText').innerText = '巡檢管理員';
+        document.getElementById('userRoleText').innerText = '場務管理員';
         closeModal('loginModal');
-        showToast('巡檢管理員權限已解鎖', 'success');
+        showToast('場務管理員權限已解鎖', 'success');
       } else {
         showToast('通行密碼不正確', 'error');
       }
@@ -1969,7 +2067,119 @@
       generateAppendix24Printout(pinsToExport, activeHeader);
     };
 
-    function generateAppendix24Printout(pinsList, headerData = {}) {
+    // 🌟 Canvas 電子簽名板初始化與互動邏輯
+let sigPadA = null;
+let sigPadB = null;
+
+function initSignaturePads() {
+  sigPadA = setupSingleCanvas('canvasPartyA');
+  sigPadB = setupSingleCanvas('canvasPartyB');
+  loadExistingSignatures();
+}
+
+function setupSingleCanvas(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  const ctx = canvas.getContext('2d');
+  
+  // 處理高解析度螢幕模糊問題 (Retina)
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  let drawing = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  function getPos(e) {
+    const r = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: clientX - r.left, y: clientY - r.top };
+  }
+
+  canvas.onmousedown = (e) => { drawing = true; const p = getPos(e); lastX = p.x; lastY = p.y; };
+  canvas.onmousemove = (e) => {
+    if (!drawing) return;
+    const p = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(p.x, p.y);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    lastX = p.x; lastY = p.y;
+  };
+  canvas.onmouseup = () => drawing = false;
+  canvas.onmouseleave = () => drawing = false;
+
+  canvas.ontouchstart = (e) => { drawing = true; const p = getPos(e); lastX = p.x; lastY = p.y; e.preventDefault(); };
+  canvas.ontouchmove = (e) => {
+    if (!drawing) return;
+    const p = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(p.x, p.y);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    lastX = p.x; lastY = p.y;
+    e.preventDefault();
+  };
+  canvas.ontouchend = () => drawing = false;
+
+  return { canvas, ctx };
+}
+
+window.clearSignature = function(party) {
+  const pad = party === 'partyA' ? sigPadA : sigPadB;
+  if (!pad) return;
+  pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
+};
+
+window.saveSignaturesToActiveHeader = function() {
+  const currentActivity = document.getElementById('assetManagerActivitySelect').value;
+  if (!currentActivity) return showToast('請先選擇活動檔期名稱！', 'error');
+
+  const imgA = sigPadA ? sigPadA.canvas.toDataURL('image/png') : '';
+  const imgB = sigPadB ? sigPadB.canvas.toDataURL('image/png') : '';
+
+  let list = getStoredHeaderList();
+  const idx = list.findIndex(h => h.activity === currentActivity);
+  if (idx >= 0) {
+    list[idx].sigA = imgA;
+    list[idx].sigB = imgB;
+    list[idx].sigTime = new Date().toISOString();
+    saveStoredHeaderList(list);
+    showToast('雙方電子簽名已成功綁定至本檔期！', 'success');
+  } else {
+    showToast('找不到當前活動檔期紀錄', 'error');
+  }
+};
+
+function loadExistingSignatures() {
+  const currentActivity = document.getElementById('assetManagerActivitySelect')?.value;
+  if (!currentActivity) return;
+  const list = getStoredHeaderList();
+  const h = list.find(item => item.activity === currentActivity);
+  if (!h) return;
+
+  if (h.sigA && sigPadA) {
+    const img = new Image();
+    img.onload = () => sigPadA.ctx.drawImage(img, 0, 0, sigPadA.canvas.clientWidth, sigPadA.canvas.clientHeight);
+    img.src = h.sigA;
+  }
+  if (h.sigB && sigPadB) {
+    const img = new Image();
+    img.onload = () => sigPadB.ctx.drawImage(img, 0, 0, sigPadB.canvas.clientWidth, sigPadB.canvas.clientHeight);
+    img.src = h.sigB;
+  }
+}
+
+function generateAppendix24Printout(pinsList, headerData = {}) {
       document.getElementById('rptActivityName').innerText = headerData.activity || pinsList[0]?.activity_name || '未指定活動';
       document.getElementById('rptRenterUnit').innerText = headerData.unit || pinsList[0]?.renter_unit || '未指定單位';
       
@@ -1977,6 +2187,30 @@
       const endDisplay = formatDateToTwFullString(headerData.end || pinsList[0]?.rent_end_date);
       document.getElementById('rptRentDates').innerText = `${startDisplay} ~ ${endDisplay}`;
 
+      // 綁定異常表的電子簽名
+      const imgRptA = document.getElementById('rptSigPartyA');
+      const placeholderRptA = document.getElementById('rptSigPlaceholderA');
+      if (headerData.sigA && imgRptA && placeholderRptA) {
+        imgRptA.src = headerData.sigA;
+        imgRptA.classList.remove('hidden');
+        placeholderRptA.classList.add('hidden');
+      } else if (imgRptA && placeholderRptA) {
+        imgRptA.classList.add('hidden');
+        placeholderRptA.classList.remove('hidden');
+      }
+
+      const imgRptB = document.getElementById('rptSigPartyB');
+      const placeholderRptB = document.getElementById('rptSigPlaceholderB');
+      if (headerData.sigB && imgRptB && placeholderRptB) {
+        imgRptB.src = headerData.sigB;
+        imgRptB.classList.remove('hidden');
+        placeholderRptB.classList.add('hidden');
+      } else if (imgRptB && placeholderRptB) {
+        imgRptB.classList.add('hidden');
+        placeholderRptB.classList.remove('hidden');
+      }
+
+      // 渲染表格內容
       const tbody = document.getElementById('rptTableBody');
       tbody.innerHTML = pinsList.map((p, i) => {
         const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資區域';
