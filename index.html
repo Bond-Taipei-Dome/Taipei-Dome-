@@ -2263,7 +2263,7 @@
       }
     }
 
-    function generateAppendix24Printout(pinsList, headerData = {}) {
+function generateAppendix24Printout(pinsList, headerData = {}) {
       const damagePinsOnly = (pinsList || []).filter(p => p.pin_type !== 'asset');
 
       document.getElementById('rptActivityName').innerText = headerData.activity || damagePinsOnly[0]?.activity_name || '未指定活動';
@@ -2275,21 +2275,38 @@
 
       const imgRptA = document.getElementById('rptSigPartyA');
       const placeholderRptA = document.getElementById('rptSigPlaceholderA');
+      
+      const imgRptB = document.getElementById('rptSigPartyB');
+      const placeholderRptB = document.getElementById('rptSigPlaceholderB');
+
+      // 建立一個用來確保圖片載入完成的 Promise 陣列
+      const loadPromises = [];
+
       if (headerData.sigA && imgRptA && placeholderRptA) {
-        imgRptA.src = headerData.sigA;
-        imgRptA.classList.remove('hidden');
-        placeholderRptA.classList.add('hidden');
+        loadPromises.push(new Promise((resolve) => {
+          imgRptA.onload = () => {
+            imgRptA.classList.remove('hidden');
+            placeholderRptA.classList.add('hidden');
+            resolve();
+          };
+          imgRptA.onerror = resolve;
+          imgRptA.src = headerData.sigA;
+        }));
       } else if (imgRptA && placeholderRptA) {
         imgRptA.classList.add('hidden');
         placeholderRptA.classList.remove('hidden');
       }
 
-      const imgRptB = document.getElementById('rptSigPartyB');
-      const placeholderRptB = document.getElementById('rptSigPlaceholderB');
       if (headerData.sigB && imgRptB && placeholderRptB) {
-        imgRptB.src = headerData.sigB;
-        imgRptB.classList.remove('hidden');
-        placeholderRptB.classList.add('hidden');
+        loadPromises.push(new Promise((resolve) => {
+          imgRptB.onload = () => {
+            imgRptB.classList.remove('hidden');
+            placeholderRptB.classList.add('hidden');
+            resolve();
+          };
+          imgRptB.onerror = resolve;
+          imgRptB.src = headerData.sigB;
+        }));
       } else if (imgRptB && placeholderRptB) {
         imgRptB.classList.add('hidden');
         placeholderRptB.classList.remove('hidden');
@@ -2336,12 +2353,19 @@
       const printArea = document.getElementById('appendix24PrintArea');
       printArea.classList.remove('hidden');
       printArea.classList.add('print-active-area'); 
-      window.print();
-      setTimeout(() => {
-        printArea.classList.remove('print-active-area'); 
-        printArea.classList.add('hidden');
-      }, 500);
+
+      // 確保所有簽名圖片載入完畢後再呼叫列印
+      Promise.all(loadPromises).then(() => {
+        setTimeout(() => {
+          window.print();
+          setTimeout(() => {
+            printArea.classList.remove('print-active-area'); 
+            printArea.classList.add('hidden');
+          }, 500);
+        }, 100);
+      });
     }
+
 
     let sigPadAppendixA = null;
     let sigPadAppendixB = null;
