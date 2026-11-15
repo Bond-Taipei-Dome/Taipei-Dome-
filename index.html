@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>臺北大巨蛋場務管理系統</title>
+  <title>臺北大巨蛋場館現況管理系統</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -91,7 +91,6 @@
     }
     .toast-item { pointer-events: auto; }
 
-    /* 《設施設備損害異常紀錄表》Word 檔標準 A4 官方報表列印防超頁與防拆分控制 */
     @media print {
       @page {
         size: A4 portrait;
@@ -104,10 +103,10 @@
         color: #000000 !important;
       }
       header, #viewport, #toastContainer, .no-print,
-      #loginModal, #pinModal, #projectHeaderModal, #listViewContainer, #confirmModal {
+      #loginModal, #pinModal, #projectHeaderModal, #listViewContainer, #confirmModal, #assetManagerModal {
         display: none !important;
       }
-      #appendix24PrintArea {
+      #appendix24PrintArea, #assetPrintArea {
         display: block !important;
         position: static !important;
         width: 100% !important;
@@ -133,17 +132,12 @@
 
   <!-- 頂部導覽列 -->
   <header class="h-20 bg-slate-900/95 backdrop-blur border-b border-slate-800 flex items-center justify-between px-3 sm:px-6 z-30 shrink-0 shadow-md">
-    <!-- 左側：樓層剖面選單與標題 -->
     <div class="flex items-center space-x-3 sm:space-x-4">
       <div>
         <div class="flex items-center gap-2 flex-wrap">
-          <h1 class="font-bold text-sm sm:text-lg tracking-wide text-white leading-tight">臺北大巨蛋場務管理系統</h1>
-          <!-- 自動化版本標籤 -->
+          <h1 class="font-bold text-sm sm:text-lg tracking-wide text-white leading-tight">臺北大巨蛋場館現況管理系統</h1>
           <span id="autoVersionBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v2026.11.13</span>
-          <!-- 開發者資訊標籤 -->
           <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">開發與維護：陳啟民</span>
-
-          <!-- 恆久雲端連線狀態標籤 -->
           <span id="cloudStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span class="hidden sm:inline">🟢 雲端即時連線</span>
@@ -154,9 +148,8 @@
         </p>
       </div>
 
-      <!-- 13 大獨立樓層與剖面圖選擇下拉選單 -->
       <div class="relative ml-2">
-        <select id="mapSelect" onchange="switchMap(this.value)" class="bg-slate-800 hover:bg-slate-750 text-amber-400 font-bold text-xs sm:text-sm rounded-lg pl-3 pr-8 py-2.5 border border-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer transition appearance-none min-h-[44px]">
+        <select id="mapSelect" onchange="switchMap(this.value)" class="bg-slate-800 hover:bg-slate-750 text-amber-400 font-bold text-xs sm:text-sm rounded-lg pl-3 pr-8 py-2.5 border border-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer transition appearance-none min-h-[36px]">
           <optgroup label="🏢 樓層平面圖 (Floor Plans)">
             <option value="map-b2">B2 層平面圖</option>
             <option value="map-b1">B1 層平面圖</option>
@@ -179,34 +172,37 @@
       </div>
     </div>
 
-    <!-- 中間：視圖切換 (地圖 / 清單) -->
     <div class="flex items-center space-x-3">
       <div class="flex bg-slate-800 rounded-lg p-1 border border-slate-700 text-sm">
-        <button id="btnMapView" onclick="switchMainView('map')" class="px-3.5 sm:px-4 py-2 rounded-md bg-amber-500 text-slate-950 font-bold transition flex items-center gap-1.5 shadow min-h-[44px]">
+        <button id="btnMapView" onclick="switchMainView('map')" class="px-3.5 sm:px-4 py-2 rounded-md bg-amber-500 text-slate-950 font-bold transition flex items-center gap-1.5 shadow min-h-[36px]">
           <i class="fa-solid fa-map"></i> <span class="hidden sm:inline">地圖模式</span>
         </button>
-        <button id="btnListView" onclick="switchMainView('list')" class="px-3.5 sm:px-4 py-2 rounded-md text-slate-300 hover:text-white transition flex items-center gap-1.5 min-h-[44px]">
+        <button id="btnListView" onclick="switchMainView('list')" class="px-3.5 sm:px-4 py-2 rounded-md text-slate-300 hover:text-white transition flex items-center gap-1.5 min-h-[36px]">
           <i class="fa-solid fa-table-list"></i> <span class="hidden sm:inline">案件清單</span>
           <span id="totalBadge" class="bg-slate-700 text-amber-400 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
         </button>
       </div>
     </div>
 
-    <!-- 右側：功能按鈕群 -->
+    <!-- 右側功能按鈕群 -->
     <div class="flex items-center space-x-2">
-      <button onclick="copyPendingListSummary()" class="flex items-center bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="一鍵複製待修復案件通報文字（可貼至 LINE）">
+      <button onclick="copyPendingListSummary()" class="flex items-center bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="一鍵複製待修復案件通報文字（可貼至 LINE）">
         <i class="fa-solid fa-share-nodes mr-1.5"></i> <span class="hidden lg:inline">通報分享</span>
       </button>
 
-      <button onclick="openProjectHeaderManager()" class="flex items-center bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="管理與切換多筆活動檔期抬頭">
+      <button onclick="openProjectHeaderManager()" class="flex items-center bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="管理與切換多筆活動檔期抬頭">
         <i class="fa-solid fa-folder-tree mr-1.5"></i> <span class="hidden md:inline">檔期抬頭</span>
       </button>
 
-      <button onclick="exportAppendix24ModeA()" class="flex items-center bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="匯出設施設備損害異常紀錄表 A4 紙本報表">
+      <button onclick="openAssetManagerModal()" class="flex items-center bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="管理器材點交、點退與跨檔期數量流轉">
+        <i class="fa-solid fa-boxes-stacked mr-1.5"></i> <span class="hidden md:inline">器材點交管理</span>
+      </button>
+
+      <button onclick="exportAppendix24ModeA()" class="flex items-center bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="匯出設施設備損害異常紀錄表 A4 紙本報表">
         <i class="fa-solid fa-file-export mr-1.5"></i> <span class="hidden md:inline">設施設備損害異常紀錄表</span>
       </button>
 
-      <button id="btnLogin" onclick="openModal('loginModal')" class="flex items-center bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-slate-700 transition min-h-[44px]">
+      <button id="btnLogin" onclick="openModal('loginModal')" class="flex items-center bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-slate-700 transition min-h-[36px]">
         <i class="fa-solid fa-shield-halved mr-1.5 text-amber-400"></i>
         <span id="userRoleText">訪客</span>
       </button>
@@ -215,14 +211,12 @@
 
   <!-- 主要內容區 -->
   <main class="flex-1 relative overflow-hidden flex flex-col">
-
-    <!-- 1. 地圖視窗 -->
+    <!-- 地圖視窗 -->
     <div id="viewport" class="w-full h-full relative overflow-hidden bg-slate-950 touch-none cursor-grab active:cursor-grabbing">
-      
       <div class="absolute top-3 left-3 z-20 pointer-events-none flex items-center gap-2">
         <div id="mapHintBanner" class="bg-slate-900/90 backdrop-blur-md border border-slate-700/80 text-slate-100 px-3.5 py-2 rounded-lg text-xs sm:text-sm flex items-center gap-2 shadow-lg">
           <i class="fa-solid fa-circle-info text-amber-400"></i>
-          <span id="mapActionHint">點擊圖面任意位置可新增損壞巡檢點位</span>
+          <span id="mapActionHint">點擊圖面任意位置可新增損壞巡檢點位或器材配置點</span>
         </div>
       </div>
 
@@ -238,7 +232,6 @@
         </div>
       </div>
 
-      <!-- 地圖縮放與圖例按鈕 -->
       <div class="absolute bottom-5 right-5 z-20 flex flex-col gap-2.5">
         <div class="bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl p-3 text-xs sm:text-sm space-y-2 shadow-xl">
           <div class="flex items-center justify-between gap-4">
@@ -272,12 +265,12 @@
       </div>
     </div>
 
-    <!-- 2. 列表視窗 -->
+    <!-- 列表視窗 -->
     <div id="listViewContainer" class="hidden w-full h-full p-4 sm:p-6 overflow-y-auto bg-slate-900 select-text">
       <div class="max-w-7xl mx-auto space-y-4">
         <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-slate-800 p-4 rounded-xl border border-slate-700 shadow">
           <div class="flex flex-wrap items-center gap-3">
-            <select id="filterMap" onchange="renderListViewTable()" class="bg-slate-700 text-white text-xs sm:text-sm rounded-lg px-3.5 py-2.5 border border-slate-600 focus:outline-none focus:border-amber-500 min-h-[44px]">
+            <select id="filterMap" onchange="renderListViewTable()" class="bg-slate-700 text-white text-xs sm:text-sm rounded-lg px-3.5 py-2.5 border border-slate-600 focus:outline-none focus:border-amber-500 min-h-[36px]">
               <option value="all">全部樓層與剖面圖</option>
               <optgroup label="樓層平面圖">
                 <option value="map-b2">B2 層</option>
@@ -297,18 +290,18 @@
                 <option value="map-sec-west">西向剖面</option>
               </optgroup>
             </select>
-            <select id="filterStatus" onchange="renderListViewTable()" class="bg-slate-700 text-white text-xs sm:text-sm rounded-lg px-3.5 py-2.5 border border-slate-600 focus:outline-none focus:border-amber-500 min-h-[44px]">
+            <select id="filterStatus" onchange="renderListViewTable()" class="bg-slate-700 text-white text-xs sm:text-sm rounded-lg px-3.5 py-2.5 border border-slate-600 focus:outline-none focus:border-amber-500 min-h-[36px]">
               <option value="all">全部狀態</option>
               <option value="unrestored">🔴 待修復案件</option>
               <option value="restored">🟢 已修復案件</option>
             </select>
-            <button onclick="copyPendingListSummary()" class="bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-teal-500 transition min-h-[44px] flex items-center gap-1.5 shadow">
+            <button onclick="copyPendingListSummary()" class="bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-teal-500 transition min-h-[36px] flex items-center gap-1.5 shadow">
               <i class="fa-solid fa-copy"></i> 一鍵複製待修清單
             </button>
           </div>
           <div class="relative flex-1 sm:w-72">
             <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input type="text" id="searchKeyword" oninput="renderListViewTable()" placeholder="搜尋標題、責任單位或活動抬頭..." class="bg-slate-700 text-white text-xs sm:text-sm rounded-lg pl-9 pr-3.5 py-2.5 border border-slate-600 w-full focus:outline-none focus:border-amber-500 min-h-[44px]">
+            <input type="text" id="searchKeyword" oninput="renderListViewTable()" placeholder="搜尋標題、責任單位或活動抬頭..." class="bg-slate-700 text-white text-xs sm:text-sm rounded-lg pl-9 pr-3.5 py-2.5 border border-slate-600 w-full focus:outline-none focus:border-amber-500 min-h-[36px]">
           </div>
         </div>
 
@@ -325,9 +318,7 @@
                   <th class="py-3.5 px-4 text-right">操作</th>
                 </tr>
               </thead>
-              <tbody id="listViewTableBody" class="divide-y divide-slate-700/70">
-                <!-- 動態渲染 -->
-              </tbody>
+              <tbody id="listViewTableBody" class="divide-y divide-slate-700/70"></tbody>
             </table>
           </div>
         </div>
@@ -360,27 +351,27 @@
         
         <div>
           <label class="block text-xs font-semibold mb-1">活動名稱 (activity_name) <span class="text-rose-400">*</span></label>
-          <input type="text" id="globalActivityName" required placeholder="例如：2026 職棒總冠軍賽" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
+          <input type="text" id="globalActivityName" required placeholder="例如：2026 職棒總冠軍賽" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[36px]">
         </div>
         <div>
           <label class="block text-xs font-semibold mb-1">租用單位 (renter_unit)</label>
-          <input type="text" id="globalRenterUnit" placeholder="例如：○○棒球協會" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
+          <input type="text" id="globalRenterUnit" placeholder="例如：○○棒球協會" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[36px]">
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold mb-1">租用開始時間 (含時分 24小時制)</label>
-            <input type="datetime-local" id="globalRentStartDate" step="60" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
+            <input type="datetime-local" id="globalRentStartDate" step="60" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[36px]">
           </div>
           <div>
             <label class="block text-xs font-semibold mb-1">租用結束時間 (含時分 24小時制)</label>
-            <input type="datetime-local" id="globalRentEndDate" step="60" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[44px]">
+            <input type="datetime-local" id="globalRentEndDate" step="60" class="w-full bg-slate-800 rounded-lg p-3 text-xs sm:text-sm border border-slate-600 text-white min-h-[36px]">
           </div>
         </div>
         <div class="flex gap-2 pt-1">
           <button type="submit" class="touch-target flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-sm shadow flex items-center justify-center">
             <i class="fa-solid fa-plus mr-1"></i> 儲存檔期抬頭
           </button>
-          <button type="button" onclick="resetHeaderForm()" class="px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs min-h-[44px]">重設</button>
+          <button type="button" onclick="resetHeaderForm()" class="px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs min-h-[36px]">重設</button>
         </div>
       </form>
 
@@ -397,21 +388,21 @@
       <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
       <h3 class="text-lg font-bold text-white mb-2"><i class="fa-solid fa-shield-halved text-amber-400 mr-2"></i>巡檢身分驗證</h3>
       <p class="text-xs text-slate-400 mb-4">請輸入通行密碼解鎖巡檢權限：</p>
-      <input type="password" id="inputAuthPassword" placeholder="請輸入通行密碼..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-500 min-h-[44px]">
+      <input type="password" id="inputAuthPassword" placeholder="請輸入通行密碼..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-500 min-h-[36px]">
       <div class="flex gap-2">
         <button onclick="submitAuthPassword()" class="touch-target flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm shadow flex items-center justify-center">解鎖權限</button>
-        <button onclick="resetToGuest()" class="px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs min-h-[44px]">切回訪客</button>
+        <button onclick="resetToGuest()" class="px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs min-h-[36px]">切回訪客</button>
       </div>
     </div>
   </div>
 
-  <!-- 彈窗 3：新增/編輯損壞點位 Modal (含一鍵複製分享) -->
+  <!-- 彈窗 3：新增/編輯損壞點位 Modal -->
   <div id="pinModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-xl w-full p-6 text-slate-100 relative shadow-2xl max-h-[90vh] overflow-y-auto">
       <button onclick="closeModal('pinModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
       <div class="flex items-center justify-between pr-8 mb-4">
         <h2 id="pinModalTitle" class="text-lg font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-location-dot text-rose-500"></i> 新增損壞巡檢點
+          <i class="fa-solid fa-location-dot text-rose-500"></i> 新增巡檢點 / 器材配置點
         </h2>
         <button type="button" id="btnShareSinglePin" onclick="copySinglePinSummary()" class="px-3 py-1.5 bg-teal-600/90 hover:bg-teal-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
           <i class="fa-solid fa-share-nodes"></i> 複製此案回報文字
@@ -424,62 +415,76 @@
         <input type="hidden" id="formCoordX">
         <input type="hidden" id="formCoordY">
 
-        <!-- 區塊 A：專案抬頭資訊 -->
         <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-700/60 space-y-3">
           <div class="text-xs font-bold text-amber-400 uppercase tracking-wider">專案抬頭資訊 (Header Scoped)</div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold mb-1">活動名稱 (activity_name) <span class="text-rose-400">*</span></label>
-              <input type="text" id="formActivityName" required class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
+              <input type="text" id="formActivityName" required class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
             </div>
             <div>
               <label class="block text-xs font-semibold mb-1">租用單位 (renter_unit)</label>
-              <input type="text" id="formRenterUnit" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
+              <input type="text" id="formRenterUnit" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold mb-1">租用開始時間 (24小時制)</label>
-              <input type="datetime-local" id="formRentStartDate" step="60" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
+              <input type="datetime-local" id="formRentStartDate" step="60" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
             </div>
             <div>
               <label class="block text-xs font-semibold mb-1">租用結束時間 (24小時制)</label>
-              <input type="datetime-local" id="formRentEndDate" step="60" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
+              <input type="datetime-local" id="formRentEndDate" step="60" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
             </div>
           </div>
         </div>
 
-        <!-- 區塊 B：案件細節 -->
         <div>
-          <label class="block text-xs font-semibold mb-1">損壞項目名稱 / 位置地點 <span class="text-rose-400">*</span></label>
-          <input type="text" id="formTitle" required placeholder="例如：B1 牆面劃傷 / L2 扶手鬆脫" class="w-full bg-slate-900 rounded-lg p-2.5 text-sm border border-slate-700 text-white min-h-[44px]">
+          <div>
+            <label class="block text-xs font-semibold mb-1">點位類型</label>
+            <select id="formPinType" onchange="togglePinTypeFields()" class="w-full bg-slate-900 rounded-lg p-2.5 text-sm border border-slate-700 text-white min-h-[36px]">
+              <option value="damage">🔴 毀損點位 (設施異常)</option>
+              <option value="asset">📦 器材點位 (各點位庫存配置)</option>
+            </select>
+          </div>
+
+          <div id="assetFieldsContainer" class="hidden mt-3 bg-slate-900/80 p-3.5 rounded-xl border border-blue-500/40 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="text-xs font-bold text-blue-400 uppercase tracking-wider">📦 該點位多品項器材清單</div>
+              <button type="button" onclick="addPinAssetRow()" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold transition flex items-center gap-1 shadow">
+                <i class="fa-solid fa-plus"></i> 新增品項
+              </button>
+            </div>
+            <div id="pinAssetRowsContainer" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+            <p class="text-[10px] text-slate-400">※ 可在此點位隨時自由增減多種不同器材與對應數量。</p>
+          </div>
+
+          <label class="block text-xs font-semibold mt-3 mb-1">點位名稱 / 位置地點 <span class="text-rose-400">*</span></label>
+          <input type="text" id="formTitle" required placeholder="例如：B1 牆面劃傷 / 主舞台左側器材區" class="w-full bg-slate-900 rounded-lg p-2.5 text-sm border border-slate-700 text-white min-h-[36px]">
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold mb-1">責任單位</label>
-            <input type="text" id="formDepartment" placeholder="例如：營修組 / 場務科" class="w-full bg-slate-900 rounded-lg p-2.5 text-xs border border-slate-700 text-white min-h-[44px]">
+            <input type="text" id="formDepartment" placeholder="例如：主辦方 / 場務科" class="w-full bg-slate-900 rounded-lg p-2.5 text-xs border border-slate-700 text-white min-h-[36px]">
           </div>
           <div>
             <label class="block text-xs font-semibold mb-1">損害發生日期 (damage_date)</label>
-            <input type="date" id="formDamageDate" class="w-full bg-slate-900 rounded-lg p-2.5 text-xs border border-slate-700 text-white min-h-[44px]">
+            <input type="date" id="formDamageDate" class="w-full bg-slate-900 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
           </div>
         </div>
 
-        <!-- 實際完修日期 -->
-        <div class="bg-slate-900/80 p-3.5 rounded-xl border border-emerald-500/40 space-y-2">
+        <div class="bg-slate-900/80 p-2 rounded-xl border border-emerald-500/40 space-y-1">
           <div class="flex items-center justify-between">
             <label class="block text-xs font-bold text-emerald-400">實際完修日期 (actual_restore_date)</label>
             <button type="button" onclick="fillTodayRestoreDate()" class="px-2.5 py-1 bg-emerald-600/40 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded text-[11px] font-bold border border-emerald-500/50 transition">
               <i class="fa-solid fa-calendar-check mr-1"></i>填入今日完修
             </button>
           </div>
-          <input type="date" id="formActualRestoreDate" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[44px]">
-          <p class="text-[11px] text-slate-400">※ 填寫完修日期後點位轉為綠色，且自動從《設施設備損害異常紀錄表》報表中排除（只保留待修項目）。</p>
+          <input type="date" id="formActualRestoreDate" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
         </div>
 
-        <!-- 預計修復方式單選與延伸欄位 -->
-        <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-700/60 space-y-3">
+        <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-700/60 space-y-1">
           <label class="block text-xs font-bold text-indigo-300">預計修復方式 (repair_option)</label>
           <div class="flex items-center space-x-4 text-xs">
             <label class="flex items-center space-x-1.5 cursor-pointer py-1">
@@ -495,24 +500,23 @@
           <div id="selfRepairFields" class="hidden grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-700/50">
             <div>
               <label class="block text-xs font-semibold mb-1">施工單位名稱 (constructor_name)</label>
-              <input type="text" id="formConstructorName" placeholder="例如：○○營造工程" class="w-full bg-slate-800 rounded-lg p-2 text-xs border border-slate-600 text-white min-h-[44px]">
+              <input type="text" id="formConstructorName" placeholder="例如：○○營造工程" class="w-full bg-slate-800 rounded-lg p-2 text-xs border border-slate-600 text-white min-h-[36px]">
             </div>
             <div>
               <label class="block text-xs font-semibold mb-1">預計施作日期 (construct_date)</label>
-              <input type="date" id="formConstructDate" class="w-full bg-slate-800 rounded-lg p-2 text-xs border border-slate-600 text-white min-h-[44px]">
+              <input type="date" id="formConstructDate" class="w-full bg-slate-800 rounded-lg p-2 text-xs border border-slate-600 text-white min-h-[36px]">
             </div>
           </div>
           <div id="paidRepairNotice" class="hidden text-xs text-amber-400 bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20">
-            <i class="fa-solid fa-circle-info mr-1"></i> 將由場館技術科提供後續維修報價單。
+            <i class="fa-solid fa-circle-info mr-1"></i> 將由場務管理科提供後續維修報價單。
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold mb-1">詳細損害描述與備註</label>
+          <label class="block text-xs font-semibold mb-1">詳細說明與備註</label>
           <textarea id="formDescription" rows="2" placeholder="備註現況..." class="w-full bg-slate-900 rounded-lg p-2.5 text-xs border border-slate-700 text-white"></textarea>
         </div>
 
-        <!-- 現場照片上傳 -->
         <div>
           <label class="block text-xs font-semibold mb-1">現場照片 (支援手機直拍)</label>
           <input type="file" id="formPhotoInput" accept="image/*" capture="environment" multiple onchange="handlePhotoUpload(event)" class="hidden">
@@ -525,11 +529,11 @@
         </div>
 
         <div class="pt-3 flex justify-between items-center border-t border-slate-700">
-          <button type="button" id="btnDeletePinForm" onclick="requestDeletePinFromForm()" class="hidden px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs min-h-[44px]">
+          <button type="button" id="btnDeletePinForm" onclick="requestDeletePinFromForm()" class="hidden px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs min-h-[36px]">
             <i class="fa-solid fa-trash-can mr-1"></i> 刪除點位
           </button>
           <div class="flex gap-2 ml-auto">
-            <button type="button" onclick="closeModal('pinModal')" class="px-4 py-3 bg-slate-700 text-slate-300 rounded-xl text-xs min-h-[44px]">取消</button>
+            <button type="button" onclick="closeModal('pinModal')" class="px-4 py-3 bg-slate-700 text-slate-300 rounded-xl text-xs min-h-[36px]">取消</button>
             <button type="submit" class="touch-target px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-md flex items-center justify-center">儲存巡檢紀錄</button>
           </div>
         </div>
@@ -546,90 +550,200 @@
       <p id="confirmModalText" class="text-xs text-slate-300 mb-6 leading-relaxed">此動作將永久移除該筆巡檢資料與相關圖片紀錄，無法復原。</p>
       <div class="flex gap-2">
         <button id="btnConfirmDeleteAction" class="touch-target flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs shadow flex items-center justify-center">確定刪除</button>
-        <button onclick="closeModal('confirmModal')" class="px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs min-h-[44px]">取消</button>
+        <button onclick="closeModal('confirmModal')" class="px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs min-h-[36px]">取消</button>
       </div>
     </div>
   </div>
 
-  <!-- 《設施設備損害異常紀錄表》Word 檔標準 A4 官方報表列印模板 -->
+  <!-- 🌟 彈窗 5：器材點交、點退與跨檔期流轉管理 Modal -->
+  <div id="assetManagerModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 rounded-2xl border border-purple-500/50 max-w-5xl w-full p-6 text-slate-100 relative shadow-2xl max-h-[92vh] overflow-y-auto">
+      <button onclick="closeModal('assetManagerModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
+      
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-boxes-stacked"></i></div>
+        <div>
+          <h2 class="text-xl font-bold text-white">器材點交、點退與跨檔期數量流轉管理</h2>
+          <p class="text-xs text-slate-300">前一檔點退時的器材數量與位置明細，將無縫成為下一檔進場點交的起始基準。</p>
+        </div>
+      </div>
+
+      <!-- 檔期選擇與快速帶入工具列 -->
+      <div class="bg-slate-900/90 p-4 rounded-xl border border-purple-500/30 mb-5 space-y-3">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div class="flex-1 w-full sm:w-auto">
+            <label class="block text-xs font-bold text-purple-300 uppercase tracking-wider mb-1">選擇操作檔期活動</label>
+            <select id="assetManagerActivitySelect" onchange="onAssetManagerActivityChange()" class="w-full bg-slate-800 text-white font-bold text-sm rounded-lg p-2.5 border border-slate-600 focus:outline-none focus:border-amber-500 cursor-pointer min-h-[38px]">
+              <option value="">-- 請選擇或建立活動檔期 --</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" onclick="autoLoadPreviousCheckOut()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs transition shadow flex items-center gap-1.5 min-h-[38px]" title="自動將前一檔點退後的各位置品項與數量帶入本檔點交基準">
+              <i class="fa-solid fa-file-arrow-down"></i> 📥 載入前一檔點退數量
+            </button>
+            <button type="button" onclick="exportAssetPrintoutForm()" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-xs transition shadow flex items-center gap-1.5 min-h-[38px]" title="列印當前活動器材點交與點退紀錄表 A4 紙本報表">
+              <i class="fa-solid fa-print"></i> 🖨️ 列印器材點交/點退表單
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 點交 / 點退表單 -->
+      <form onsubmit="handleSaveAssetTransaction(event)" class="bg-slate-900/80 p-4 rounded-xl border border-purple-500/30 mb-5 space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+          <h3 id="assetFormTitle" class="text-xs font-bold text-amber-400 uppercase tracking-wider">📦 記錄本檔器材點交 / 點退異動明細</h3>
+          <span class="text-[11px] text-slate-400">※ 點退時會將耗損或數量增減結算，並成為下一檔的起始依據。</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1">作業類型 <span class="text-rose-400">*</span></label>
+             <select id="txType" onchange="toggleTxTypeHint()" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
+              <option value="check_in">📥 進場點交 (接收/配置數量)</option>
+              <option value="check_out">📤 離場點退 (結算與耗損變動)</option>
+              <option value="loss">⚠️ 館內耗損/遺失紀錄</option>
+              <option value="carry_over">🔄 跨檔期保留/轉移 (不撤場續用)</option>
+             </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">對應地圖點位 (Asset Pin) <span class="text-rose-400">*</span></label>
+            <select id="txPinLocation" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
+              <option value="主倉庫區">主倉庫區</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">器材品項名稱 <span class="text-rose-400">*</span></label>
+            <input type="text" id="txAssetName" required placeholder="例如：摺疊椅、三角錐、護欄" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1">數量變動 (正數為增加/點交，負數或點退請直接填寫) <span class="text-rose-400">*</span></label>
+            <input type="number" id="txQty" required placeholder="例如：100 或 -5" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
+            <p id="txQtyHint" class="text-[10px] text-slate-400 mt-1">※ 點退離場時，請輸入實際清點退回數量或耗損差額。</p>
+          </div>
+          <div class="flex items-end">
+            <button type="submit" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg text-xs shadow flex items-center justify-center gap-1.5 min-h-[36px]">
+              <i class="fa-solid fa-plus"></i> 儲存該位置品項異動
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- 列表顯示 -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">🏢 全館所有位置之器材種類與目前庫存 / 檔期結算狀態</h3>
+          <button type="button" onclick="renderAssetInventoryUI()" class="text-xs text-amber-400 hover:underline"><i class="fa-solid fa-rotate mr-1"></i>重新整理數據</button>
+        </div>
+        
+        <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm text-slate-200">
+              <thead class="bg-slate-700/80 text-slate-100 uppercase text-xs border-b border-slate-600">
+                <tr>
+                  <th class="py-2.5 px-4">位置 / 點位名稱</th>
+                  <th class="py-2.5 px-4">器材品項名稱</th>
+                  <th class="py-2.5 px-4 text-right">進場點交數量</th>
+                  <th class="py-2.5 px-4 text-right">點退/耗損異動</th>
+                  <th class="py-2.5 px-4 text-right font-bold text-amber-400">目前結算在庫數</th>
+                </tr>
+              </thead>
+              <tbody id="assetInventorySummaryBody" class="divide-y divide-slate-700/70"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider pt-2">詳細異動歷史紀錄與跨檔期流轉明細</h3>
+        <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden max-h-56 overflow-y-auto">
+          <table class="w-full text-left text-xs text-slate-200">
+            <thead class="bg-slate-700/80 text-slate-100 uppercase text-xs border-b border-slate-600 sticky top-0">
+              <tr>
+                <th class="py-2 px-3">時間</th>
+                <th class="py-2 px-3">活動檔期</th>
+                <th class="py-2 px-3">位置地點</th>
+                <th class="py-2 px-3">器材名稱</th>
+                <th class="py-2 px-3">類型</th>
+                <th class="py-2 px-3 text-right">數量</th>
+              </tr>
+            </thead>
+            <tbody id="assetTransactionsBody" class="divide-y divide-slate-700/70"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 官方設施設備損害異常報表列印模板 -->
   <div id="appendix24PrintArea" class="hidden bg-white text-black p-2 font-sans">
     <div class="text-center font-black text-xl mb-0.5 tracking-wider">臺北大巨蛋設施設備損害異常紀錄表</div>
     <div class="text-center text-[10px] text-gray-600 mb-2 font-semibold">（表單編號：DI-VM-05-2023-01）</div>
-
-    <div class="border-2 border-black p-2.5 text-xs space-y-1 mb-2.5 bg-gray-50/30 print-keep-together">
-      <div class="flex justify-between items-center border-b border-gray-300 pb-1">
-        <span class="text-xs"><strong>活動名稱：</strong><span id="rptActivityName" class="font-bold underline">--</span></span>
-        <span class="text-xs"><strong>租用單位：</strong><span id="rptRenterUnit" class="font-bold underline">--</span></span>
-      </div>
-      <div class="pt-0.5 text-xs text-gray-800">
-        <strong>場地租用期間：</strong><span id="rptRentDates" class="font-mono">--</span>
-      </div>
+    <div class="border border-black p-3 mb-3 text-xs space-y-1">
+      <div><strong>活動名稱：</strong><span id="rptActivityName">--</span></div>
+      <div><strong>租用單位：</strong><span id="rptRenterUnit">--</span></div>
+      <div><strong>租用期間：</strong><span id="rptRentDates">--</span></div>
     </div>
-
-    <table class="w-full border-collapse border-2 border-black text-xs mb-3">
+    <table class="w-full text-xs border-collapse border border-black">
       <thead>
-        <tr class="bg-gray-200 text-center font-bold border-b-2 border-black">
-          <th class="border border-black p-1.5 w-8">項次</th>
-          <th class="border border-black p-1.5 w-1/3">異常設施設備<br><span class="text-[9px] font-normal text-gray-600">（位置/名稱/現場照片）</span></th>
-          <th class="border border-black p-1.5 w-1/4">異常圖說<br><span class="text-[9px] font-normal text-gray-600">（損害日期/原因說明）</span></th>
-          <th class="border border-black p-1.5">預計修復方式與處理規劃</th>
+        <tr class="bg-gray-200 text-center">
+          <th class="border border-black p-1.5 w-10">項次</th>
+          <th class="border border-black p-1.5 w-44">損壞位置與照片</th>
+          <th class="border border-black p-1.5">損壞發生日期與說明</th>
+          <th class="border border-black p-1.5 w-44">處理方式與預定完修</th>
         </tr>
       </thead>
       <tbody id="rptTableBody"></tbody>
     </table>
+  </div>
 
-    <div class="mb-3 border-2 border-black p-2 text-xs bg-gray-50/50 print-keep-together">
-      <div class="font-bold border-b border-black pb-1 mb-1.5 text-xs flex items-center justify-between">
-        <span>✍️ 現場驗收與損害確認雙方簽章</span>
-        <span class="text-[9px] font-normal text-gray-500">（雙方代表確認無誤後請於下方親筆簽名）</span>
-      </div>
-      <div class="grid grid-cols-2 gap-6 py-1">
-        <div class="flex items-center">
-          <strong class="text-xs shrink-0">租用單位代表：</strong>
-          <div class="border-b-2 border-black flex-1 h-6"></div>
-        </div>
-        <div class="flex items-center">
-          <strong class="text-xs shrink-0">場館代表：</strong>
-          <div class="border-b-2 border-black flex-1 h-6"></div>
-        </div>
-      </div>
+  <!-- 🌟 官方活動器材點交與點退紀錄表列印模板 -->
+  <div id="assetPrintArea" class="hidden bg-white text-black p-4 font-sans text-xs">
+    <div class="text-center font-black text-xl mb-1 tracking-wider">臺北大巨蛋活動器材點交與點退紀錄表</div>
+    <div class="text-center text-[10px] text-gray-600 mb-3 font-semibold">（表單編號：DI-AST-02-2026-01）</div>
+    
+    <div class="border border-black p-3 mb-4 space-y-1 bg-gray-50">
+      <div><strong>活動名稱：</strong><span id="assetRptActivityName">--</span></div>
+      <div><strong>租用/主辦單位：</strong><span id="assetRptRenterUnit">--</span></div>
+      <div><strong>檔期期間：</strong><span id="assetRptRentDates">--</span></div>
     </div>
 
-    <div class="border-2 border-black text-xs print-keep-together">
-      <div class="bg-gray-200 p-1 font-bold border-b-2 border-black text-center text-xs tracking-wide">
-        遠雄巨蛋公司內部會簽與審核區
+    <table class="w-full border-collapse border border-black mb-6">
+      <thead>
+        <tr class="bg-gray-200 text-center font-bold">
+          <th class="border border-black p-2 w-12">項次</th>
+          <th class="border border-black p-2 w-48">配置位置與點位名稱</th>
+          <th class="border border-black p-2">器材品項名稱</th>
+          <th class="border border-black p-2 w-24 text-right">進場點交數</th>
+          <th class="border border-black p-2 w-24 text-right">離場點退數</th>
+          <th class="border border-black p-2 w-24 text-right">目前在庫數</th>
+          <th class="border border-black p-2 w-32">備註 / 差異說明</th>
+        </tr>
+      </thead>
+      <tbody id="assetRptTableBody"></tbody>
+    </table>
+
+    <!-- 底部雙方簽章區 -->
+    <div class="grid grid-cols-2 gap-8 pt-4 border-t-2 border-black print-keep-together mt-8">
+      <div class="border border-black p-4 h-28 flex flex-col justify-between">
+        <div class="font-bold">場館點交人員（甲方）簽章：</div>
+        <div class="text-right text-gray-400 text-[10px]">日期：______年______月______日</div>
       </div>
-      <div class="grid grid-cols-4 divide-x-2 divide-black h-20">
-        <div class="p-2 flex flex-col justify-between">
-          <span class="font-bold text-xs">營運部主管：</span>
-          <div class="text-[9px] text-gray-400 text-center font-semibold">（簽章）</div>
-        </div>
-        <div class="p-2 flex flex-col justify-between">
-          <span class="font-bold text-xs">場館業務科：</span>
-          <div class="text-[9px] text-gray-400 text-center font-semibold">（簽章）</div>
-        </div>
-        <div class="p-2 flex flex-col justify-between">
-          <span class="font-bold text-xs">設備技術科：</span>
-          <div class="text-[9px] text-gray-400 text-center font-semibold">（簽章）</div>
-        </div>
-        <div class="p-2 flex flex-col justify-between">
-          <span class="font-bold text-xs">場務管理科：</span>
-          <div class="text-[9px] text-gray-400 text-center font-semibold">（簽章）</div>
-        </div>
+      <div class="border border-black p-4 h-28 flex flex-col justify-between">
+        <div class="font-bold">租用單位代表（乙方）簽章：</div>
+        <div class="text-right text-gray-400 text-[10px]">日期：______年______月______日</div>
       </div>
     </div>
   </div>
 
   <!-- 核心邏輯腳本 -->
   <script>
-    // 永久連線 Supabase 雲端 (鐵律 1 & 6)
     const SUPABASE_URL = 'https://pmwnnkemklbeuzupdvlq.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_XFUvaEUIqj8KKmVAgjpMqA_XpEyI11e';
 
     const GITHUB_BASE = 'https://raw.githubusercontent.com/Bond-Taipei-Dome/TaipeiDome-maps/main/';
     const CDN_BASE = 'https://cdn.jsdelivr.net/gh/Bond-Taipei-Dome/TaipeiDome-maps@main/';
 
-    // 13 大獨立樓層與剖面圖對照 (鐵律 2)
     window.MAPS = {
       'map-b2': { id: 'map-b2', name: 'B2 層平面圖', file: 'B2 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
       'map-b1': { id: 'map-b1', name: 'B1 層平面圖', file: 'B1 臺北大巨蛋 Scan to CAD_page-0001.jpg' },
@@ -671,16 +785,16 @@
       renderProjectHeaderListUI();
     });
 
-document.addEventListener('DOMContentLoaded', () => {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const versionBadge = document.getElementById('autoVersionBadge');
-  if (versionBadge) {
-    versionBadge.innerText = `v${yyyy}.${mm}.${dd}`;
-  }
-});
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const versionBadge = document.getElementById('autoVersionBadge');
+      if (versionBadge) {
+        versionBadge.innerText = `v${yyyy}.${mm}.${dd}`;
+      }
+    });
 
     function updateCloudBadge(isOk, msg = '') {
       const badge = document.getElementById('cloudStatusBadge');
@@ -871,7 +985,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `● 預計修復：${pin.repair_option || '待確定'}\n` +
         `● 現況說明：${pin.description || '無備註'}\n` +
         `------------------------\n` +
-        `（來自 臺北大巨蛋場務管理系統）`;
+        `（來自 臺北大巨蛋場館現況管理系統）`;
 
       navigator.clipboard.writeText(text).then(() => {
         showToast('已複製回報文字！可直接貼至 LINE 群組', 'success');
@@ -975,10 +1089,23 @@ document.addEventListener('DOMContentLoaded', () => {
       list.forEach(pin => {
         const isRestored = !!pin.actual_restore_date;
         const el = document.createElement('div');
-        el.className = `custom-pin ${isRestored ? 'pin-restored' : 'pin-unrestored'}`;
+        if (pin.pin_type === 'asset') {
+          el.className = 'absolute cursor-pointer';
+        } else {
+          el.className = `custom-pin ${isRestored ? 'pin-restored' : 'pin-unrestored'}`;
+        }
         el.style.left = `${pin.x}%`;
         el.style.top = `${pin.y}%`;
-        el.innerHTML = isRestored ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-exclamation"></i>';
+
+        if (pin.pin_type === 'asset') {
+          const totalQty = pin.asset_qty || (pin.asset_list ? pin.asset_list.reduce((s,i)=>s+i.qty,0) : 0);
+          el.innerHTML = `<div style="width:52px;height:52px;border-radius:50%;background:#2563eb;border:3px solid #ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;box-shadow:0 0 14px rgba(37,99,235,.8);font-weight:bold;line-height:1.1;padding:2px;text-align:center;">
+            <span style="font-size:16px;">📦</span>
+            <span style="font-size:10px;background:rgba(0,0,0,0.5);padding:0 4px;border-radius:4px;max-width:46px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${totalQty}個</span>
+          </div>`;
+        } else {
+          el.innerHTML = isRestored ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-exclamation"></i>';
+        }
 
         el.onclick = (e) => { e.stopPropagation(); editPin(pin.id); };
         layer.appendChild(el);
@@ -1078,11 +1205,21 @@ document.addEventListener('DOMContentLoaded', () => {
       requestUpdateTransform();
     };
 
-    function getStoredHeaderList() {
-      const raw = localStorage.getItem('dome_project_headers_list');
-      try { return raw ? JSON.parse(raw) : []; } catch (e) { return []; }
-    }
-
+function getStoredHeaderList() {
+  const raw = localStorage.getItem('dome_project_headers_list');
+  try { 
+    let list = raw ? JSON.parse(raw) : [];
+    // 🌟 依照租用開始時間（start）由遠到近進行時間序列排序
+    list.sort((a, b) => {
+      if (!a.start) return 1;
+      if (!b.start) return -1;
+      return new Date(a.start) - new Date(b.start);
+    });
+    return list;
+  } catch (e) { 
+    return []; 
+  }
+}
     function saveStoredHeaderList(list) {
       localStorage.setItem('dome_project_headers_list', JSON.stringify(list));
     }
@@ -1090,6 +1227,304 @@ document.addEventListener('DOMContentLoaded', () => {
     window.openProjectHeaderManager = function() {
       renderProjectHeaderListUI();
       openModal('projectHeaderModal');
+    };
+
+    // 📦 器材點交與跨檔期流轉管理邏輯
+    window.assetTransactions = [];
+
+    window.openAssetManagerModal = async function() {
+      await fetchAssetTransactionsFromCloud();
+      renderAssetManagerActivitySelector();
+      openModal('assetManagerModal');
+    };
+
+    async function fetchAssetTransactionsFromCloud() {
+      if (!window.supabaseClient) return;
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('asset_transactions')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!error && Array.isArray(data)) {
+          window.assetTransactions = data;
+          localStorage.setItem('dome_asset_tx_cache', JSON.stringify(data));
+        } else {
+          throw error;
+        }
+      } catch (err) {
+        const cached = localStorage.getItem('dome_asset_tx_cache');
+        if (cached) {
+          window.assetTransactions = JSON.parse(cached);
+        }
+      }
+      renderAssetInventoryUI();
+    }
+
+    function renderAssetManagerActivitySelector() {
+      const select = document.getElementById('assetManagerActivitySelect');
+      if (!select) return;
+      const list = getStoredHeaderList();
+      const activeId = localStorage.getItem('dome_active_header_id') || '';
+      const activeHeader = list.find(h => h.id === activeId);
+
+      select.innerHTML = '<option value="">-- 請選擇活動檔期 --</option>' +
+        list.map(h => `<option value="${h.activity}" ${activeHeader && activeHeader.activity === h.activity ? 'selected' : ''}>${h.activity} (${h.unit || '未設定單位'})</option>`).join('');
+      
+      populatePinLocationsDropdown();
+    }
+
+    window.onAssetManagerActivityChange = function() {
+      renderAssetInventoryUI();
+    };
+
+    function populatePinLocationsDropdown() {
+      const pinSelect = document.getElementById('txPinLocation');
+      if (!pinSelect) return;
+      
+      const assetPins = window.pins.filter(p => p.pin_type === 'asset');
+      let optionsHtml = '<option value="主倉庫區">主倉庫區 (預設)</option>';
+      
+      assetPins.forEach(p => {
+        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資';
+        optionsHtml += `<option value="${p.title} (${mapName})">${p.title} (${mapName})</option>`;
+      });
+      pinSelect.innerHTML = optionsHtml;
+    }
+
+    window.toggleTxTypeHint = function() {
+      const type = document.getElementById('txType').value;
+      const hint = document.getElementById('txQtyHint');
+      if (!hint) return;
+      if (type === 'check_in') {
+        hint.innerText = "※ 進場點交：請填入接收或配置的正數數量。";
+      } else if (type === 'check_out') {
+        hint.innerText = "※ 離場點退：請填入實際清點退回的數量（系統將自動結算與前一檔差異）。";
+      } else if (type === 'carry_over') {
+        hint.innerText = "※ 跨檔期保留：請填入不隨本檔離場歸還、要直接保留轉移至下一檔續用的數量。";
+      } else {
+        hint.innerText = "※ 耗損遺失：請填入損壞或遺失的數量（建議填負數或正數由系統扣除）。";
+      }
+    };
+
+    window.autoLoadPreviousCheckOut = function() {
+      const currentActivity = document.getElementById('assetManagerActivitySelect').value;
+      if (!currentActivity) {
+        return showToast('請先上方選擇您要操作的「本檔活動名稱」！', 'error');
+      }
+
+      const list = getStoredHeaderList();
+      const currentIndex = list.findIndex(h => h.activity === currentActivity);
+      if (currentIndex <= 0) {
+        return showToast('找不到前一檔活動記錄，無法自動載入前一檔點退數量！', 'info');
+      }
+
+      const prevActivity = list[currentIndex - 1].activity;
+      const prevTxs = window.assetTransactions.filter(tx => tx.activity_name === prevActivity);
+      if (prevTxs.length === 0) {
+        return showToast(`前一檔「${prevActivity}」無任何器材點交/點退紀錄！`, 'info');
+      }
+
+      const balanceMap = {};
+      prevTxs.forEach(tx => {
+        const key = `${tx.pin_location || '主倉庫區'}_${tx.asset_name}`;
+        if (!balanceMap[key]) {
+          balanceMap[key] = { pin_location: tx.pin_location || '主倉庫區', asset_name: tx.asset_name, qty: 0 };
+        }
+        balanceMap[key].qty += parseInt(tx.change_qty || 0);
+      });
+
+      let loadedCount = 0;
+      Object.values(balanceMap).forEach(item => {
+        if (item.qty !== 0) {
+          const newTx = {
+            id: crypto.randomUUID(),
+            activity_name: currentActivity,
+            pin_location: item.pin_location,
+            asset_name: item.asset_name,
+            transaction_type: 'check_in',
+            change_qty: item.qty,
+            created_at: new Date().toISOString()
+          };
+          window.assetTransactions.unshift(newTx);
+          loadedCount++;
+        }
+      });
+
+      localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
+      renderAssetInventoryUI();
+      showToast(`成功從前一檔「${prevActivity}」帶入 ${loadedCount} 筆器材點退結算餘額作為本檔點交起算！`, 'success');
+    };
+
+    window.handleSaveAssetTransaction = async function(e) {
+      e.preventDefault();
+      const activity_name = document.getElementById('assetManagerActivitySelect').value;
+      if (!activity_name) return showToast('請先選擇活動檔期名稱！', 'error');
+
+      const pin_location = document.getElementById('txPinLocation').value;
+      const asset_name = document.getElementById('txAssetName').value.trim();
+      const transaction_type = document.getElementById('txType').value;
+      let change_qty = parseInt(document.getElementById('txQty').value || '0');
+
+      if (transaction_type === 'check_out' || transaction_type === 'loss') {
+        if (change_qty > 0) change_qty = -change_qty;
+      }
+
+      const newTx = {
+        id: crypto.randomUUID(),
+        activity_name,
+        pin_location,
+        asset_name,
+        transaction_type,
+        change_qty,
+        created_at: new Date().toISOString()
+      };
+
+      window.assetTransactions.unshift(newTx);
+      localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
+
+      if (window.supabaseClient) {
+        try {
+          await window.supabaseClient.from('asset_transactions').insert([newTx]);
+        } catch (err) {}
+      }
+
+      document.getElementById('txQty').value = '';
+      renderAssetInventoryUI();
+      showToast('器材異動明細已成功儲存與流轉！', 'success');
+    };
+
+    function renderAssetInventoryUI() {
+      const summaryBody = document.getElementById('assetInventorySummaryBody');
+      const txBody = document.getElementById('assetTransactionsBody');
+      if (!summaryBody || !txBody) return;
+
+      const selectedActivity = document.getElementById('assetManagerActivitySelect')?.value || '';
+
+      const targetTxs = selectedActivity 
+        ? window.assetTransactions.filter(tx => tx.activity_name === selectedActivity)
+        : window.assetTransactions;
+
+      const inventoryMap = {};
+      targetTxs.forEach(tx => {
+        const loc = tx.pin_location || '主倉庫區';
+        const name = tx.asset_name || '未命名器材';
+        const mapKey = `${loc}___${name}`;
+
+        if (!inventoryMap[mapKey]) {
+          inventoryMap[mapKey] = { pin_location: loc, asset_name: name, totalIn: 0, totalOut: 0, balance: 0 };
+        }
+        const qty = parseInt(tx.change_qty || 0);
+        if (qty > 0) {
+          inventoryMap[mapKey].totalIn += qty;
+        } else {
+          inventoryMap[mapKey].totalOut += Math.abs(qty);
+        }
+        inventoryMap[mapKey].balance += qty;
+      });
+
+      const keys = Object.keys(inventoryMap);
+      if (keys.length === 0) {
+        summaryBody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-500 text-xs">尚無任何器材點交與位置明細紀錄</td></tr>`;
+      } else {
+        summaryBody.innerHTML = keys.map(k => {
+          const item = inventoryMap[k];
+          return `
+            <tr class="hover:bg-slate-700/40 transition">
+              <td class="py-2.5 px-4 font-semibold text-indigo-300"><i class="fa-solid fa-location-dot mr-1"></i>${item.pin_location}</td>
+              <td class="py-2.5 px-4 font-bold text-white">${item.asset_name}</td>
+              <td class="py-2.5 px-4 text-right text-emerald-400 font-mono">+${item.totalIn}</td>
+              <td class="py-2.5 px-4 text-right text-rose-400 font-mono">-${item.totalOut}</td>
+              <td class="py-2.5 px-4 text-right font-bold text-amber-400 font-mono text-sm">${item.balance}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      if (window.assetTransactions.length === 0) {
+        txBody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 text-xs">尚無異動明細</td></tr>`;
+      } else {
+        txBody.innerHTML = window.assetTransactions.map(tx => {
+          let badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300">進場點交</span>';
+          if (tx.transaction_type === 'check_out') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-300">離場點退</span>';
+          if (tx.transaction_type === 'loss') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300">耗損遺失</span>';
+          if (tx.transaction_type === 'carry_over') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-300">🔄 跨檔期保留</span>';
+
+          return `
+            <tr class="hover:bg-slate-700/40 transition">
+              <td class="py-2 px-3 text-slate-400 font-mono">${tx.created_at ? tx.created_at.replace('T', ' ').substring(0, 16) : '--'}</td>
+              <td class="py-2 px-3 text-amber-300 font-semibold">${tx.activity_name || '--'}</td>
+              <td class="py-2 px-3 text-indigo-200">${tx.pin_location || '主倉庫區'}</td>
+              <td class="py-2 px-3 text-white font-medium">${tx.asset_name || '--'}</td>
+              <td class="py-2 px-3">${badge}</td>
+              <td class="py-2 px-3 text-right font-mono font-bold ${tx.change_qty >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${tx.change_qty}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    // 🌟 匯出器材點交與點退紙本報表
+    window.exportAssetPrintoutForm = function() {
+      const selectedActivity = document.getElementById('assetManagerActivitySelect').value;
+      if (!selectedActivity) {
+        return showToast('請先上方選擇您要列印的「活動檔期名稱」！', 'error');
+      }
+
+      const list = getStoredHeaderList();
+      const headerData = list.find(h => h.activity === selectedActivity) || {};
+
+      const targetTxs = window.assetTransactions.filter(tx => tx.activity_name === selectedActivity);
+      if (targetTxs.length === 0) {
+        return showToast(`活動「${selectedActivity}」尚無任何器材點交或點退紀錄可供列印！`, 'info');
+      }
+
+      const inventoryMap = {};
+      targetTxs.forEach(tx => {
+        const loc = tx.pin_location || '主倉庫區';
+        const name = tx.asset_name || '未命名器材';
+        const mapKey = `${loc}___${name}`;
+
+        if (!inventoryMap[mapKey]) {
+          inventoryMap[mapKey] = { pin_location: loc, asset_name: name, totalIn: 0, totalOut: 0, balance: 0 };
+        }
+        const qty = parseInt(tx.change_qty || 0);
+        if (qty > 0) {
+          inventoryMap[mapKey].totalIn += qty;
+        } else {
+          inventoryMap[mapKey].totalOut += Math.abs(qty);
+        }
+        inventoryMap[mapKey].balance += qty;
+      });
+
+      document.getElementById('assetRptActivityName').innerText = selectedActivity;
+      document.getElementById('assetRptRenterUnit').innerText = headerData.unit || '未指定單位';
+      
+      const startDisplay = formatDateToTwFullString(headerData.start);
+      const endDisplay = formatDateToTwFullString(headerData.end);
+      document.getElementById('assetRptRentDates').innerText = `${startDisplay} ~ ${endDisplay}`;
+
+      const tbody = document.getElementById('assetRptTableBody');
+      const items = Object.values(inventoryMap);
+
+      tbody.innerHTML = items.map((item, idx) => `
+        <tr class="align-middle print-keep-together">
+          <td class="border border-black p-2 text-center font-bold">${idx + 1}</td>
+          <td class="border border-black p-2 font-semibold text-gray-800"><i class="fa-solid fa-location-dot mr-1"></i>${item.pin_location}</td>
+          <td class="border border-black p-2 font-bold text-black">${item.asset_name}</td>
+          <td class="border border-black p-2 text-right font-mono text-emerald-700 font-bold">${item.totalIn > 0 ? '+' + item.totalIn : '0'}</td>
+          <td class="border border-black p-2 text-right font-mono text-rose-700 font-bold">${item.totalOut > 0 ? '-' + item.totalOut : '0'}</td>
+          <td class="border border-black p-2 text-right font-mono text-black font-black text-sm">${item.balance}</td>
+          <td class="border border-black p-2 text-gray-700 text-[11px]">
+            ${item.totalOut === 0 && item.balance > 0 ? '本批器材跨檔期連續使用，不隨本檔離場點退，轉入下檔續用' : ''}
+          </td>
+        </tr>
+      `).join('');
+
+      const printArea = document.getElementById('assetPrintArea');
+      printArea.classList.remove('hidden');
+      window.print();
+      setTimeout(() => printArea.classList.add('hidden'), 500);
     };
 
     function renderProjectHeaderListUI() {
@@ -1194,7 +1629,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('globalRentEndDate').value = '';
     };
 
-    // 通行密碼隱蔽保護 (鐵律 6)
     window.submitAuthPassword = function() {
       const pwd = document.getElementById('inputAuthPassword').value.trim();
       if (pwd === 'superadmin') {
@@ -1225,7 +1659,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openPinModalForCreate(x, y) {
-      document.getElementById('pinModalTitle').innerText = '新增損壞巡檢點';
+      document.getElementById('pinModalTitle').innerText = '新增巡檢點 / 器材配置點';
       document.getElementById('pinForm').reset();
       document.getElementById('formPinId').value = '';
       document.getElementById('formMapId').value = window.currentMapId;
@@ -1250,6 +1684,9 @@ document.addEventListener('DOMContentLoaded', () => {
       window.activeImages = [];
       renderPhotoPreviews();
       toggleRepairFields();
+      togglePinTypeFields();
+      window.pinAssetList = [];
+      renderPinAssetRows();
       openModal('pinModal');
     }
 
@@ -1257,11 +1694,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const pin = window.pins.find(p => p.id === id);
       if (!pin) return;
 
-      document.getElementById('pinModalTitle').innerText = '編輯損壞巡檢點';
+      document.getElementById('pinModalTitle').innerText = '編輯巡檢點 / 器材配置點';
       document.getElementById('formPinId').value = pin.id;
       document.getElementById('formMapId').value = pin.map_id || pin.mapId;
       document.getElementById('formCoordX').value = pin.x;
       document.getElementById('formCoordY').value = pin.y;
+      document.getElementById('formPinType').value = pin.pin_type || 'damage';
       document.getElementById('formTitle').value = pin.title || '';
       document.getElementById('formActivityName').value = pin.activity_name || '';
       document.getElementById('formRenterUnit').value = pin.renter_unit || '';
@@ -1273,6 +1711,9 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('formConstructDate').value = pin.construct_date || '';
       document.getElementById('formActualRestoreDate').value = pin.actual_restore_date || '';
       document.getElementById('formDescription').value = pin.description || '';
+      
+      window.pinAssetList = pin.asset_list ? [...pin.asset_list] : (pin.asset_name ? [{ name: pin.asset_name, qty: pin.asset_qty || 0 }] : []);
+      renderPinAssetRows();
 
       document.getElementById('btnShareSinglePin').classList.remove('hidden');
 
@@ -1288,6 +1729,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.activeImages = pin.images ? [...pin.images] : [];
       renderPhotoPreviews();
       toggleRepairFields();
+      togglePinTypeFields();
       openModal('pinModal');
     };
 
@@ -1313,6 +1755,39 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
+    window.togglePinTypeFields = function() {
+      const pType = document.getElementById('formPinType').value;
+      const container = document.getElementById('assetFieldsContainer');
+      if (pType === 'asset') {
+        container?.classList.remove('hidden');
+      } else {
+        container?.classList.add('hidden');
+      }
+    };
+
+    window.pinAssetList = [];
+
+    window.renderPinAssetRows = function() {
+      const container = document.getElementById('pinAssetRowsContainer');
+      if (!container) return;
+      if (window.pinAssetList.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-500 text-center py-3 bg-slate-950/40 rounded-lg">尚無新增品項，請點擊右上角「新增品項」</div>`;
+        return;
+      }
+      container.innerHTML = window.pinAssetList.map((item, idx) => `
+        <div class="flex items-center gap-2 bg-slate-800 p-2 rounded-lg border border-slate-700">
+          <input type="text" value="${item.name || ''}" placeholder="品項名稱(如:摺疊椅)" oninput="window.pinAssetList[${idx}].name=this.value" class="flex-1 bg-slate-900 text-white text-xs rounded p-2 border border-slate-600 min-h-[32px]">
+          <input type="number" value="${item.qty || 0}" placeholder="數量" oninput="window.pinAssetList[${idx}].qty=parseInt(this.value||0)" class="w-20 bg-slate-900 text-white text-xs rounded p-2 border border-slate-600 text-right min-h-[32px]">
+          <button type="button" onclick="window.pinAssetList.splice(${idx},1); renderPinAssetRows();" class="px-2.5 py-1.5 bg-rose-600/80 hover:bg-rose-500 text-white rounded text-xs transition"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      `).join('');
+    };
+
+    window.addPinAssetRow = function() {
+      window.pinAssetList.push({ name: '', qty: 1 });
+      renderPinAssetRows();
+    };
+
     window.handlePhotoUpload = (e) => {
       const files = Array.from(e.target.files);
       files.forEach(f => {
@@ -1336,17 +1811,16 @@ document.addEventListener('DOMContentLoaded', () => {
       `).join('');
     }
 
-    // 安全雲端同步與容錯處置
     window.handleSavePin = async (e) => {
       e.preventDefault();
-      const pinId =
- document.getElementById('formPinId').value || crypto.randomUUID();
+      const pinId = document.getElementById('formPinId').value || crypto.randomUUID();
       
       const pinData = {
         id: pinId,
         map_id: document.getElementById('formMapId').value,
         x: parseFloat(document.getElementById('formCoordX').value),
         y: parseFloat(document.getElementById('formCoordY').value),
+        pin_type: document.getElementById('formPinType').value,
         title: document.getElementById('formTitle').value.trim(),
         activity_name: document.getElementById('formActivityName').value.trim(),
         renter_unit: document.getElementById('formRenterUnit').value.trim(),
@@ -1359,6 +1833,8 @@ document.addEventListener('DOMContentLoaded', () => {
         construct_date: document.getElementById('formConstructDate').value || null,
         actual_restore_date: document.getElementById('formActualRestoreDate').value || null,
         description: document.getElementById('formDescription').value.trim(),
+        asset_list: [...window.pinAssetList],
+        asset_qty: window.pinAssetList.reduce((sum, item) => sum + parseInt(item.qty || 0), 0),
         images: [...window.activeImages]
       };
 
@@ -1372,16 +1848,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const { error } = await window.supabaseClient.from('pins').upsert([pinData]);
           if (error) {
-            console.warn('Supabase save error:', error);
             showToast('已存至本機！(雲端權限限制中)', 'info');
-            updateCloudBadge(false, '唯讀/權限限縮');
           } else {
-            showToast('巡檢點位已成功同步至雲端！', 'success');
-            updateCloudBadge(true);
+            showToast('點位已成功同步至雲端！', 'success');
           }
         } catch(err) {
           showToast('已存至本機！', 'info');
-          updateCloudBadge(false, '連線異常');
         }
       }
 
@@ -1423,14 +1895,6 @@ document.addEventListener('DOMContentLoaded', () => {
       openModal('confirmModal');
     };
 
-    
-
-
-// ==========================================
-    // 📢 【一鍵快速複製通報功能補丁】
-    // ==========================================
-
-    // 1. 產生完整中文日期時間字串的輔助工具
     function formatDateToTwFullString(dtStr) {
       if (!dtStr) return '--';
       try {
@@ -1440,68 +1904,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
       } catch(e) { return dtStr; }
     }
-
-    // 2. 一鍵複製「全部待修復案件」摘要（可貼至 LINE 進行群組通報）
-    window.copyPendingListSummary = function() {
-      const activeId = localStorage.getItem('dome_active_header_id') || '';
-      const list = getStoredHeaderList();
-      const activeHeader = list.find(h => h.id === activeId);
-
-      let pendingPins = window.pins.filter(p => !p.actual_restore_date);
-      if (activeHeader && activeHeader.activity) {
-        pendingPins = pendingPins.filter(p => p.activity_name === activeHeader.activity);
-      }
-
-      if (pendingPins.length === 0) {
-        return showToast('當前視角下無任何「待修復」案件需要通報！', 'info');
-      }
-
-      let summary = `🚨【臺北大巨蛋 待修復異常通報清單】🚨\n`;
-      if (activeHeader?.activity) summary += `活動檔期：${activeHeader.activity}\n`;
-      summary += `待處理總件數：${pendingPins.length} 件\n`;
-      summary += `========================\n`;
-
-      pendingPins.forEach((p, idx) => {
-        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資區域';
-        summary += `${idx + 1}. [${mapName}] ${p.title}\n`;
-        summary += `   • 責任單位：${p.department || '未指定'} | 修復方式：${p.repair_option || '待確定'}\n`;
-        if (p.description) summary += `   • 備註：${p.description}\n`;
-      });
-      summary += `========================\n（報告時間：${formatDateToTwFullString(new Date())}）`;
-
-      navigator.clipboard.writeText(summary).then(() => {
-        showToast(`已成功複製 ${pendingPins.length} 筆待修復通報文字！`, 'success');
-      }).catch(() => {
-        showToast('複製失敗，請手動複製', 'error');
-      });
-    };
-
-    // 3. 一鍵複製「單一案件」詳細資訊（在點位編輯彈窗中使用）
-    window.copySinglePinSummary = function() {
-      const pinId = document.getElementById('formPinId').value;
-      const pin = window.pins.find(p => p.id === pinId);
-      if (!pin) return showToast('請先選擇或儲存點位', 'info');
-
-      const mapName = window.MAPS[pin.map_id || pin.mapId]?.name || '圖資區域';
-      const statusText = pin.actual_restore_date ? '🟢 已修復' : '🔴 待修復';
-      const text = `【大巨蛋場務巡檢通報】\n` +
-        `------------------------\n` +
-        `● 案件名稱：${pin.title}\n` +
-        `● 圖資區域：${mapName}\n` +
-        `● 案件狀態：${statusText}\n` +
-        `● 責任單位：${pin.department || '未指定'}\n` +
-        `● 損害日期：${pin.damage_date || '未指定'}\n` +
-        `● 預計修復：${pin.repair_option || '待確定'}\n` +
-        `● 現況說明：${pin.description || '無備註'}\n` +
-        `------------------------\n` +
-        `（來自 臺北大巨蛋場務管理系統）`;
-
-      navigator.clipboard.writeText(text).then(() => {
-        showToast('已複製回報文字！可直接貼至 LINE 群組', 'success');
-      }).catch(() => {
-        showToast('複製失敗，請手動複製', 'error');
-      });
-    };
 
     window.exportAppendix24ModeA = function() {
       const list = getStoredHeaderList();
@@ -1582,6 +1984,3 @@ document.addEventListener('DOMContentLoaded', () => {
   </script>
 </body>
 </html>
-```eof
-
-***
