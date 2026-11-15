@@ -886,6 +886,9 @@
       const statusFilter = document.getElementById('filterStatus')?.value || 'all';
 
       let filtered = window.pins.filter(p => {
+        // 🌟 列表視窗專門管理毀損異常案件，在此排除器材點位
+        if (p.pin_type === 'asset') return false;
+
         const pMap = p.map_id || p.mapId;
         const matchesFloor = floorFilter === 'all' || pMap === floorFilter;
         const matchesStatus = statusFilter === 'all' || (statusFilter === 'restored' ? p.actual_restore_date : !p.actual_restore_date);
@@ -897,6 +900,7 @@
         return matchesFloor && matchesStatus && matchesKey;
       });
 
+ 
       if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-slate-500 text-sm">查無符合條件之巡檢案件</td></tr>`;
         return;
@@ -999,7 +1003,7 @@
       const list = getStoredHeaderList();
       const activeHeader = list.find(h => h.id === activeId);
 
-      let pendingPins = window.pins.filter(p => !p.actual_restore_date);
+      let pendingPins = window.pins.filter(p => p.pin_type !== 'asset' && !p.actual_restore_date);
       if (activeHeader && activeHeader.activity) {
         pendingPins = pendingPins.filter(p => p.activity_name === activeHeader.activity);
       }
@@ -1116,12 +1120,14 @@
 
     function updateDashboardStats() {
       const currentMapPins = window.pins.filter(p => (p.map_id || p.mapId) === window.currentMapId);
-      const pending = currentMapPins.filter(p => !p.actual_restore_date).length;
-      const completed = currentMapPins.filter(p => !!p.actual_restore_date).length;
+      // 🌟 僅計算毀損點位（排除器材點位）
+      const damagePins = currentMapPins.filter(p => p.pin_type !== 'asset');
+      const pending = damagePins.filter(p => !p.actual_restore_date).length;
+      const completed = damagePins.filter(p => !!p.actual_restore_date).length;
 
       document.getElementById('legendPending').innerText = pending;
       document.getElementById('legendCompleted').innerText = completed;
-      document.getElementById('totalBadge').innerText = window.pins.length;
+      document.getElementById('totalBadge').innerText = window.pins.filter(p => p.pin_type !== 'asset').length;
     }
 
     function setupInteractions() {
@@ -1912,9 +1918,9 @@ function getStoredHeaderList() {
 
       let pinsToExport = [];
       if (window.currentMainView === 'map') {
-        pinsToExport = (window.pins || []).filter(p => (p.map_id || p.mapId) === window.currentMapId);
+        pinsToExport = (window.pins || []).filter(p => p.pin_type !== 'asset' && (p.map_id || p.mapId) === window.currentMapId);
       } else {
-        pinsToExport = window.pins;
+        pinsToExport = window.pins.filter(p => p.pin_type !== 'asset');
       }
 
       if (activeHeader.activity) {
