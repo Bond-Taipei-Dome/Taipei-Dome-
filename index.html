@@ -1563,7 +1563,7 @@
       }
     };
 
-    window.autoLoadPreviousCheckOut = function() {
+window.autoLoadPreviousCheckOut = function() {
       const currentActivity = document.getElementById('assetManagerActivitySelect').value;
       if (!currentActivity) {
         return showToast('請先上方選擇您要操作的「本檔活動名稱」！', 'error');
@@ -1577,18 +1577,23 @@
 
       const prevHeader = list[currentIndex - 1];
       const prevActivity = prevHeader.activity;
-      const prevTxs = window.assetTransactions.filter(tx => tx.activity_name === prevActivity);
+      
+      // 安全過濾前一檔的異動明細
+      const prevTxs = (window.assetTransactions || []).filter(tx => tx && tx.activity_name === prevActivity);
       if (prevTxs.length === 0) {
         return showToast(`前一檔「${prevActivity}」無任何器材點交/點退紀錄！`, 'info');
       }
 
       const balanceMap = {};
       prevTxs.forEach(tx => {
-        const key = `${tx.pin_location || '主倉庫區'}_${tx.asset_name}`;
+        const loc = tx.pin_location || '主倉庫區';
+        const name = tx.asset_name || '未命名器材';
+        const key = `${loc}___${name}`;
+        
         if (!balanceMap[key]) {
           balanceMap[key] = { 
-            pin_location: tx.pin_location || '主倉庫區', 
-            asset_name: tx.asset_name, 
+            pin_location: loc, 
+            asset_name: name, 
             qty: 0,
             origin_activity: tx.origin_activity || prevActivity,
             path_history: tx.path_history ? `${tx.path_history} ➔ ${prevActivity}` : prevActivity
@@ -1599,7 +1604,8 @@
 
       let loadedCount = 0;
       Object.values(balanceMap).forEach(item => {
-        if (item.qty !== 0) {
+        // 如果前一檔結算時庫存大於 0，則轉為本檔的進場點交基準
+        if (item.qty > 0) {
           const newTx = {
             id: crypto.randomUUID(),
             activity_name: currentActivity,
@@ -1608,7 +1614,7 @@
             transaction_type: 'check_in',
             change_qty: item.qty,
             origin_activity: item.origin_activity,
-            path_history: item.path_history,
+            path_history: `${item.path_history} ➔ ${currentActivity}`,
             created_at: new Date().toISOString()
           };
           window.assetTransactions.unshift(newTx);
@@ -1618,8 +1624,14 @@
 
       localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
       renderAssetInventoryUI();
-      showToast(`成功從前一檔「${prevActivity}」帶入 ${loadedCount} 筆留用器材數量！`, 'success');
+      
+      if (loadedCount > 0) {
+        showToast(`成功從前一檔「${prevActivity}」自動載入 ${loadedCount} 項結算在庫器材！`, 'success');
+      } else {
+        showToast(`前一檔「${prevActivity}」結算後無剩餘在庫數量可供載入。`, 'info');
+      }
     };
+
 
     window.handleSaveAssetTransaction = async function(e) {
       e.preventDefault();
