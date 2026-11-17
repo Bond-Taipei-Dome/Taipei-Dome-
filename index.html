@@ -1562,11 +1562,12 @@ window.autoLoadPreviousCheckOut = function() {
         return showToast('請先上方選擇您要操作的「本檔活動名稱」！', 'error');
       }
 
-      let loadedCount = 0;
-      let skippedCount = 0;
+      // 1. 重新整理前，先移除該活動先前已自動載入的進場點交紀錄，確保每次點選皆為「重新同步、不重複累加」
+      window.assetTransactions = window.assetTransactions.filter(tx => 
+        !(tx.activity_name === currentActivity && tx.transaction_type === 'check_in')
+      );
 
-      // 1. 檢查該活動檔期是否已經有過異動紀錄
-      const existingTxsForActivity = window.assetTransactions.filter(tx => tx.activity_name === currentActivity);
+      let loadedCount = 0;
 
       // 2. 從地圖上的 Asset Pin 點位讀取最新配置
       const assetPins = (window.pins || []).filter(p => p.pin_type === 'asset');
@@ -1577,16 +1578,6 @@ window.autoLoadPreviousCheckOut = function() {
           if (Array.isArray(pin.asset_list)) {
             pin.asset_list.forEach(item => {
               if (!item.name || !item.qty) return;
-              
-              // 檢查該活動檔期中，是否已經存在相同位置與品項的紀錄，避免重複按下時一直加總原始數量
-              const alreadyExists = existingTxsForActivity.some(tx => 
-                tx.pin_location === pinLocationName && tx.asset_name === item.name
-              );
-
-              if (alreadyExists) {
-                skippedCount++;
-                return; // 若已經載入過，直接略過，不再重複新增
-              }
 
               const newTx = {
                 id: crypto.randomUUID(),
@@ -1604,10 +1595,8 @@ window.autoLoadPreviousCheckOut = function() {
             });
           }
         });
-      }
-
-      // 3. 若地圖上無 Asset Pin，則從歷史異動結算（同樣防重複檢查）
-      if (assetPins.length === 0 && loadedCount === 0) {
+      } else {
+        // 3. 若地圖上無 Asset Pin，則從歷史異動結算餘額
         const inventoryMap = {};
         (window.assetTransactions || []).forEach(tx => {
           if (!tx) return;
@@ -1629,14 +1618,6 @@ window.autoLoadPreviousCheckOut = function() {
 
         Object.values(inventoryMap).forEach(item => {
           if (item.balance > 0) {
-            const alreadyExists = existingTxsForActivity.some(tx => 
-              tx.pin_location === item.pin_location && tx.asset_name === item.asset_name
-            );
-            if (alreadyExists) {
-              skippedCount++;
-              return;
-            }
-
             const newTx = {
               id: crypto.randomUUID(),
               activity_name: currentActivity,
@@ -1657,12 +1638,9 @@ window.autoLoadPreviousCheckOut = function() {
       localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
       renderAssetInventoryUI();
       
-      if (loadedCount > 0) {
-        showToast(`已成功為「${currentActivity}」載入 ${loadedCount} 項新進場點交品項！${skippedCount > 0 ? `(已略過 ${skippedCount} 項重複項目)` : ''}`, 'success');
-      } else {
-        showToast(`此檔期已經載入過地圖點位器材，未重複新增。`, 'info');
-      }
+      showToast(`已成功同步「${currentActivity}」之場館內器材點交基準（共 ${loadedCount} 項），無重複累加！`, 'success');
     };
+
 
 
     window.handleSaveAssetTransaction = async function(e) {
