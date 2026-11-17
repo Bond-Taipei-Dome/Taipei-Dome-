@@ -1570,20 +1570,36 @@ window.autoLoadPreviousCheckOut = function() {
       }
 
       const list = getStoredHeaderList();
-      const currentIndex = list.findIndex(h => h.activity === currentActivity);
-      if (currentIndex <= 0) {
-        return showToast('找不到前一檔活動記錄，無法自動載入前一檔點退數量！', 'info');
+      // 過濾掉當前活動，只留下其他歷史檔期供選擇
+      const historyList = list.filter(h => h.activity !== currentActivity);
+
+      if (historyList.length === 0) {
+        return showToast('系統中尚無其他歷史活動檔期可供載入！', 'info');
       }
 
-      const prevHeader = list[currentIndex - 1];
-      const prevActivity = prevHeader.activity;
+      // 彈出提示讓使用者手動選擇要從哪一檔載入
+      let promptText = `請選擇您要從哪一個歷史活動檔期載入器材點退基準（輸入編號）:\n\n`;
+      historyList.forEach((h, idx) => {
+        promptText += `[${idx + 1}] ${h.activity} (${h.unit || '未設定單位'})\n`;
+      });
+
+      const userChoice = prompt(promptText, "1");
+      if (!userChoice) return;
+
+      const choiceIndex = parseInt(userChoice) - 1;
+      if (isNaN(choiceIndex) || choiceIndex < 0 || choiceIndex >= historyList.length) {
+        return showToast('輸入的編號無效，已取消載入。', 'error');
+      }
+
+      const selectedPrevHeader = historyList[choiceIndex];
+      const prevActivity = selectedPrevHeader.activity;
       
-      // 安全過濾前一檔的異動明細
       const prevTxs = (window.assetTransactions || []).filter(tx => tx && tx.activity_name === prevActivity);
       if (prevTxs.length === 0) {
-        return showToast(`前一檔「${prevActivity}」無任何器材點交/點退紀錄！`, 'info');
+        return showToast(`選定的歷史活動「${prevActivity}」無任何器材點交/點退紀錄！`, 'info');
       }
 
+      // 計算該歷史檔期的結餘
       const balanceMap = {};
       prevTxs.forEach(tx => {
         const loc = tx.pin_location || '主倉庫區';
@@ -1604,7 +1620,6 @@ window.autoLoadPreviousCheckOut = function() {
 
       let loadedCount = 0;
       Object.values(balanceMap).forEach(item => {
-        // 如果前一檔結算時庫存大於 0，則轉為本檔的進場點交基準
         if (item.qty > 0) {
           const newTx = {
             id: crypto.randomUUID(),
@@ -1626,11 +1641,12 @@ window.autoLoadPreviousCheckOut = function() {
       renderAssetInventoryUI();
       
       if (loadedCount > 0) {
-        showToast(`成功從前一檔「${prevActivity}」自動載入 ${loadedCount} 項結算在庫器材！`, 'success');
+        showToast(`成功從歷史活動「${prevActivity}」手動載入 ${loadedCount} 項結算在庫器材！`, 'success');
       } else {
-        showToast(`前一檔「${prevActivity}」結算後無剩餘在庫數量可供載入。`, 'info');
+        showToast(`選定的歷史活動「${prevActivity}」結算後無剩餘在庫數量可供載入。`, 'info');
       }
     };
+
 
 
     window.handleSaveAssetTransaction = async function(e) {
