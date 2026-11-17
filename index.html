@@ -908,9 +908,8 @@ class="bg-slate-900 rounded-xl border border-slate-700 p-3 max-h-80 overflow-y-a
       <thead>
         <tr class="bg-gray-200 text-center">
           <th class="border border-black p-1.5 w-10">項次</th>
-          <th class="border border-black p-1.5 w-44">圖資區域與照片</th>
+          <th class="border border-black p-1.5 w-56">點位名稱與照片</th>
           <th class="border border-black p-1.5">損壞標題與說明</th>
-          <th class="border border-black p-1.5 w-44">責任單位與修復方式</th>
         </tr>
       </thead>
       <tbody id="allVenueRptTableBody"></tbody>
@@ -936,7 +935,6 @@ class="bg-slate-900 rounded-xl border border-slate-700 p-3 max-h-80 overflow-y-a
       </div>
     </div>
   </div>
-
 
 <!-- 🌟 官方活動器材點交與點退紀錄表列印模板 (支援留用軌跡呈現與電子簽名) -->
   <div id="assetPrintArea" class="hidden bg-white text-black p-4 font-sans text-xs">
@@ -2707,8 +2705,8 @@ function generateAllVenuePrintout(pinsList, sigData = {}) {
           <tr class="align-top print-keep-together">
             <td class="border border-black p-2 text-center font-bold">${i + 1}</td>
             <td class="border border-black p-2 space-y-1.5">
-              <div><span class="font-bold text-gray-700">【位置】：</span><span class="font-semibold text-indigo-700">${mapName}</span></div>
               <div><span class="font-bold text-black text-sm">${p.title}</span></div>
+              <div><span class="font-semibold text-indigo-700 text-xs">【樓層】：${mapName}</span></div>
               ${p.images && p.images.length > 0 ? `
                 <div class="pt-1">
                   <img src="${p.images[0]}" class="print-img-limit max-h-24 object-contain rounded border border-gray-400">
@@ -2716,16 +2714,11 @@ function generateAllVenuePrintout(pinsList, sigData = {}) {
               ` : '<div class="text-[10px] text-gray-400 italic">（未附現場照片）</div>'}
             </td>
             <td class="border border-black p-2 space-y-1">
-              <div class="font-bold text-gray-700 text-[11px]">狀況說明與備註：</div>
-              <p class="text-xs text-gray-900 whitespace-pre-wrap">${p.description || '無詳細說明'}</p>
-            </td>
-            <td class="border border-black p-2 space-y-1 text-[11px]">
-              <div><strong>原屬活動檔期：</strong><br><span class="text-amber-800 font-bold">${p.activity_name || '未指定'}</span></div>
-              <div><strong>損害發生日期：</strong><span class="font-mono">${p.damage_date || '未紀錄'}</span></div>
-              <div class="pt-1 border-t border-gray-200">
-                <strong>處理方式：</strong><br>
-                <span class="font-bold text-black">${p.repair_option || '租用方自行修復'}</span>
-                ${p.construct_date ? `<br><span>預定完修：${p.construct_date}</span>` : ''}
+              <div class="font-bold text-gray-700 text-[11px]">損害標題與狀況說明：</div>
+              <div class="font-bold text-black">${p.title}</div>
+              <p class="text-xs text-gray-900 whitespace-pre-wrap mt-1">${p.description || '無詳細說明'}</p>
+              <div class="text-[10px] text-gray-500 mt-2 pt-1 border-t border-gray-200">
+                原屬活動檔期：${p.activity_name || '未指定'} | 發生日期：${p.damage_date || '未紀錄'}
               </div>
             </td>
           </tr>
@@ -2746,6 +2739,8 @@ function generateAllVenuePrintout(pinsList, sigData = {}) {
         }, 100);
       });
     }
+
+
 
 window.saveAllVenueSignatures = function() {
       const imgA = sigPadAllVenueA ? sigPadAllVenueA.canvas.toDataURL('image/png') : '';
