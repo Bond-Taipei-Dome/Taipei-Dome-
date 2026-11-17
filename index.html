@@ -91,7 +91,7 @@
     }
     .toast-item { pointer-events: auto; }
 
-@media print {
+    @media print {
       @page {
         size: A4 portrait;
         margin: 8mm 10mm;
@@ -110,7 +110,6 @@
       body > div:not(.print-active-area) {
         display: none !important;
       }
-      /* 保留這一個乾淨的整合宣告即可 */
       #appendix24PrintArea.print-active-area, #assetPrintArea.print-active-area, #allVenuePrintArea.print-active-area {
         display: block !important;
         position: static !important;
@@ -141,7 +140,7 @@
       <div>
         <div class="flex items-center gap-2 flex-wrap">
           <h1 class="font-bold text-sm sm:text-lg tracking-wide text-white leading-tight">臺北大巨蛋場館現況管理系統</h1>
-          <span id="autoVersionBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v2026.11.15</span>
+          <span id="autoVersionBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v2026.11.16</span>
           <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">開發與維護：陳啟民</span>
           <span id="cloudStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -207,7 +206,6 @@
         <i class="fa-solid fa-file-export mr-1.5"></i> <span class="hidden md:inline">設施設備損害異常紀錄表</span>
       </button>
 
-      <!-- 🌟 新增按鈕：「全場館待修案件總表」 -->
       <button onclick="exportAllVenuePendingReport()" class="flex items-center bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="匯出全場館所有待修復異常案件總表 A4 紙本報表">
         <i class="fa-solid fa-clipboard-list mr-1.5"></i> <span class="hidden md:inline">全場館待修案件總表</span>
       </button>
@@ -335,140 +333,122 @@
       </div>
     </div>
 
-   <!-- 🌟 彈窗 6：設施設備損害異常紀錄表預覽與簽名 Modal -->
-  <div id="appendix24Modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-slate-800 rounded-2xl border border-amber-500/50 max-w-4xl w-full p-6 text-slate-100 relative shadow-2xl max-h-[92vh] overflow-y-auto">
-      <button onclick="closeModal('appendix24Modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
-      
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-file-invoice"></i></div>
-        <div>
-          <h2 class="text-xl font-bold text-white">設施設備損害異常紀錄表 - 簽名與列印預覽</h2>
-          <p class="text-xs text-slate-300">請在下方確認待修項目與檔期資訊，並完成雙方電子簽名後直接列印紙本。</p>
-        </div>
-      </div>
-
-<!-- 檔期與待修總覽資訊 -->
-      <div class="bg-slate-900/90 p-4 rounded-xl border border-amber-500/30 mb-4 space-y-2 text-xs">
-        <div><strong>活動名稱：</strong><span id="modalRptActivity" class="text-amber-400 font-bold">--</span></div>
-        <div><strong>租用單位：</strong><span id="modalRptUnit" class="text-slate-200">--</span></div>
-        <div><strong>租用期間：</strong><span id="modalRptDates" class="text-slate-200">--</span></div>
-        <div><strong>待修復總件數：</strong><span id="modalRptCount" class="text-rose-400 font-bold">0 件</span></div>
+    <!-- 彈窗 6：設施設備損害異常紀錄表預覽與簽名 Modal -->
+    <div id="appendix24Modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+      <div class="bg-slate-800 rounded-2xl border border-amber-500/50 max-w-4xl w-full p-6 text-slate-100 relative shadow-2xl max-h-[92vh] overflow-y-auto">
+        <button onclick="closeModal('appendix24Modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
         
-        <!-- 🌟 新增：雙方簽名前的異常狀況與照片預覽清單容器 -->
-        <div id="appendix24PreviewList" class="bg-slate-900 rounded-xl border border-slate-700 p-3 max-h-80 overflow-y-auto text-xs space-y-2 mt-2"></div>
-      </div>
-
-
-      <!-- 簽名介面 -->
-      <div class="bg-slate-900/90 p-4 rounded-xl border border-amber-500/30 mb-5 space-y-3">
-        <div class="flex items-center justify-between">
-          <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider">✍️ 異常報表雙方電子簽名</h3>
-          <span class="text-[11px] text-slate-400">※ 在此簽名將直接套用到本次列印的紙本報表中</span>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
-            <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-indigo-300">
-              <span>租用單位代表簽名</span>
-              <button type="button" onclick="clearAppendixSignature('partyA')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
-            </div>
-            <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
-              <canvas id="canvasAppendixA" class="w-full h-full touch-none cursor-crosshair"></canvas>
-            </div>
-          </div>
-
-          <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
-            <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-amber-300">
-              <span>場館代表簽名</span>
-              <button type="button" onclick="clearAppendixSignature('partyB')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
-            </div>
-            <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
-              <canvas id="canvasAppendixB" class="w-full h-full touch-none cursor-crosshair"></canvas>
-            </div>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-file-invoice"></i></div>
+          <div>
+            <h2 class="text-xl font-bold text-white">設施設備損害異常紀錄表 - 簽名與列印預覽</h2>
+            <p class="text-xs text-slate-300">請在下方確認待修項目與檔期資訊，並完成雙方電子簽名後直接列印紙本。</p>
           </div>
         </div>
-      </div>
 
-      <!-- 底部按鈕 -->
-      <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
-        <button type="button" onclick="closeModal('appendix24Modal')" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-bold">取消</button>
-        <button type="button" onclick="confirmAndPrintAppendix24()" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-black rounded-xl text-xs shadow flex items-center gap-1.5">
-          <i class="fa-solid fa-print"></i> 確認簽名並列印正式報表
-        </button>
+        <div class="bg-slate-900/90 p-4 rounded-xl border border-amber-500/30 mb-4 space-y-2 text-xs">
+          <div><strong>活動名稱：</strong><span id="modalRptActivity" class="text-amber-400 font-bold">--</span></div>
+          <div><strong>租用單位：</strong><span id="modalRptUnit" class="text-slate-200">--</span></div>
+          <div><strong>租用期間：</strong><span id="modalRptDates" class="text-slate-200">--</span></div>
+          <div><strong>待修復總件數：</strong><span id="modalRptCount" class="text-rose-400 font-bold">0 件</span></div>
+          <div id="appendix24PreviewList" class="bg-slate-900 rounded-xl border border-slate-700 p-3 max-h-80 overflow-y-auto text-xs space-y-2 mt-2"></div>
+        </div>
+
+        <div class="bg-slate-900/90 p-4 rounded-xl border border-amber-500/30 mb-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider">✍️ 異常報表雙方電子簽名</h3>
+            <span class="text-[11px] text-slate-400">※ 在此簽名將直接套用到本次列印的紙本報表中</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
+              <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-indigo-300">
+                <span>租用單位代表簽名</span>
+                <button type="button" onclick="clearAppendixSignature('partyA')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
+              </div>
+              <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
+                <canvas id="canvasAppendixA" class="w-full h-full touch-none cursor-crosshair"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
+              <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-amber-300">
+                <span>場館代表簽名</span>
+                <button type="button" onclick="clearAppendixSignature('partyB')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
+              </div>
+              <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
+                <canvas id="canvasAppendixB" class="w-full h-full touch-none cursor-crosshair"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
+          <button type="button" onclick="closeModal('appendix24Modal')" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-bold">取消</button>
+          <button type="button" onclick="confirmAndPrintAppendix24()" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-black rounded-xl text-xs shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-print"></i> 確認簽名並列印正式報表
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-<!-- 🌟 彈窗 7：全場館待修案件總表預覽與簽名 Modal -->
-  <div id="allVenueModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-slate-800 rounded-2xl border border-rose-500/50 max-w-4xl w-full p-6 text-slate-100 relative shadow-2xl max-h-[92vh] overflow-y-auto">
-      <button onclick="closeModal('allVenueModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
-      
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-clipboard-list"></i></div>
-        <div>
-          <h2 class="text-xl font-bold text-white">全場館待修案件總表 - 簽名與列印預覽</h2>
-          <p class="text-xs text-slate-300">彙整全場館所有樓層與區域之未完修異常案件，確認無誤後完成雙方簽名列印。</p>
-        </div>
-      </div>
-
-      <!-- 全館待修總覽資訊 (包含異常狀況與照片預覽清單) -->
-      <div class="bg-slate-900/90 p-4 rounded-xl border border-rose-500/30 mb-4 space-y-2 text-xs">
-        <div><strong>列印對象：</strong><span class="text-rose-400 font-bold">臺北大巨蛋全場館（含 B2 ~ RF 所有樓層與剖面）</span></div>
-        <div><strong>目前全館待修復總件數：</strong><span id="allVenueModalCount" class="text-rose-400 font-bold text-base">0 件</span></div>
+    <!-- 彈窗 7：全場館待修案件總表預覽與簽名 Modal -->
+    <div id="allVenueModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+      <div class="bg-slate-800 rounded-2xl border border-rose-500/50 max-w-4xl w-full p-6 text-slate-100 relative shadow-2xl max-h-[92vh] overflow-y-auto">
+        <button onclick="closeModal('allVenueModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
         
-        <!-- 🌟 雙方簽名前的異常狀況與照片預覽清單容器 -->
-        <div id="allVenuePreviewList" class="bg-slate-900 rounded-xl border border-slate-700 p-3 max-h-80 overflow-y-auto text-xs space-y-2"></div>
-        
-        <div><strong>彙整時間：</strong><span id="allVenueModalTime" class="text-slate-200">--</span></div>
-      </div>
-      
-
-
-      <!-- 簽名介面 -->
-      <div class="bg-slate-900/90 p-4 rounded-xl border border-rose-500/30 mb-5 space-y-3">
-        <div class="flex items-center justify-between">
-          <h3 class="text-xs font-bold text-rose-400 uppercase tracking-wider">✍️ 全館總表雙方電子簽名</h3>
-          <span class="text-[11px] text-slate-400">※ 在此簽名將直接套用到全館總表紙本報表中</span>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-clipboard-list"></i></div>
+          <div>
+            <h2 class="text-xl font-bold text-white">全場館待修案件總表 - 簽名與列印預覽</h2>
+            <p class="text-xs text-slate-300">彙整全場館所有樓層與區域之未完修異常案件，確認無誤後完成雙方簽名列印。</p>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
-            <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-indigo-300">
-              <span>租用單位代表人員簽名</span>
-              <button type="button" onclick="clearAllVenueSignature('partyA')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
-            </div>
-            <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
-              <canvas id="canvasAllVenueA" class="w-full h-full touch-none cursor-crosshair"></canvas>
-            </div>
+        <div class="bg-slate-900/90 p-4 rounded-xl border border-rose-500/30 mb-4 space-y-2 text-xs">
+          <div><strong>列印對象：</strong><span class="text-rose-400 font-bold">臺北大巨蛋全場館（含 B2 ~ RF 所有樓層與剖面）</span></div>
+          <div><strong>目前全館待修復總件數：</strong><span id="allVenueModalCount" class="text-rose-400 font-bold text-base">0 件</span></div>
+          <div id="allVenuePreviewList" class="bg-slate-900 rounded-xl border border-slate-700 p-3 max-h-80 overflow-y-auto text-xs space-y-2"></div>
+          <div><strong>彙整時間：</strong><span id="allVenueModalTime" class="text-slate-200">--</span></div>
+        </div>
+
+        <div class="bg-slate-900/90 p-4 rounded-xl border border-rose-500/30 mb-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-rose-400 uppercase tracking-wider">✍️ 全館總表雙方電子簽名</h3>
+            <span class="text-[11px] text-slate-400">※ 在此簽名將直接套用到全館總表紙本報表中</span>
           </div>
 
-          <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
-            <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-rose-300">
-              <span>場館代表簽名</span>
-              <button type="button" onclick="clearAllVenueSignature('partyB')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
+              <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-indigo-300">
+                <span>租用單位代表人員簽名</span>
+                <button type="button" onclick="clearAllVenueSignature('partyA')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
+              </div>
+              <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
+                <canvas id="canvasAllVenueA" class="w-full h-full touch-none cursor-crosshair"></canvas>
+              </div>
             </div>
-            <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
-              <canvas id="canvasAllVenueB" class="w-full h-full touch-none cursor-crosshair"></canvas>
+
+            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
+              <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-rose-300">
+                <span>場館代表簽名</span>
+                <button type="button" onclick="clearAllVenueSignature('partyB')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
+              </div>
+              <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
+                <canvas id="canvasAllVenueB" class="w-full h-full touch-none cursor-crosshair"></canvas>
+              </div>
             </div>
           </div>
         </div>
+
+        <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
+          <button type="button" onclick="closeModal('allVenueModal')" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-bold">取消</button>
+          <button type="button" onclick="confirmAndPrintAllVenueReport()" class="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-slate-950 font-black rounded-xl text-xs shadow flex items-center gap-1.5 text-white">
+            <i class="fa-solid fa-print"></i> 確認簽名並列印全場館待修總表
+          </button>
+        </div>
       </div>
-
-<!-- 簽名介面結束 -->
-
-
-
-  <!-- 底部按鈕 -->
-  <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
-    <button type="button" onclick="closeModal('allVenueModal')" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-bold">取消</button>
-    <button type="button" onclick="confirmAndPrintAllVenueReport()" class="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-slate-950 font-black rounded-xl text-xs shadow flex items-center gap-1.5 text-white">
-      <i class="fa-solid fa-print"></i> 確認簽名並列印全場館待修總表
-    </button>
-  </div>
-</div>
-</div> <!-- 確保 Modal 內層與外層 div 正確閉合 -->
+    </div>
   </main>
 
   <!-- 彈窗 1：多筆專案抬頭管理 -->
@@ -700,7 +680,7 @@
     </div>
   </div>
 
-  <!-- 🌟 彈窗 5：器材點交、點退與跨檔期流轉管理 Modal -->
+  <!-- 彈窗 5：器材點交、點退與跨檔期流轉管理 Modal -->
   <div id="assetManagerModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-slate-800 rounded-2xl border border-purple-500/50 max-w-5xl w-full p-6 text-slate-100 relative shadow-2xl max-h-[92vh] overflow-y-auto">
       <button onclick="closeModal('assetManagerModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
@@ -733,7 +713,6 @@
         </div>
       </div>
 
-
       <!-- 點交 / 點退表單 -->
       <form onsubmit="handleSaveAssetTransaction(event)" class="bg-slate-900/80 p-4 rounded-xl border border-purple-500/30 mb-5 space-y-3">
         <div class="flex items-center justify-between border-b border-slate-700 pb-2">
@@ -757,9 +736,14 @@
               <option value="主倉庫區">主倉庫區</option>
             </select>
           </div>
-          <div>
+<div>
             <label class="block text-xs font-semibold mb-1">器材品項名稱 <span class="text-rose-400">*</span></label>
-            <input type="text" id="txAssetName" required placeholder="例如：摺疊椅、三角錐、護欄" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
+            <div class="flex gap-1.5">
+              <select id="txAssetNameSelect" onchange="onTxAssetSelectChange(this.value)" class="flex-1 bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px] cursor-pointer">
+                <option value="">-- 請先選擇點位或自行輸入 --</option>
+              </select>
+            </div>
+            <input type="text" id="txAssetName" required placeholder="例如：摺疊椅、三角錐、護欄" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px] mt-1.5">
           </div>
         </div>
 
@@ -801,8 +785,7 @@
           </div>
         </div>
 
-
-<!-- 🌟 新增：點交前全場館各點位器材狀況與照片預覽模式 -->
+        <!-- 點交前全場館各點位器材狀況與照片預覽模式 -->
         <div class="bg-slate-900/90 p-4 rounded-xl border border-blue-500/30 my-4 space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -810,48 +793,45 @@
             </h3>
             <span class="text-[11px] text-slate-400">※ 請租用方在簽名前核對下方各點位之現場配置狀況</span>
           </div>
-          <div id="assetPinsPreviewGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
-            <!-- 動態載入各點位圖資位置、品項與照片 -->
+          <div id="assetPinsPreviewGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1"></div>
+        </div>
+
+        <!-- 點交雙方電子簽名介面 -->
+        <div class="bg-slate-900/90 p-4 rounded-xl border border-purple-500/30 my-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider">✍️ 點交雙方電子簽名</h3>
+            <span class="text-[11px] text-slate-400">※ 可直接在下方方框內用手指或滑鼠簽名</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
+              <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-indigo-300">
+                <span>租用單位代表簽名</span>
+                <button type="button" onclick="clearSignature('partyA')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
+              </div>
+              <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
+                <canvas id="canvasPartyA" class="w-full h-full touch-none cursor-crosshair"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
+              <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-purple-300">
+                <span>場館方代表簽名</span>
+                <button type="button" onclick="clearSignature('partyB')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
+              </div>
+              <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
+                <canvas id="canvasPartyB" class="w-full h-full touch-none cursor-crosshair"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-2">
+            <button type="button" onclick="saveSignaturesToActiveHeader()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg text-xs shadow flex items-center gap-1.5 min-h-[36px]">
+              <i class="fa-solid fa-signature"></i> 儲存雙方簽名至本檔期
+            </button>
           </div>
         </div>
 
-
-        
-<!-- 🌟 點交雙方電子簽名介面 -->
-<div class="bg-slate-900/90 p-4 rounded-xl border border-purple-500/30 my-4 space-y-3">
-  <div class="flex items-center justify-between">
-    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider">✍️ 點交雙方電子簽名</h3>
-    <span class="text-[11px] text-slate-400">※ 可直接在下方方框內用手指或滑鼠簽名</span>
-  </div>
-
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
-      <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-indigo-300">
-        <span>租用單位代表簽名</span>
-        <button type="button" onclick="clearSignature('partyA')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
-      </div>
-      <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
-        <canvas id="canvasPartyA" class="w-full h-full touch-none cursor-crosshair"></canvas>
-      </div>
-    </div>
-
-    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
-      <div class="w-full flex justify-between items-center mb-1 text-xs font-bold text-purple-300">
-        <span>場館方代表簽名</span>
-        <button type="button" onclick="clearSignature('partyB')" class="text-[10px] text-rose-400 hover:underline">清除重寫</button>
-      </div>
-      <div class="w-full bg-white rounded-lg overflow-hidden border border-slate-600 h-32 relative">
-        <canvas id="canvasPartyB" class="w-full h-full touch-none cursor-crosshair"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <div class="flex justify-end pt-2">
-    <button type="button" onclick="saveSignaturesToActiveHeader()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg text-xs shadow flex items-center gap-1.5 min-h-[36px]">
-      <i class="fa-solid fa-signature"></i> 儲存雙方簽名至本檔期
-    </button>
-  </div>
-</div>
         <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider pt-2">詳細異動歷史紀錄與跨檔期流轉明細</h3>
         <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden max-h-56 overflow-y-auto">
           <table class="w-full text-left text-xs text-slate-200">
@@ -872,7 +852,7 @@
     </div>
   </div>
 
-<!-- 官方設施設備損害異常報表列印模板 (已加入電子簽名) -->
+  <!-- 官方設施設備損害異常報表列印模板 -->
   <div id="appendix24PrintArea" class="hidden bg-white text-black p-2 font-sans">
     <div class="text-center font-black text-xl mb-0.5 tracking-wider">臺北大巨蛋設施設備損害異常紀錄表</div>
     <div class="text-center text-[10px] text-gray-600 mb-2 font-semibold">（表單編號：DI-VM-05-2023-01）</div>
@@ -893,7 +873,6 @@
       <tbody id="rptTableBody"></tbody>
     </table>
 
-    <!-- 底部雙方簽章區 -->
     <div class="grid grid-cols-2 gap-8 pt-4 border-t-2 border-black print-keep-together mt-8">
       <div class="border border-black p-4 h-32 flex flex-col justify-between relative">
         <div class="font-bold z-10">租用單位代表簽章：</div>
@@ -914,8 +893,7 @@
     </div>
   </div>
 
-
-<!-- 🌟 全場館待修案件總表列印模板 (支援電子簽名與全館彙整) -->
+  <!-- 全場館待修案件總表列印模板 -->
   <div id="allVenuePrintArea" class="hidden bg-white text-black p-2 font-sans">
     <div class="text-center font-black text-xl mb-0.5 tracking-wider">臺北大巨蛋全場館待修案件總表</div>
     <div class="text-center text-[10px] text-gray-600 mb-2 font-semibold">（表單編號：DI-VM-ALL-2026-01）</div>
@@ -935,7 +913,6 @@
       <tbody id="allVenueRptTableBody"></tbody>
     </table>
 
-    <!-- 底部雙方簽章區 -->
     <div class="grid grid-cols-2 gap-8 pt-4 border-t-2 border-black print-keep-together mt-8">
       <div class="border border-black p-4 h-32 flex flex-col justify-between relative">
         <div class="font-bold z-10">租用單位代表簽章：</div>
@@ -956,7 +933,7 @@
     </div>
   </div>
 
-<!-- 🌟 官方活動器材點交與點退紀錄表列印模板 (支援留用軌跡呈現與電子簽名) -->
+  <!-- 活動器材點交與點退紀錄表列印模板 -->
   <div id="assetPrintArea" class="hidden bg-white text-black p-4 font-sans text-xs">
     <div class="text-center font-black text-xl mb-1 tracking-wider">臺北大巨蛋活動器材點交與點退紀錄表</div>
     <div class="text-center text-[10px] text-gray-600 mb-3 font-semibold">（表單編號：DI-AST-02-2026-01）</div>
@@ -982,7 +959,6 @@
       <tbody id="assetRptTableBody"></tbody>
     </table>
 
-    <!-- 底部雙方簽章區 (已綁定電子簽名) -->
     <div class="grid grid-cols-2 gap-8 pt-4 border-t-2 border-black print-keep-together mt-8">
       <div class="border border-black p-4 h-32 flex flex-col justify-between relative">
         <div class="font-bold z-10">租用單位代表簽章：</div>
@@ -1002,7 +978,6 @@
       </div>
     </div>
   </div>
-
 
   <!-- 核心邏輯腳本 -->
   <script>
@@ -1545,6 +1520,9 @@
       populatePinLocationsDropdown();
     }
 
+      populatePinLocationsDropdown();
+      updateTxAssetDropdownOptions(); // 確保每次打開時自動載入當前點位品項
+
     window.onAssetManagerActivityChange = function() {
       renderAssetInventoryUI();
     };
@@ -1584,56 +1562,85 @@ window.autoLoadPreviousCheckOut = function() {
         return showToast('請先上方選擇您要操作的「本檔活動名稱」！', 'error');
       }
 
-      // 🌟 核心修正：不綁定任何前一檔，直接結算全場館目前所有的歷史異動累積總庫存
-      const inventoryMap = {};
-      (window.assetTransactions || []).forEach(tx => {
-        if (!tx) return;
-        const loc = tx.pin_location || '主倉庫區';
-        const name = tx.asset_name || '未命名器材';
-        const key = `${loc}___${name}`;
-        
-        if (!inventoryMap[key]) {
-          inventoryMap[key] = { 
-            pin_location: loc, 
-            asset_name: name, 
-            balance: 0,
-            origin_activity: tx.origin_activity || currentActivity,
-            path_history: tx.path_history || currentActivity
-          };
-        }
-        inventoryMap[key].balance += parseInt(tx.change_qty || 0);
-      });
-
       let loadedCount = 0;
-      Object.values(inventoryMap).forEach(item => {
-        // 如果該品項在場館內的即時結餘大於 0，就直接作為本檔的進場點交基準
-        if (item.balance > 0) {
-          const newTx = {
-            id: crypto.randomUUID(),
-            activity_name: currentActivity,
-            pin_location: item.pin_location,
-            asset_name: item.asset_name,
-            transaction_type: 'check_in',
-            change_qty: item.balance,
-            origin_activity: item.origin_activity,
-            path_history: item.path_history ? `${item.path_history} ➔ ${currentActivity}` : currentActivity,
-            created_at: new Date().toISOString()
-          };
-          window.assetTransactions.unshift(newTx);
-          loadedCount++;
-        }
-      });
+
+      // 1. 優先從地圖上的 Asset Pin 點位直接讀取最新配置
+      const assetPins = (window.pins || []).filter(p => p.pin_type === 'asset');
+      
+      if (assetPins.length > 0) {
+        assetPins.forEach(pin => {
+          const pinLocationName = pin.title || '未命名點位';
+          if (Array.isArray(pin.asset_list)) {
+            pin.asset_list.forEach(item => {
+              if (!item.name || !item.qty) return;
+              
+              const newTx = {
+                id: crypto.randomUUID(),
+                activity_name: currentActivity,
+                pin_location: pinLocationName,
+                asset_name: item.name,
+                transaction_type: 'check_in',
+                change_qty: parseInt(item.qty),
+                origin_activity: currentActivity,
+                path_history: currentActivity,
+                created_at: new Date().toISOString()
+              };
+              window.assetTransactions.unshift(newTx);
+              loadedCount++;
+            });
+          }
+        });
+      }
+
+      // 2. 若地圖上無 Asset Pin，則從歷史異動結算
+      if (loadedCount === 0) {
+        const inventoryMap = {};
+        (window.assetTransactions || []).forEach(tx => {
+          if (!tx) return;
+          const loc = tx.pin_location || '主倉庫區';
+          const name = tx.asset_name || '未命名器材';
+          const key = `${loc}___${name}`;
+          
+          if (!inventoryMap[key]) {
+            inventoryMap[key] = { 
+              pin_location: loc, 
+              asset_name: name, 
+              balance: 0,
+              origin_activity: tx.origin_activity || currentActivity,
+              path_history: tx.path_history || currentActivity
+            };
+          }
+          inventoryMap[key].balance += parseInt(tx.change_qty || 0);
+        });
+
+        Object.values(inventoryMap).forEach(item => {
+          if (item.balance > 0) {
+            const newTx = {
+              id: crypto.randomUUID(),
+              activity_name: currentActivity,
+              pin_location: item.pin_location,
+              asset_name: item.asset_name,
+              transaction_type: 'check_in',
+              change_qty: item.balance,
+              origin_activity: item.origin_activity,
+              path_history: item.path_history ? `${item.path_history} ➔ ${currentActivity}` : currentActivity,
+              created_at: new Date().toISOString()
+            };
+            window.assetTransactions.unshift(newTx);
+            loadedCount++;
+          }
+        });
+      }
 
       localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
       renderAssetInventoryUI();
       
       if (loadedCount > 0) {
-        showToast(`成功自動結算場館現有庫存，為「${currentActivity}」載入 ${loadedCount} 項進場點交基準！`, 'success');
+        showToast(`已成功同步地圖點位，為「${currentActivity}」載入 ${loadedCount} 項進場點交品項！`, 'success');
       } else {
-        showToast(`目前場館內無任何剩餘在庫數量可供載入。`, 'info');
+        showToast(`目前地圖上或歷史紀錄中無任何器材可供載入。`, 'info');
       }
     };
-
 
 
 
@@ -1677,7 +1684,75 @@ window.autoLoadPreviousCheckOut = function() {
       showToast('器材異動明細已成功儲存與流轉！', 'success');
     };
 
-// 🌟 新增：渲染點交預覽模式的各點位卡片與照片
+    // 🌟 修正補回：渲染器材庫存表格與點位預覽
+    function renderAssetInventoryUI() {
+      const tbody = document.getElementById('assetInventorySummaryBody');
+      const txBody = document.getElementById('assetTransactionsBody');
+      const selectedActivity = document.getElementById('assetManagerActivitySelect')?.value || '';
+
+      const targetTxs = selectedActivity 
+        ? window.assetTransactions.filter(tx => tx.activity_name === selectedActivity)
+        : window.assetTransactions;
+
+      const summaryMap = {};
+      targetTxs.forEach(tx => {
+        const loc = tx.pin_location || '主倉庫區';
+        const name = tx.asset_name || '未命名器材';
+        const key = `${loc}___${name}`;
+
+        if (!summaryMap[key]) {
+          summaryMap[key] = { pin_location: loc, asset_name: name, checkIn: 0, change: 0, balance: 0 };
+        }
+        const qty = parseInt(tx.change_qty || 0);
+        if (qty > 0) summaryMap[key].checkIn += qty;
+        else summaryMap[key].change += qty;
+        summaryMap[key].balance += qty;
+      });
+
+      if (tbody) {
+        const items = Object.values(summaryMap);
+        if (items.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-500 text-xs">尚無任何器材庫存數據</td></tr>`;
+        } else {
+          tbody.innerHTML = items.map(item => `
+            <tr class="hover:bg-slate-750 transition">
+              <td class="py-2.5 px-4 font-semibold text-indigo-300">${item.pin_location}</td>
+              <td class="py-2.5 px-4 font-bold text-white">${item.asset_name}</td>
+              <td class="py-2.5 px-4 text-right font-mono text-emerald-400 font-bold">${item.checkIn > 0 ? '+' + item.checkIn : '0'}</td>
+              <td class="py-2.5 px-4 text-right font-mono text-rose-400 font-bold">${item.change !== 0 ? item.change : '0'}</td>
+              <td class="py-2.5 px-4 text-right font-mono font-black text-amber-400 text-sm">${item.balance}</td>
+            </tr>
+          `).join('');
+        }
+      }
+
+      if (txBody) {
+        if (window.assetTransactions.length === 0) {
+          txBody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 text-xs">尚無異動明細</td></tr>`;
+        } else {
+          txBody.innerHTML = window.assetTransactions.map(tx => {
+            let badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300">進場點交</span>';
+            if (tx.transaction_type === 'check_out') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-300">離場點退</span>';
+            if (tx.transaction_type === 'loss') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300">耗損遺失</span>';
+            if (tx.transaction_type === 'carry_over') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-300">🔄 跨檔期保留</span>';
+
+            return `
+              <tr class="hover:bg-slate-700/40 transition">
+                <td class="py-2 px-3 text-slate-400 font-mono">${tx.created_at ? tx.created_at.replace('T', ' ').substring(0, 16) : '--'}</td>
+                <td class="py-2 px-3 text-amber-300 font-semibold">${tx.activity_name || '--'}</td>
+                <td class="py-2 px-3 text-indigo-200">${tx.pin_location || '主倉庫區'}</td>
+                <td class="py-2 px-3 text-white font-medium">${tx.asset_name || '--'}</td>
+                <td class="py-2 px-3">${badge}</td>
+                <td class="py-2 px-3 text-right font-mono font-bold ${tx.change_qty >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${tx.change_qty}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+
+      renderAssetPinsPreview();
+    }
+
     function renderAssetPinsPreview() {
       const container = document.getElementById('assetPinsPreviewGrid');
       if (!container) return;
@@ -1704,7 +1779,6 @@ window.autoLoadPreviousCheckOut = function() {
                 <span class="font-bold text-white text-xs truncate">${p.title}</span>
                 <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded">${mapName}</span>
               </div>
-              <div class="text-[11px] text-slate-300">責任單位：${p.department || '未指定'}</div>
               <div class="flex flex-wrap gap-1.5 pt-1">
                 ${assetItemsHtml}
               </div>
@@ -1714,32 +1788,6 @@ window.autoLoadPreviousCheckOut = function() {
       }).join('');
     }
 
-
-
-      if (window.assetTransactions.length === 0) {
-        txBody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 text-xs">尚無異動明細</td></tr>`;
-      } else {
-        txBody.innerHTML = window.assetTransactions.map(tx => {
-          let badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300">進場點交</span>';
-          if (tx.transaction_type === 'check_out') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-300">離場點退</span>';
-          if (tx.transaction_type === 'loss') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300">耗損遺失</span>';
-          if (tx.transaction_type === 'carry_over') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-300">🔄 跨檔期保留</span>';
-
-          return `
-            <tr class="hover:bg-slate-700/40 transition">
-              <td class="py-2 px-3 text-slate-400 font-mono">${tx.created_at ? tx.created_at.replace('T', ' ').substring(0, 16) : '--'}</td>
-              <td class="py-2 px-3 text-amber-300 font-semibold">${tx.activity_name || '--'}</td>
-              <td class="py-2 px-3 text-indigo-200">${tx.pin_location || '主倉庫區'}</td>
-              <td class="py-2 px-3 text-white font-medium">${tx.asset_name || '--'}</td>
-              <td class="py-2 px-3">${badge}</td>
-              <td class="py-2 px-3 text-right font-mono font-bold ${tx.change_qty >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${tx.change_qty}</td>
-            </tr>
-          `;
-        }).join('');
-      }
-    }
-
-// 🌟 匯出器材點交與點退紙本報表
     window.exportAssetPrintoutForm = function() {
       const selectedActivity = document.getElementById('assetManagerActivitySelect').value;
       if (!selectedActivity) {
@@ -1761,32 +1809,22 @@ window.autoLoadPreviousCheckOut = function() {
 
       if (headerData.sigA && imgElA && placeholderA) {
         loadPromises.push(new Promise((resolve) => {
-          imgElA.onload = () => {
-            imgElA.classList.remove('hidden');
-            placeholderA.classList.add('hidden');
-            resolve();
-          };
+          imgElA.onload = () => { imgElA.classList.remove('hidden'); placeholderA.classList.add('hidden'); resolve(); };
           imgElA.onerror = resolve;
           imgElA.src = headerData.sigA;
         }));
       } else if (imgElA && placeholderA) {
-        imgElA.classList.add('hidden');
-        placeholderA.classList.remove('hidden');
+        imgElA.classList.add('hidden'); placeholderA.classList.remove('hidden');
       }
 
       if (headerData.sigB && imgElB && placeholderB) {
         loadPromises.push(new Promise((resolve) => {
-          imgElB.onload = () => {
-            imgElB.classList.remove('hidden');
-            placeholderB.classList.add('hidden');
-            resolve();
-          };
+          imgElB.onload = () => { imgElB.classList.remove('hidden'); placeholderB.classList.add('hidden'); resolve(); };
           imgElB.onerror = resolve;
           imgElB.src = headerData.sigB;
         }));
       } else if (imgElB && placeholderB) {
-        imgElB.classList.add('hidden');
-        placeholderB.classList.remove('hidden');
+        imgElB.classList.add('hidden'); placeholderB.classList.remove('hidden');
       }
 
       const targetTxs = window.assetTransactions.filter(tx => tx.activity_name === selectedActivity);
@@ -1812,11 +1850,8 @@ window.autoLoadPreviousCheckOut = function() {
           };
         }
         const qty = parseInt(tx.change_qty || 0);
-        if (qty > 0) {
-          inventoryMap[mapKey].totalIn += qty;
-        } else {
-          inventoryMap[mapKey].totalOut += Math.abs(qty);
-        }
+        if (qty > 0) inventoryMap[mapKey].totalIn += qty;
+        else inventoryMap[mapKey].totalOut += Math.abs(qty);
         inventoryMap[mapKey].balance += qty;
         if (tx.path_history) inventoryMap[mapKey].path_history = tx.path_history;
       });
@@ -2188,6 +2223,42 @@ window.autoLoadPreviousCheckOut = function() {
       else window.pins.push(pinData);
 
       localStorage.setItem('dome_pins_cache', JSON.stringify(window.pins));
+
+// 【新增連動】若為器材點位，同步更新或產生器材點交異動明細
+      if (pinData.pin_type === 'asset' && Array.isArray(pinData.asset_list)) {
+        const currentActiveActivity = document.getElementById('assetManagerActivitySelect')?.value || pinData.activity_name || '預設活動檔期';
+        
+        pinData.asset_list.forEach(assetItem => {
+          if (!assetItem.name) return;
+          const existingTxIndex = window.assetTransactions.findIndex(tx => 
+            tx.activity_name === currentActiveActivity && 
+            tx.pin_location === pinData.title && 
+            tx.asset_name === assetItem.name
+          );
+
+          if (existingTxIndex >= 0) {
+            // 若已存在，更新其數量
+            window.assetTransactions[existingTxIndex].change_qty = parseInt(assetItem.qty || 0);
+          } else {
+            // 若不存在，新增一筆點交紀錄
+            const newTx = {
+              id: crypto.randomUUID(),
+              activity_name: currentActiveActivity,
+              pin_location: pinData.title,
+              asset_name: assetItem.name,
+              transaction_type: 'check_in',
+              change_qty: parseInt(assetItem.qty || 0),
+              origin_activity: currentActiveActivity,
+              path_history: currentActiveActivity,
+              created_at: new Date().toISOString()
+            };
+            window.assetTransactions.unshift(newTx);
+          }
+        });
+        localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
+      }
+
+
       
       if (window.supabaseClient) {
         try {
@@ -2250,7 +2321,7 @@ window.autoLoadPreviousCheckOut = function() {
       } catch(e) { return dtStr; }
     }
 
-window.exportAppendix24ModeA = function() {
+    window.exportAppendix24ModeA = function() {
       const list = getStoredHeaderList();
       const activeId = localStorage.getItem('dome_active_header_id') || '';
       const activeHeader = list.find(h => h.id === activeId) || {};
@@ -2283,7 +2354,6 @@ window.exportAppendix24ModeA = function() {
       document.getElementById('modalRptDates').innerText = `${startDisplay} ~ ${endDisplay}`;
       document.getElementById('modalRptCount').innerText = `${pinsToExport.length} 件`;
 
-      // 🌟 動態渲染雙方簽名前的異常狀況與現場照片預覽清單
       const previewDiv = document.getElementById('appendix24PreviewList');
       if (previewDiv) {
         previewDiv.innerHTML = pinsToExport.map((p, index) => {
@@ -2306,8 +2376,6 @@ window.exportAppendix24ModeA = function() {
       setTimeout(initAppendixSignaturePads, 100);
     };
 
-
-// 🌟 匯出全場館待修案件總表觸發函式（含雙方簽名前的異常與照片預覽）
     window.exportAllVenuePendingReport = function() {
       const allPendingPins = (window.pins || []).filter(p => p.pin_type !== 'asset' && !p.actual_restore_date);
 
@@ -2320,7 +2388,6 @@ window.exportAppendix24ModeA = function() {
       document.getElementById('allVenueModalCount').innerText = `${allPendingPins.length} 件`;
       document.getElementById('allVenueModalTime').innerText = formatDateToTwFullString(new Date());
       
-      // 🌟 動態渲染雙方簽名前的異常狀況與現場照片預覽清單
       const previewDiv = document.getElementById('allVenuePreviewList');
       if (previewDiv) {
         previewDiv.innerHTML = allPendingPins.map((p, index) => {
@@ -2342,7 +2409,6 @@ window.exportAppendix24ModeA = function() {
       openModal('allVenueModal');
       setTimeout(initAllVenueSignaturePads, 100);
     };
-
       
     let sigPadA = null;
     let sigPadB = null;
@@ -2474,32 +2540,22 @@ window.exportAppendix24ModeA = function() {
 
       if (headerData.sigA && imgRptA && placeholderRptA) {
         loadPromises.push(new Promise((resolve) => {
-          imgRptA.onload = () => {
-            imgRptA.classList.remove('hidden');
-            placeholderRptA.classList.add('hidden');
-            resolve();
-          };
+          imgRptA.onload = () => { imgRptA.classList.remove('hidden'); placeholderRptA.classList.add('hidden'); resolve(); };
           imgRptA.onerror = resolve;
           imgRptA.src = headerData.sigA;
         }));
       } else if (imgRptA && placeholderRptA) {
-        imgRptA.classList.add('hidden');
-        placeholderRptA.classList.remove('hidden');
+        imgRptA.classList.add('hidden'); placeholderRptA.classList.remove('hidden');
       }
 
       if (headerData.sigB && imgRptB && placeholderRptB) {
         loadPromises.push(new Promise((resolve) => {
-          imgRptB.onload = () => {
-            imgRptB.classList.remove('hidden');
-            placeholderRptB.classList.add('hidden');
-            resolve();
-          };
+          imgRptB.onload = () => { imgRptB.classList.remove('hidden'); placeholderRptB.classList.add('hidden'); resolve(); };
           imgRptB.onerror = resolve;
           imgRptB.src = headerData.sigB;
         }));
       } else if (imgRptB && placeholderRptB) {
-        imgRptB.classList.add('hidden');
-        placeholderRptB.classList.remove('hidden');
+        imgRptB.classList.add('hidden'); placeholderRptB.classList.remove('hidden');
       }
 
       const tbody = document.getElementById('rptTableBody');
@@ -2555,7 +2611,6 @@ window.exportAppendix24ModeA = function() {
       });
     }
 
-
     let sigPadAppendixA = null;
     let sigPadAppendixB = null;
 
@@ -2605,58 +2660,32 @@ window.exportAppendix24ModeA = function() {
       generateAppendix24Printout(window.currentExportPins, headerData);
     };
 
-    // 🌟 全場館待修案件總表簽名與列印邏輯
     let sigPadAllVenueA = null;
     let sigPadAllVenueB = null;
 
     function initAllVenueSignaturePads() {
+      sigPadAllVenueA = setupSingleCanvas('canvasAllVenueA');
+      sigPadAllVenueB = setupSingleCanvas('canvasAllVenueB');
 
-  sigPadAllVenueA =
-    setupSingleCanvas('canvasAllVenueA');
+      const sigA = localStorage.getItem('allVenueSigA');
+      const sigB = localStorage.getItem('allVenueSigB');
 
-  sigPadAllVenueB =
-    setupSingleCanvas('canvasAllVenueB');
+      if (sigA && sigPadAllVenueA) {
+        const img = new Image();
+        img.onload = () => {
+          sigPadAllVenueA.ctx.drawImage(img, 0, 0, sigPadAllVenueA.canvas.clientWidth, sigPadAllVenueA.canvas.clientHeight);
+        };
+        img.src = sigA;
+      }
 
-  const sigA =
-    localStorage.getItem('allVenueSigA');
-
-  const sigB =
-    localStorage.getItem('allVenueSigB');
-
-  if(sigA && sigPadAllVenueA){
-
-    const img = new Image();
-
-    img.onload = () => {
-      sigPadAllVenueA.ctx.drawImage(
-        img,
-        0,
-        0,
-        sigPadAllVenueA.canvas.clientWidth,
-        sigPadAllVenueA.canvas.clientHeight
-      );
-    };
-
-    img.src = sigA;
-  }
-
-  if(sigB && sigPadAllVenueB){
-
-    const img = new Image();
-
-    img.onload = () => {
-      sigPadAllVenueB.ctx.drawImage(
-        img,
-        0,
-        0,
-        sigPadAllVenueB.canvas.clientWidth,
-        sigPadAllVenueB.canvas.clientHeight
-      );
-    };
-
-    img.src = sigB;
-  }
-}
+      if (sigB && sigPadAllVenueB) {
+        const img = new Image();
+        img.onload = () => {
+          sigPadAllVenueB.ctx.drawImage(img, 0, 0, sigPadAllVenueB.canvas.clientWidth, sigPadAllVenueB.canvas.clientHeight);
+        };
+        img.src = sigB;
+      }
+    }
 
     window.clearAllVenueSignature = function(party) {
       const pad = party === 'partyA' ? sigPadAllVenueA : sigPadAllVenueB;
@@ -2664,42 +2693,18 @@ window.exportAppendix24ModeA = function() {
       pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
     };
 
-window.confirmAndPrintAllVenueReport = function() {
+    window.confirmAndPrintAllVenueReport = function() {
+      const imgA = sigPadAllVenueA ? sigPadAllVenueA.canvas.toDataURL('image/png') : '';
+      const imgB = sigPadAllVenueB ? sigPadAllVenueB.canvas.toDataURL('image/png') : '';
 
-  const imgA =
-    sigPadAllVenueA
-      ? sigPadAllVenueA.canvas.toDataURL('image/png')
-      : '';
+      localStorage.setItem('allVenueSigA', imgA);
+      localStorage.setItem('allVenueSigB', imgB);
 
-  const imgB =
-    sigPadAllVenueB
-      ? sigPadAllVenueB.canvas.toDataURL('image/png')
-      : '';
+      closeModal('allVenueModal');
+      generateAllVenuePrintout(window.allVenueExportPins, { sigA: imgA, sigB: imgB });
+    };
 
-  localStorage.setItem(
-    'allVenueSigA',
-    imgA
-  );
-
-  localStorage.setItem(
-    'allVenueSigB',
-    imgB
-  );
-
-  closeModal('allVenueModal');
-
-  generateAllVenuePrintout(
-    window.allVenueExportPins,
-    {
-      sigA: imgA,
-      sigB: imgB
-    }
-  );
-};
-
-     
-
-function generateAllVenuePrintout(pinsList, sigData = {}) {
+    function generateAllVenuePrintout(pinsList, sigData = {}) {
       document.getElementById('allVenuePrintTime').innerText = formatDateToTwFullString(new Date());
       document.getElementById('allVenuePrintCount').innerText = `${pinsList.length} 件`;
 
@@ -2772,18 +2777,63 @@ function generateAllVenuePrintout(pinsList, sigData = {}) {
       });
     }
 
-
-
-window.saveAllVenueSignatures = function() {
+    window.saveAllVenueSignatures = function() {
       const imgA = sigPadAllVenueA ? sigPadAllVenueA.canvas.toDataURL('image/png') : '';
       const imgB = sigPadAllVenueB ? sigPadAllVenueB.canvas.toDataURL('image/png') : '';
       
-      // 將全館總表簽名暫存於全域或 localStorage，以便後續點擊確認列印時直接帶入
       window.savedAllVenueSigA = imgA;
       window.savedAllVenueSigB = imgB;
       showToast('全館總表雙方電子簽名已暫存！', 'success');
     };
 
+// 當切換點位時，自動更新該點位對應的器材品項下拉清單
+    document.addEventListener('DOMContentLoaded', () => {
+      const pinSelectEl = document.getElementById('txPinLocation');
+      if (pinSelectEl) {
+        pinSelectEl.addEventListener('change', updateTxAssetDropdownOptions);
+      }
+    });
+
+    function updateTxAssetDropdownOptions() {
+      const selectedPinTitle = document.getElementById('txPinLocation')?.value || '';
+      const assetSelect = document.getElementById('txAssetNameSelect');
+      const assetInput = document.getElementById('txAssetName');
+      if (!assetSelect) return;
+
+      // 從地圖上的 Asset Pin 尋找對應點位
+      const targetPin = (window.pins || []).find(p => {
+        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資';
+        const fullTitle = `${p.title} (${mapName})`;
+        return fullTitle === selectedPinTitle || p.title === selectedPinTitle;
+      });
+
+      let optionsHtml = '<option value="">-- 選擇該點位配置之品項 (或下方直接手動輸入) --</option>';
+      
+      if (targetPin && Array.isArray(targetPin.asset_list) && targetPin.asset_list.length > 0) {
+        targetPin.asset_list.forEach(item => {
+          if (item.name) {
+            optionsHtml += `<option value="${item.name}">${item.name} (預設數量: ${item.qty})</option>`;
+          }
+        });
+      } else {
+        // 若該點位沒特別設定，則從現有異動紀錄中抓取所有常見品項作為建議
+        const uniqueNames = [...new Set((window.assetTransactions || []).map(tx => tx.asset_name).filter(Boolean))];
+        uniqueNames.forEach(name => {
+          optionsHtml += `<option value="${name}">${name}</option>`;
+        });
+      }
+
+      assetSelect.innerHTML = optionsHtml;
+    }
+
+    window.onTxAssetSelectChange = function(selectedName) {
+      if (!selectedName) return;
+      const assetInput = document.getElementById('txAssetName');
+      if (assetInput) {
+        assetInput.value = selectedName;
+      }
+    };
+
   </script>
- </body>
+</body>
 </html>
