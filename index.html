@@ -1569,67 +1569,39 @@ window.autoLoadPreviousCheckOut = function() {
         return showToast('請先上方選擇您要操作的「本檔活動名稱」！', 'error');
       }
 
-      const list = getStoredHeaderList();
-      // 過濾掉當前活動，只留下其他歷史檔期供選擇
-      const historyList = list.filter(h => h.activity !== currentActivity);
-
-      if (historyList.length === 0) {
-        return showToast('系統中尚無其他歷史活動檔期可供載入！', 'info');
-      }
-
-      // 彈出提示讓使用者手動選擇要從哪一檔載入
-      let promptText = `請選擇您要從哪一個歷史活動檔期載入器材點退基準（輸入編號）:\n\n`;
-      historyList.forEach((h, idx) => {
-        promptText += `[${idx + 1}] ${h.activity} (${h.unit || '未設定單位'})\n`;
-      });
-
-      const userChoice = prompt(promptText, "1");
-      if (!userChoice) return;
-
-      const choiceIndex = parseInt(userChoice) - 1;
-      if (isNaN(choiceIndex) || choiceIndex < 0 || choiceIndex >= historyList.length) {
-        return showToast('輸入的編號無效，已取消載入。', 'error');
-      }
-
-      const selectedPrevHeader = historyList[choiceIndex];
-      const prevActivity = selectedPrevHeader.activity;
-      
-      const prevTxs = (window.assetTransactions || []).filter(tx => tx && tx.activity_name === prevActivity);
-      if (prevTxs.length === 0) {
-        return showToast(`選定的歷史活動「${prevActivity}」無任何器材點交/點退紀錄！`, 'info');
-      }
-
-      // 計算該歷史檔期的結餘
-      const balanceMap = {};
-      prevTxs.forEach(tx => {
+      // 🌟 核心修正：不綁定任何前一檔，直接結算全場館目前所有的歷史異動累積總庫存
+      const inventoryMap = {};
+      (window.assetTransactions || []).forEach(tx => {
+        if (!tx) return;
         const loc = tx.pin_location || '主倉庫區';
         const name = tx.asset_name || '未命名器材';
         const key = `${loc}___${name}`;
         
-        if (!balanceMap[key]) {
-          balanceMap[key] = { 
+        if (!inventoryMap[key]) {
+          inventoryMap[key] = { 
             pin_location: loc, 
             asset_name: name, 
-            qty: 0,
-            origin_activity: tx.origin_activity || prevActivity,
-            path_history: tx.path_history ? `${tx.path_history} ➔ ${prevActivity}` : prevActivity
+            balance: 0,
+            origin_activity: tx.origin_activity || currentActivity,
+            path_history: tx.path_history || currentActivity
           };
         }
-        balanceMap[key].qty += parseInt(tx.change_qty || 0);
+        inventoryMap[key].balance += parseInt(tx.change_qty || 0);
       });
 
       let loadedCount = 0;
-      Object.values(balanceMap).forEach(item => {
-        if (item.qty > 0) {
+      Object.values(inventoryMap).forEach(item => {
+        // 如果該品項在場館內的即時結餘大於 0，就直接作為本檔的進場點交基準
+        if (item.balance > 0) {
           const newTx = {
             id: crypto.randomUUID(),
             activity_name: currentActivity,
             pin_location: item.pin_location,
             asset_name: item.asset_name,
             transaction_type: 'check_in',
-            change_qty: item.qty,
+            change_qty: item.balance,
             origin_activity: item.origin_activity,
-            path_history: `${item.path_history} ➔ ${currentActivity}`,
+            path_history: item.path_history ? `${item.path_history} ➔ ${currentActivity}` : currentActivity,
             created_at: new Date().toISOString()
           };
           window.assetTransactions.unshift(newTx);
@@ -1641,11 +1613,12 @@ window.autoLoadPreviousCheckOut = function() {
       renderAssetInventoryUI();
       
       if (loadedCount > 0) {
-        showToast(`成功從歷史活動「${prevActivity}」手動載入 ${loadedCount} 項結算在庫器材！`, 'success');
+        showToast(`成功自動結算場館現有庫存，為「${currentActivity}」載入 ${loadedCount} 項進場點交基準！`, 'success');
       } else {
-        showToast(`選定的歷史活動「${prevActivity}」結算後無剩餘在庫數量可供載入。`, 'info');
+        showToast(`目前場館內無任何剩餘在庫數量可供載入。`, 'info');
       }
     };
+
 
 
 
