@@ -2080,9 +2080,20 @@ window.switchActiveProjectHeader = async function(headerId) {
 
       await saveStoredHeaderListToCloud(headerObj);
 
-      if (!editId) {
-        localStorage.setItem('dome_active_header_id', headerId);
-      }
+if (!editId && window.supabaseClient) {
+
+  await window.supabaseClient
+    .from('project_headers')
+    .update({ is_active: false })
+    .neq('id', '');
+
+  await window.supabaseClient
+    .from('project_headers')
+    .update({ is_active: true })
+    .eq('id', headerId);
+
+}
+
 
       resetHeaderForm();
       renderProjectHeaderListUI();
