@@ -2377,7 +2377,21 @@ if (!editId && window.supabaseClient) {
       
       if (window.supabaseClient) {
         try {
-          const { error } = await window.supabaseClient.from('pins').upsert([pinData]);
+          const { error } = await window.supabaseClient
+  .from('pins')
+  .upsert([pinData]);
+
+if (error) {
+  console.error(error);
+  showToast('已存至本機！(雲端同步失敗)', 'info');
+} else {
+  showToast('點位已成功同步至雲端！', 'success');
+}
+
+
+
+console.log('header save result', data);
+console.log('header save error', error);
           if (error) {
             showToast('已存至本機！(雲端權限限制中)', 'info');
           } else {
