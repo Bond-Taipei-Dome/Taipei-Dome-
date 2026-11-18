@@ -1598,7 +1598,7 @@ const idx = window.projectHeadersCache.findIndex(
       const select = document.getElementById('assetManagerActivitySelect');
       if (!select) return;
       const list = getStoredHeaderList();
-      const activeId = localStorage.getItem('dome_active_header_id') || '';
+      const activeId = (list.find(h => h.is_active === true) || {}).id || '';
       const activeHeader = list.find(h => h.id === activeId);
 
       select.innerHTML = '<option value="">-- 請選擇活動檔期 --</option>' +
@@ -2023,11 +2023,36 @@ const idx = window.projectHeadersCache.findIndex(
       }
     }
 
-    window.switchActiveProjectHeader = function(headerId) {
-      localStorage.setItem('dome_active_header_id', headerId);
-      renderProjectHeaderListUI();
-      showToast('已切換當前活動檔期！', 'success');
-    };
+window.switchActiveProjectHeader = async function(headerId) {
+
+  if (!window.supabaseClient) return;
+
+  try {
+
+    await window.supabaseClient
+      .from('project_headers')
+      .update({ is_active: false })
+      .neq('id', '');
+
+    await window.supabaseClient
+      .from('project_headers')
+      .update({ is_active: true })
+      .eq('id', headerId);
+
+    await fetchProjectHeadersFromCloud();
+
+    showToast('已切換當前活動檔期！', 'success');
+
+  } catch (err) {
+
+    console.error(err);
+    showToast('切換失敗', 'error');
+
+  }
+
+};
+
+
 
     window.saveGlobalProjectHeader = async function(e) {
       if (e) e.preventDefault();
