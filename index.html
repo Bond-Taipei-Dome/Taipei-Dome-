@@ -1165,7 +1165,12 @@ renderProjectHeaderListUI();
     }
 
     async function saveStoredHeaderListToCloud(headerObj) {
-      const idx = window.projectHeadersCache.findIndex(h => h.id === headerObj.id);
+window.projectHeadersCache = window.projectHeadersCache || [];
+
+const idx = window.projectHeadersCache.findIndex(
+    h => h.id === headerObj.id
+);
+
       if (idx >= 0) {
         window.projectHeadersCache[idx] = headerObj;
       } else {
