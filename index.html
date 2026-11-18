@@ -1132,13 +1132,19 @@
           .select('*')
           .order('start', { ascending: true });
 
-        if (!error && Array.isArray(data)) {
-          window.projectHeadersCache = data;
-          localStorage.setItem('dome_project_headers_cache', JSON.stringify(data));
-          renderProjectHeaderListUI();
-        } else {
-          throw error;
-        }
+// 在 fetchProjectHeadersFromCloud() 成功取得 data 後：
+window.projectHeadersCache = data;
+localStorage.setItem('dome_project_headers_cache', JSON.stringify(data));
+
+// 🌟 新增：若本機目前沒有選定檔期，自動預設為雲端第一筆，實現裝置間一致性
+const currentActive = localStorage.getItem('dome_active_header_id');
+if (!currentActive && data.length > 0) {
+  localStorage.setItem('dome_active_header_id', data[0].id);
+}
+
+renderProjectHeaderListUI();
+
+
       } catch (err) {
         loadProjectHeadersFromLocal();
       }
