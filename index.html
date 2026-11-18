@@ -1179,14 +1179,23 @@ const idx = window.projectHeadersCache.findIndex(
       localStorage.setItem('dome_project_headers_cache', JSON.stringify(window.projectHeadersCache));
 
       if (window.supabaseClient) {
-        try {
-          await window.supabaseClient.from('project_headers').upsert([headerObj]);
-        } catch (err) {
-          console.error('雲端同步失敗', err);
-        }
-      }
-      renderProjectHeaderListUI();
+  try {
+
+    const { error } =
+      await window.supabaseClient
+        .from('project_headers')
+        .upsert([headerObj]);
+
+    if (error) {
+      console.error(error);
     }
+
+  } catch (err) {
+    console.error('雲端同步失敗', err);
+  }
+}
+
+}
 
     async function deleteStoredHeaderFromCloud(headerId) {
       window.projectHeadersCache = window.projectHeadersCache.filter(h => h.id !== headerId);
@@ -1598,7 +1607,7 @@ const idx = window.projectHeadersCache.findIndex(
       const select = document.getElementById('assetManagerActivitySelect');
       if (!select) return;
       const list = getStoredHeaderList();
-      const activeId = (list.find(h => h.is_active === true) || {}).id || '';
+      const activeId = localStorage.getItem('dome_active_header_id') || '';
       const activeHeader = list.find(h => h.id === activeId);
 
       select.innerHTML = '<option value="">-- 請選擇活動檔期 --</option>' +
@@ -1721,7 +1730,8 @@ const idx = window.projectHeadersCache.findIndex(
       showToast(`已成功同步「${currentActivity}」之場館內器材點交基準（共 ${loadedCount} 項）！`, 'success');
     };
 
-    window.handleSaveAssetTransaction = async function(e) {
+
+window.handleSaveAssetTransaction = async function(e) {
       e.preventDefault();
       const activity_name = document.getElementById('assetManagerActivitySelect').value;
       if (!activity_name) return showToast('請先選擇活動檔期名稱！', 'error');
@@ -1731,9 +1741,7 @@ const idx = window.projectHeadersCache.findIndex(
       const transaction_type = document.getElementById('txType').value;
       let change_qty = parseInt(document.getElementById('txQty').value || '0');
 
-      if (transaction_type === 'check_out' || transaction_type === 'loss') {
-        if (change_qty > 0) change_qty = -change_qty;
-      }
+      // 💡 移除原本會強制轉負數的 if 判斷，直接採用您在輸入框中填寫的正負數值
 
       const newTx = {
         id: crypto.randomUUID(),
@@ -1747,19 +1755,60 @@ const idx = window.projectHeadersCache.findIndex(
         created_at: new Date().toISOString()
       };
 
+
       window.assetTransactions.unshift(newTx);
       localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
 
+      // 🌟 將點交/點退異動反向彙整回對應的地圖器材點位 (Asset Pin)
+      const targetPin = (window.pins || []).find(p => {
+        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資';
+        const fullTitle = `${p.title} (${mapName})`;
+        return fullTitle === pin_location || p.title === pin_location;
+      });
+
+      if (targetPin) {
+        targetPin.asset_list = targetPin.asset_list || [];
+        const assetIndex = targetPin.asset_list.findIndex(item => item.name === asset_name);
+
+        if (assetIndex >= 0) {
+          targetPin.asset_list[assetIndex].qty = parseInt(targetPin.asset_list[assetIndex].qty || 0) + change_qty;
+          if (targetPin.asset_list[assetIndex].qty < 0) targetPin.asset_list[assetIndex].qty = 0;
+        } else if (change_qty > 0) {
+          targetPin.asset_list.push({ name: asset_name, qty: change_qty });
+        }
+
+        targetPin.asset_qty = targetPin.asset_list.reduce((sum, item) => sum + parseInt(item.qty || 0), 0);
+        localStorage.setItem('dome_pins_cache', JSON.stringify(window.pins));
+
+        if (window.supabaseClient) {
+          try {
+            await window.supabaseClient.from('pins').upsert([targetPin]);
+          } catch (err) {
+            console.error('點位器材彙整同步雲端失敗', err);
+          }
+        }
+      }
+
       if (window.supabaseClient) {
         try {
-          await window.supabaseClient.from('asset_transactions').insert([newTx]);
-        } catch (err) {}
+          await window.supabaseClient
+            .from('asset_transactions')
+            .insert([newTx]);
+        }
+        catch (err) {
+          console.error(err);
+          showToast('器材資料同步失敗', 'error');
+        }
       }
 
       document.getElementById('txQty').value = '';
       renderAssetInventoryUI();
-      showToast('器材異動明細已成功儲存與流轉！', 'success');
+      renderPins(); // 重新整理地圖上的點位標籤數量
+      showToast('器材異動明細已成功儲存並彙整回對應點位！', 'success');
     };
+
+
+
 
     function renderAssetInventoryUI() {
       const tbody = document.getElementById('assetInventorySummaryBody');
@@ -2025,32 +2074,20 @@ const idx = window.projectHeadersCache.findIndex(
 
 window.switchActiveProjectHeader = async function(headerId) {
 
-  if (!window.supabaseClient) return;
+  localStorage.setItem(
+    'dome_active_header_id',
+    headerId
+  );
 
-  try {
+  renderProjectHeaderListUI();
 
-    await window.supabaseClient
-      .from('project_headers')
-      .update({ is_active: false })
-      .neq('id', '');
-
-    await window.supabaseClient
-      .from('project_headers')
-      .update({ is_active: true })
-      .eq('id', headerId);
-
-    await fetchProjectHeadersFromCloud();
-
-    showToast('已切換當前活動檔期！', 'success');
-
-  } catch (err) {
-
-    console.error(err);
-    showToast('切換失敗', 'error');
-
-  }
+  showToast(
+    '已切換當前活動檔期！',
+    'success'
+  );
 
 };
+
 
 
 
@@ -2080,19 +2117,6 @@ window.switchActiveProjectHeader = async function(headerId) {
 
       await saveStoredHeaderListToCloud(headerObj);
 
-if (!editId && window.supabaseClient) {
-
-  await window.supabaseClient
-    .from('project_headers')
-    .update({ is_active: false })
-    .neq('id', '');
-
-  await window.supabaseClient
-    .from('project_headers')
-    .update({ is_active: true })
-    .eq('id', headerId);
-
-}
 
 
       resetHeaderForm();
@@ -2387,17 +2411,7 @@ if (error) {
 } else {
   showToast('點位已成功同步至雲端！', 'success');
 }
-
-
-
-console.log('header save result', data);
-console.log('header save error', error);
-          if (error) {
-            showToast('已存至本機！(雲端權限限制中)', 'info');
-          } else {
-            showToast('點位已成功同步至雲端！', 'success');
-          }
-        } catch(err) {
+       } catch(err) {
           showToast('已存至本機！', 'info');
         }
       }
