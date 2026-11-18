@@ -1733,6 +1733,12 @@ const idx = window.projectHeadersCache.findIndex(
 
 window.handleSaveAssetTransaction = async function(e) {
       e.preventDefault();
+      if (window.currentRole === window.ROLES.VISITOR) {
+        showToast('目前為訪客唯讀模式，無法變更器材點交數量！', 'error');
+        openModal('loginModal');
+        return;
+      }
+
       const activity_name = document.getElementById('assetManagerActivitySelect').value;
       if (!activity_name) return showToast('請先選擇活動檔期名稱！', 'error');
 
@@ -2091,8 +2097,14 @@ window.switchActiveProjectHeader = async function(headerId) {
 
 
 
-    window.saveGlobalProjectHeader = async function(e) {
+window.saveGlobalProjectHeader = async function(e) {
       if (e) e.preventDefault();
+      if (window.currentRole === window.ROLES.VISITOR) {
+        showToast('目前為訪客唯讀模式，無法新增或編輯活動檔期！', 'error');
+        openModal('loginModal');
+        return;
+      }
+
       const editId = document.getElementById('headerEditId')?.value;
       const activity = document.getElementById('globalActivityName')?.value.trim();
       const unit = document.getElementById('globalRenterUnit')?.value.trim();
@@ -2136,7 +2148,13 @@ window.switchActiveProjectHeader = async function(headerId) {
       document.getElementById('globalRentEndDate').value = h.end || '';
     };
 
-    window.deleteProjectHeader = async function(id) {
+window.deleteProjectHeader = async function(id) {
+      if (window.currentRole === window.ROLES.VISITOR) {
+        showToast('目前為訪客唯讀模式，無法刪除活動檔期！', 'error');
+        openModal('loginModal');
+        return;
+      }
+
       await deleteStoredHeaderFromCloud(id);
       if (localStorage.getItem('dome_active_header_id') === id) {
         localStorage.removeItem('dome_active_header_id');
@@ -2335,8 +2353,14 @@ window.switchActiveProjectHeader = async function(headerId) {
       `).join('');
     }
 
-    window.handleSavePin = async (e) => {
+window.handleSavePin = async (e) => {
       e.preventDefault();
+      if (window.currentRole === window.ROLES.VISITOR) {
+        showToast('目前為訪客唯讀模式，無法儲存巡檢紀錄！', 'error');
+        openModal('loginModal');
+        return;
+      }
+
       const pinId = document.getElementById('formPinId').value || crypto.randomUUID();
       
       const pinData = {
@@ -2624,7 +2648,14 @@ if (error) {
       pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
     };
 
-    window.saveSignaturesToActiveHeader = async function() {
+
+window.saveSignaturesToActiveHeader = async function() {
+      if (window.currentRole === window.ROLES.VISITOR) {
+        showToast('目前為訪客唯讀模式，無法儲存電子簽名！', 'error');
+        openModal('loginModal');
+        return;
+      }
+
       const currentActivity = document.getElementById('assetManagerActivitySelect').value;
       if (!currentActivity) return showToast('請先選擇活動檔期名稱！', 'error');
 
