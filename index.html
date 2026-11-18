@@ -1451,20 +1451,50 @@
       requestUpdateTransform();
     };
 
+// 直接從現有的 window.pins 萃取出所有不重複的活動檔期抬頭
     function getStoredHeaderList() {
-      const raw = localStorage.getItem('dome_project_headers_list');
-      try { 
-        let list = raw ? JSON.parse(raw) : [];
-        list.sort((a, b) => {
-          if (!a.start) return 1;
-          if (!b.start) return -1;
-          return new Date(a.start) - new Date(b.start);
-        });
-        return list;
-      } catch (e) { 
-        return []; 
-      }
+      const headerMap = {};
+      
+      (window.pins || []).forEach(p => {
+        if (p.activity_name) {
+          if (!headerMap[p.activity_name]) {
+            headerMap[p.activity_name] = {
+              id: 'header-pin-' + p.activity_name,
+              activity: p.activity_name,
+              unit: p.renter_unit || '',
+              start: p.rent_start_date || '',
+              end: p.rent_end_date || '',
+              sigA: p.renter_signature || '',
+              sigB: p.dome_signature || ''
+            };
+          }
+        }
+      });
+
+      return Object.values(headerMap);
     }
+
+    // 當儲存檔期抬頭時，同步更新目前暫存或提示使用者直接於新增點位時帶入
+    window.saveGlobalProjectHeader = function(e) {
+      if (e) e.preventDefault();
+      const activity = document.getElementById('globalActivityName')?.value.trim();
+      const unit = document.getElementById('globalRenterUnit')?.value.trim();
+      const start = document.getElementById('globalRentStartDate')?.value;
+      const end = document.getElementById('globalRentEndDate')?.value;
+
+      if (!activity) return showToast('請填寫活動名稱！', 'error');
+
+      // 將當前設定存入 localStorage 作為「目前預設帶入的新檔期樣版」
+      const template = { activity, unit, start, end };
+      localStorage.setItem('dome_active_header_template', JSON.stringify(template));
+      
+      closeModal('projectHeaderModal');
+      showToast('檔期抬頭樣版已更新！後續新增點位時將自動帶入此資訊至雲端 pins。', 'success');
+      renderProjectHeaderListUI();
+    };
+
+
+
     function saveStoredHeaderList(list) {
       localStorage.setItem('dome_project_headers_list', JSON.stringify(list));
     }
