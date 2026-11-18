@@ -736,7 +736,7 @@
               <option value="主倉庫區">主倉庫區</option>
             </select>
           </div>
-<div>
+          <div>
             <label class="block text-xs font-semibold mb-1">器材品項名稱 <span class="text-rose-400">*</span></label>
             <div class="flex gap-1.5">
               <select id="txAssetNameSelect" onchange="onTxAssetSelectChange(this.value)" class="flex-1 bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px] cursor-pointer">
@@ -1016,19 +1016,22 @@
     window.pins = [];
     window.activeImages = [];
     window.supabaseClient = null;
+    window.projectHeadersCache = [];
+    window.assetTransactions = [];
 
     let scale = 1, panX = 0, panY = 0, isDragging = false;
     let startX = 0, startY = 0, dragDistance = 0;
     let isTransformPending = false;
 
+    // 🌟 唯一整合的 DOMContentLoaded 初始化入口
     document.addEventListener('DOMContentLoaded', () => {
       initSupabaseConnection();
       loadMap(window.currentMapId);
       setupInteractions();
-      renderProjectHeaderListUI();
-    });
+      fetchProjectHeadersFromCloud();
+      fetchAssetTransactionsFromCloud();
 
-    document.addEventListener('DOMContentLoaded', () => {
+      // 設定動態版本日期
       const today = new Date();
       const yyyy = today.getFullYear();
       const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -1036,6 +1039,12 @@
       const versionBadge = document.getElementById('autoVersionBadge');
       if (versionBadge) {
         versionBadge.innerText = `v${yyyy}.${mm}.${dd}`;
+      }
+
+      // 綁定器材品項連動選單
+      const pinSelectEl = document.getElementById('txPinLocation');
+      if (pinSelectEl) {
+        pinSelectEl.addEventListener('change', updateTxAssetDropdownOptions);
       }
     });
 
@@ -1056,11 +1065,28 @@
         if (window.supabase) {
           window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
           fetchPinsFromCloud();
+          fetchProjectHeadersFromCloud();
+          fetchAssetTransactionsFromCloud();
           
+          // 即時監聽資料表變更 (Realtime Channels)
           window.supabaseClient
             .channel('public:pins')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'pins' }, () => {
               fetchPinsFromCloud();
+            })
+            .subscribe();
+
+          window.supabaseClient
+            .channel('public:project_headers')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'project_headers' }, () => {
+              fetchProjectHeadersFromCloud();
+            })
+            .subscribe();
+
+          window.supabaseClient
+            .channel('public:asset_transactions')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'asset_transactions' }, () => {
+              fetchAssetTransactionsFromCloud();
             })
             .subscribe();
         }
@@ -1094,6 +1120,76 @@
       }
     }
 
+    // ☁️ 雲端同步：專案檔期抬頭讀寫
+    async function fetchProjectHeadersFromCloud() {
+      if (!window.supabaseClient) {
+        loadProjectHeadersFromLocal();
+        return;
+      }
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('project_headers')
+          .select('*')
+          .order('start', { ascending: true });
+
+        if (!error && Array.isArray(data)) {
+          window.projectHeadersCache = data;
+          localStorage.setItem('dome_project_headers_cache', JSON.stringify(data));
+          renderProjectHeaderListUI();
+        } else {
+          throw error;
+        }
+      } catch (err) {
+        loadProjectHeadersFromLocal();
+      }
+    }
+
+    function loadProjectHeadersFromLocal() {
+      const raw = localStorage.getItem('dome_project_headers_cache');
+      try { 
+        window.projectHeadersCache = raw ? JSON.parse(raw) : [];
+        renderProjectHeaderListUI();
+      } catch (e) { 
+        window.projectHeadersCache = []; 
+      }
+    }
+
+    function getStoredHeaderList() {
+      return window.projectHeadersCache || [];
+    }
+
+    async function saveStoredHeaderListToCloud(headerObj) {
+      const idx = window.projectHeadersCache.findIndex(h => h.id === headerObj.id);
+      if (idx >= 0) {
+        window.projectHeadersCache[idx] = headerObj;
+      } else {
+        window.projectHeadersCache.push(headerObj);
+      }
+      localStorage.setItem('dome_project_headers_cache', JSON.stringify(window.projectHeadersCache));
+
+      if (window.supabaseClient) {
+        try {
+          await window.supabaseClient.from('project_headers').upsert([headerObj]);
+        } catch (err) {
+          console.error('雲端同步失敗', err);
+        }
+      }
+      renderProjectHeaderListUI();
+    }
+
+    async function deleteStoredHeaderFromCloud(headerId) {
+      window.projectHeadersCache = window.projectHeadersCache.filter(h => h.id !== headerId);
+      localStorage.setItem('dome_project_headers_cache', JSON.stringify(window.projectHeadersCache));
+
+      if (window.supabaseClient) {
+        try {
+          await window.supabaseClient.from('project_headers').delete().eq('id', headerId);
+        } catch (err) {}
+      }
+      renderProjectHeaderListUI();
+    }
+
+    // 視圖切換
     window.switchMainView = function(viewMode) {
       window.currentMainView = viewMode;
       const mapViewport = document.getElementById('viewport');
@@ -1451,62 +1547,12 @@
       requestUpdateTransform();
     };
 
-// 直接從現有的 window.pins 萃取出所有不重複的活動檔期抬頭
-    function getStoredHeaderList() {
-      const headerMap = {};
-      
-      (window.pins || []).forEach(p => {
-        if (p.activity_name) {
-          if (!headerMap[p.activity_name]) {
-            headerMap[p.activity_name] = {
-              id: 'header-pin-' + p.activity_name,
-              activity: p.activity_name,
-              unit: p.renter_unit || '',
-              start: p.rent_start_date || '',
-              end: p.rent_end_date || '',
-              sigA: p.renter_signature || '',
-              sigB: p.dome_signature || ''
-            };
-          }
-        }
-      });
-
-      return Object.values(headerMap);
-    }
-
-    // 當儲存檔期抬頭時，同步更新目前暫存或提示使用者直接於新增點位時帶入
-    window.saveGlobalProjectHeader = function(e) {
-      if (e) e.preventDefault();
-      const activity = document.getElementById('globalActivityName')?.value.trim();
-      const unit = document.getElementById('globalRenterUnit')?.value.trim();
-      const start = document.getElementById('globalRentStartDate')?.value;
-      const end = document.getElementById('globalRentEndDate')?.value;
-
-      if (!activity) return showToast('請填寫活動名稱！', 'error');
-
-      // 將當前設定存入 localStorage 作為「目前預設帶入的新檔期樣版」
-      const template = { activity, unit, start, end };
-      localStorage.setItem('dome_active_header_template', JSON.stringify(template));
-      
-      closeModal('projectHeaderModal');
-      showToast('檔期抬頭樣版已更新！後續新增點位時將自動帶入此資訊至雲端 pins。', 'success');
-      renderProjectHeaderListUI();
-    };
-
-
-
-    function saveStoredHeaderList(list) {
-      localStorage.setItem('dome_project_headers_list', JSON.stringify(list));
-    }
-
     window.openProjectHeaderManager = function() {
       renderProjectHeaderListUI();
       openModal('projectHeaderModal');
     };
 
     // 📦 器材點交與跨檔期流轉管理邏輯
-    window.assetTransactions = [];
-
     window.openAssetManagerModal = async function() {
       await fetchAssetTransactionsFromCloud();
       renderAssetManagerActivitySelector();
@@ -1548,10 +1594,8 @@
         list.map(h => `<option value="${h.activity}" ${activeHeader && activeHeader.activity === h.activity ? 'selected' : ''}>${h.activity} (${h.unit || '未設定單位'})</option>`).join('');
       
       populatePinLocationsDropdown();
+      updateTxAssetDropdownOptions();
     }
-
-      populatePinLocationsDropdown();
-      updateTxAssetDropdownOptions(); // 確保每次打開時自動載入當前點位品項
 
     window.onAssetManagerActivityChange = function() {
       renderAssetInventoryUI();
@@ -1586,20 +1630,17 @@
       }
     };
 
-window.autoLoadPreviousCheckOut = function() {
+    window.autoLoadPreviousCheckOut = function() {
       const currentActivity = document.getElementById('assetManagerActivitySelect').value;
       if (!currentActivity) {
         return showToast('請先上方選擇您要操作的「本檔活動名稱」！', 'error');
       }
 
-      // 1. 重新整理前，先移除該活動先前已自動載入的進場點交紀錄，確保每次點選皆為「重新同步、不重複累加」
       window.assetTransactions = window.assetTransactions.filter(tx => 
         !(tx.activity_name === currentActivity && tx.transaction_type === 'check_in')
       );
 
       let loadedCount = 0;
-
-      // 2. 從地圖上的 Asset Pin 點位讀取最新配置
       const assetPins = (window.pins || []).filter(p => p.pin_type === 'asset');
       
       if (assetPins.length > 0) {
@@ -1626,7 +1667,6 @@ window.autoLoadPreviousCheckOut = function() {
           }
         });
       } else {
-        // 3. 若地圖上無 Asset Pin，則從歷史異動結算餘額
         const inventoryMap = {};
         (window.assetTransactions || []).forEach(tx => {
           if (!tx) return;
@@ -1667,11 +1707,8 @@ window.autoLoadPreviousCheckOut = function() {
 
       localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
       renderAssetInventoryUI();
-      
-      showToast(`已成功同步「${currentActivity}」之場館內器材點交基準（共 ${loadedCount} 項），無重複累加！`, 'success');
+      showToast(`已成功同步「${currentActivity}」之場館內器材點交基準（共 ${loadedCount} 項）！`, 'success');
     };
-
-
 
     window.handleSaveAssetTransaction = async function(e) {
       e.preventDefault();
@@ -1713,7 +1750,6 @@ window.autoLoadPreviousCheckOut = function() {
       showToast('器材異動明細已成功儲存與流轉！', 'success');
     };
 
-    // 🌟 修正補回：渲染器材庫存表格與點位預覽
     function renderAssetInventoryUI() {
       const tbody = document.getElementById('assetInventorySummaryBody');
       const txBody = document.getElementById('assetTransactionsBody');
@@ -1789,7 +1825,7 @@ window.autoLoadPreviousCheckOut = function() {
       const assetPins = (window.pins || []).filter(p => p.pin_type === 'asset');
       
       if (assetPins.length === 0) {
-        container.innerHTML = `<div class="col-span-2 text-center py-4 text-slate-500 text-xs bg-slate-950/40 rounded-lg">目前尚無在地圖上建立任何「器材配置點 (Asset Pin)」。管理員可直接點擊地圖新增點位並綁定多品項器材。</div>`;
+        container.innerHTML = `<div class="col-span-2 text-center py-4 text-slate-500 text-xs bg-slate-950/40 rounded-lg">目前尚無在地圖上建立任何「器材配置點 (Asset Pin)」。</div>`;
         return;
       }
 
@@ -1982,7 +2018,7 @@ window.autoLoadPreviousCheckOut = function() {
       showToast('已切換當前活動檔期！', 'success');
     };
 
-    window.saveGlobalProjectHeader = function(e) {
+    window.saveGlobalProjectHeader = async function(e) {
       if (e) e.preventDefault();
       const editId = document.getElementById('headerEditId')?.value;
       const activity = document.getElementById('globalActivityName')?.value.trim();
@@ -1992,20 +2028,29 @@ window.autoLoadPreviousCheckOut = function() {
 
       if (!activity) return showToast('請填寫活動名稱！', 'error');
 
-      let list = getStoredHeaderList();
-      if (editId) {
-        const idx = list.findIndex(h => h.id === editId);
-        if (idx >= 0) list[idx] = { id: editId, activity, unit, start, end };
-      } else {
-        const newId = 'header-' + Date.now();
-        list.push({ id: newId, activity, unit, start, end });
-        localStorage.setItem('dome_active_header_id', newId);
+      const headerId = editId || ('header-' + Date.now());
+      const existing = getStoredHeaderList().find(h => h.id === headerId) || {};
+      
+      const headerObj = {
+        id: headerId,
+        activity,
+        unit,
+        start,
+        end,
+        sigA: existing.sigA || '',
+        sigB: existing.sigB || '',
+        sigTime: existing.sigTime || null
+      };
+
+      await saveStoredHeaderListToCloud(headerObj);
+
+      if (!editId) {
+        localStorage.setItem('dome_active_header_id', headerId);
       }
 
-      saveStoredHeaderList(list);
       resetHeaderForm();
       renderProjectHeaderListUI();
-      showToast('活動檔期儲存成功！', 'success');
+      showToast('活動檔期已成功儲存並同步至雲端！', 'success');
     };
 
     window.editProjectHeader = function(id) {
@@ -2020,14 +2065,13 @@ window.autoLoadPreviousCheckOut = function() {
       document.getElementById('globalRentEndDate').value = h.end || '';
     };
 
-    window.deleteProjectHeader = function(id) {
-      let list = getStoredHeaderList().filter(h => h.id !== id);
-      saveStoredHeaderList(list);
+    window.deleteProjectHeader = async function(id) {
+      await deleteStoredHeaderFromCloud(id);
       if (localStorage.getItem('dome_active_header_id') === id) {
         localStorage.removeItem('dome_active_header_id');
       }
       renderProjectHeaderListUI();
-      showToast('已刪除該筆檔期', 'info');
+      showToast('已從雲端刪除該筆檔期', 'info');
     };
 
     window.resetHeaderForm = function() {
@@ -2253,7 +2297,6 @@ window.autoLoadPreviousCheckOut = function() {
 
       localStorage.setItem('dome_pins_cache', JSON.stringify(window.pins));
 
-// 【新增連動】若為器材點位，同步更新或產生器材點交異動明細
       if (pinData.pin_type === 'asset' && Array.isArray(pinData.asset_list)) {
         const currentActiveActivity = document.getElementById('assetManagerActivitySelect')?.value || pinData.activity_name || '預設活動檔期';
         
@@ -2266,10 +2309,8 @@ window.autoLoadPreviousCheckOut = function() {
           );
 
           if (existingTxIndex >= 0) {
-            // 若已存在，更新其數量
             window.assetTransactions[existingTxIndex].change_qty = parseInt(assetItem.qty || 0);
           } else {
-            // 若不存在，新增一筆點交紀錄
             const newTx = {
               id: crypto.randomUUID(),
               activity_name: currentActiveActivity,
@@ -2286,8 +2327,6 @@ window.autoLoadPreviousCheckOut = function() {
         });
         localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
       }
-
-
       
       if (window.supabaseClient) {
         try {
@@ -2510,7 +2549,7 @@ window.autoLoadPreviousCheckOut = function() {
       pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
     };
 
-    window.saveSignaturesToActiveHeader = function() {
+    window.saveSignaturesToActiveHeader = async function() {
       const currentActivity = document.getElementById('assetManagerActivitySelect').value;
       if (!currentActivity) return showToast('請先選擇活動檔期名稱！', 'error');
 
@@ -2523,8 +2562,8 @@ window.autoLoadPreviousCheckOut = function() {
         list[idx].sigA = imgA;
         list[idx].sigB = imgB;
         list[idx].sigTime = new Date().toISOString();
-        saveStoredHeaderList(list);
-        showToast('雙方電子簽名已成功綁定至本檔期！', 'success');
+        await saveStoredHeaderListToCloud(list[idx]);
+        showToast('雙方電子簽名已成功綁定並同步至雲端！', 'success');
       } else {
         showToast('找不到當前活動檔期紀錄', 'error');
       }
@@ -2549,6 +2588,55 @@ window.autoLoadPreviousCheckOut = function() {
       }
     }
 
+    let sigPadAppendixA = null;
+    let sigPadAppendixB = null;
+
+    function initAppendixSignaturePads() {
+      sigPadAppendixA = setupSingleCanvas('canvasAppendixA');
+      sigPadAppendixB = setupSingleCanvas('canvasAppendixB');
+      
+      const activeHeader = window.currentExportHeader || {};
+      if (activeHeader.sigA && sigPadAppendixA) {
+        const img = new Image();
+        img.onload = () => sigPadAppendixA.ctx.drawImage(img, 0, 0, sigPadAppendixA.canvas.clientWidth, sigPadAppendixA.canvas.clientHeight);
+        img.src = activeHeader.sigA;
+      }
+      if (activeHeader.sigB && sigPadAppendixB) {
+        const img = new Image();
+        img.onload = () => sigPadAppendixB.ctx.drawImage(img, 0, 0, sigPadAppendixB.canvas.clientWidth, sigPadAppendixB.canvas.clientHeight);
+        img.src = activeHeader.sigB;
+      }
+    }
+
+    window.clearAppendixSignature = function(party) {
+      const pad = party === 'partyA' ? sigPadAppendixA : sigPadAppendixB;
+      if (!pad) return;
+      pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
+    };
+
+    window.confirmAndPrintAppendix24 = async function() {
+      const headerData = window.currentExportHeader || {};
+      
+      const imgA = sigPadAppendixA ? sigPadAppendixA.canvas.toDataURL('image/png') : '';
+      const imgB = sigPadAppendixB ? sigPadAppendixB.canvas.toDataURL('image/png') : '';
+
+      headerData.sigA = imgA;
+      headerData.sigB = imgB;
+
+      if (headerData.id) {
+        let list = getStoredHeaderList();
+        const idx = list.findIndex(h => h.id === headerData.id);
+        if (idx >= 0) {
+          list[idx].sigA = imgA;
+          list[idx].sigB = imgB;
+          await saveStoredHeaderListToCloud(list[idx]);
+        }
+      }
+
+      closeModal('appendix24Modal');
+      generateAppendix24Printout(window.currentExportPins, headerData);
+    };
+
     function generateAppendix24Printout(pinsList, headerData = {}) {
       const damagePinsOnly = (pinsList || []).filter(p => p.pin_type !== 'asset');
 
@@ -2561,7 +2649,6 @@ window.autoLoadPreviousCheckOut = function() {
 
       const imgRptA = document.getElementById('rptSigPartyA');
       const placeholderRptA = document.getElementById('rptSigPlaceholderA');
-      
       const imgRptB = document.getElementById('rptSigPartyB');
       const placeholderRptB = document.getElementById('rptSigPlaceholderB');
 
@@ -2640,55 +2727,6 @@ window.autoLoadPreviousCheckOut = function() {
       });
     }
 
-    let sigPadAppendixA = null;
-    let sigPadAppendixB = null;
-
-    function initAppendixSignaturePads() {
-      sigPadAppendixA = setupSingleCanvas('canvasAppendixA');
-      sigPadAppendixB = setupSingleCanvas('canvasAppendixB');
-      
-      const activeHeader = window.currentExportHeader || {};
-      if (activeHeader.sigA && sigPadAppendixA) {
-        const img = new Image();
-        img.onload = () => sigPadAppendixA.ctx.drawImage(img, 0, 0, sigPadAppendixA.canvas.clientWidth, sigPadAppendixA.canvas.clientHeight);
-        img.src = activeHeader.sigA;
-      }
-      if (activeHeader.sigB && sigPadAppendixB) {
-        const img = new Image();
-        img.onload = () => sigPadAppendixB.ctx.drawImage(img, 0, 0, sigPadAppendixB.canvas.clientWidth, sigPadAppendixB.canvas.clientHeight);
-        img.src = activeHeader.sigB;
-      }
-    }
-
-    window.clearAppendixSignature = function(party) {
-      const pad = party === 'partyA' ? sigPadAppendixA : sigPadAppendixB;
-      if (!pad) return;
-      pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
-    };
-
-    window.confirmAndPrintAppendix24 = function() {
-      const headerData = window.currentExportHeader || {};
-      
-      const imgA = sigPadAppendixA ? sigPadAppendixA.canvas.toDataURL('image/png') : '';
-      const imgB = sigPadAppendixB ? sigPadAppendixB.canvas.toDataURL('image/png') : '';
-
-      headerData.sigA = imgA;
-      headerData.sigB = imgB;
-
-      if (headerData.id) {
-        let list = getStoredHeaderList();
-        const idx = list.findIndex(h => h.id === headerData.id);
-        if (idx >= 0) {
-          list[idx].sigA = imgA;
-          list[idx].sigB = imgB;
-          saveStoredHeaderList(list);
-        }
-      }
-
-      closeModal('appendix24Modal');
-      generateAppendix24Printout(window.currentExportPins, headerData);
-    };
-
     let sigPadAllVenueA = null;
     let sigPadAllVenueB = null;
 
@@ -2701,17 +2739,13 @@ window.autoLoadPreviousCheckOut = function() {
 
       if (sigA && sigPadAllVenueA) {
         const img = new Image();
-        img.onload = () => {
-          sigPadAllVenueA.ctx.drawImage(img, 0, 0, sigPadAllVenueA.canvas.clientWidth, sigPadAllVenueA.canvas.clientHeight);
-        };
+        img.onload = () => sigPadAllVenueA.ctx.drawImage(img, 0, 0, sigPadAllVenueA.canvas.clientWidth, sigPadAllVenueA.canvas.clientHeight);
         img.src = sigA;
       }
 
       if (sigB && sigPadAllVenueB) {
         const img = new Image();
-        img.onload = () => {
-          sigPadAllVenueB.ctx.drawImage(img, 0, 0, sigPadAllVenueB.canvas.clientWidth, sigPadAllVenueB.canvas.clientHeight);
-        };
+        img.onload = () => sigPadAllVenueB.ctx.drawImage(img, 0, 0, sigPadAllVenueB.canvas.clientWidth, sigPadAllVenueB.canvas.clientHeight);
         img.src = sigB;
       }
     }
@@ -2806,30 +2840,11 @@ window.autoLoadPreviousCheckOut = function() {
       });
     }
 
-    window.saveAllVenueSignatures = function() {
-      const imgA = sigPadAllVenueA ? sigPadAllVenueA.canvas.toDataURL('image/png') : '';
-      const imgB = sigPadAllVenueB ? sigPadAllVenueB.canvas.toDataURL('image/png') : '';
-      
-      window.savedAllVenueSigA = imgA;
-      window.savedAllVenueSigB = imgB;
-      showToast('全館總表雙方電子簽名已暫存！', 'success');
-    };
-
-// 當切換點位時，自動更新該點位對應的器材品項下拉清單
-    document.addEventListener('DOMContentLoaded', () => {
-      const pinSelectEl = document.getElementById('txPinLocation');
-      if (pinSelectEl) {
-        pinSelectEl.addEventListener('change', updateTxAssetDropdownOptions);
-      }
-    });
-
     function updateTxAssetDropdownOptions() {
       const selectedPinTitle = document.getElementById('txPinLocation')?.value || '';
       const assetSelect = document.getElementById('txAssetNameSelect');
-      const assetInput = document.getElementById('txAssetName');
       if (!assetSelect) return;
 
-      // 從地圖上的 Asset Pin 尋找對應點位
       const targetPin = (window.pins || []).find(p => {
         const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資';
         const fullTitle = `${p.title} (${mapName})`;
@@ -2845,7 +2860,6 @@ window.autoLoadPreviousCheckOut = function() {
           }
         });
       } else {
-        // 若該點位沒特別設定，則從現有異動紀錄中抓取所有常見品項作為建議
         const uniqueNames = [...new Set((window.assetTransactions || []).map(tx => tx.asset_name).filter(Boolean))];
         uniqueNames.forEach(name => {
           optionsHtml += `<option value="${name}">${name}</option>`;
@@ -2862,7 +2876,6 @@ window.autoLoadPreviousCheckOut = function() {
         assetInput.value = selectedName;
       }
     };
-
   </script>
 </body>
 </html>
