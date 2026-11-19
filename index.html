@@ -726,7 +726,6 @@
              <select id="txType" onchange="toggleTxTypeHint()" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
               <option value="check_in">📥 進場點交 (接收/配置數量)</option>
               <option value="check_out">📤 離場點退 (結算與耗損變動)</option>
-              <option value="loss">⚠️ 館內耗損/遺失紀錄</option>
               <option value="carry_over">🔄 跨檔期保留/轉移 (不撤場續用)</option>
              </select>
           </div>
@@ -761,11 +760,18 @@
         </div>
       </form>
 
-      <!-- 列表顯示 -->
+
+<!-- 列表顯示 -->
       <div class="space-y-4">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">🏢 全館所有位置之器材種類與目前庫存 / 檔期結算狀態</h3>
           <button type="button" onclick="renderAssetInventoryUI()" class="text-xs text-amber-400 hover:underline"><i class="fa-solid fa-rotate mr-1"></i>重新整理數據</button>
+        </div>
+
+        <!-- 精簡版面：說明文字另外獨立呈現 -->
+        <div class="bg-slate-900/70 border border-purple-500/25 rounded-lg px-3.5 py-2 text-[11px] text-slate-300 leading-relaxed">
+          <span class="text-purple-300 font-bold">🔄 點位跨檔留用說明：</span>
+          於總表各<strong>點位</strong>勾選「留用下一檔」，代表該點位內所有器材不撤場直接續用，紙本表單會自動記錄「起始檔期 ➔ 經歷檔期 ➔ 本檔/下檔」軌跡；若某檔<strong>未勾選</strong>，則該點位將於本檔自動觸發點退歸還結算。
         </div>
         
         <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
@@ -773,6 +779,7 @@
             <table class="w-full text-left text-xs sm:text-sm text-slate-200">
               <thead class="bg-slate-700/80 text-slate-100 uppercase text-xs border-b border-slate-600">
                 <tr>
+                  <th class="py-2.5 px-3 w-28">跨檔留用</th>
                   <th class="py-2.5 px-4">位置 / 點位名稱</th>
                   <th class="py-2.5 px-4">器材品項名稱</th>
                   <th class="py-2.5 px-4 text-right">進場點交數量</th>
@@ -784,6 +791,7 @@
             </table>
           </div>
         </div>
+
 
         <!-- 點交前全場館各點位器材狀況與照片預覽模式 -->
         <div class="bg-slate-900/90 p-4 rounded-xl border border-blue-500/30 my-4 space-y-3">
@@ -1635,7 +1643,7 @@ const idx = window.projectHeadersCache.findIndex(
       pinSelect.innerHTML = optionsHtml;
     }
 
-    window.toggleTxTypeHint = function() {
+window.toggleTxTypeHint = function() {
       const type = document.getElementById('txType').value;
       const hint = document.getElementById('txQtyHint');
       if (!hint) return;
@@ -1643,12 +1651,11 @@ const idx = window.projectHeadersCache.findIndex(
         hint.innerText = "※ 進場點交：請填入接收或配置的正數數量。";
       } else if (type === 'check_out') {
         hint.innerText = "※ 離場點退：請填入實際清點退回的數量（系統將自動結算與前一檔差異）。";
-      } else if (type === 'carry_over') {
-        hint.innerText = "※ 跨檔期保留：請填入不隨本檔離場歸還、要直接保留轉移至下一檔續用的數量。";
       } else {
-        hint.innerText = "※ 耗損遺失：請填入損壞或遺失的數量（建議填負數或正數由系統扣除）。";
+        hint.innerText = "※ 跨檔期保留：請填入不隨本檔離場歸還、要直接保留轉移至下一檔續用的數量。";
       }
     };
+
 
     window.autoLoadPreviousCheckOut = function() {
       const currentActivity = document.getElementById('assetManagerActivitySelect').value;
@@ -1816,12 +1823,70 @@ window.handleSaveAssetTransaction = async function(e) {
 
 
 
+window.pinRetentionMap = JSON.parse(localStorage.getItem('dome_pin_retention_map') || '{}');
+
+window.togglePinRetention = async function(activityName, pinLocation, checked) {
+      if (window.currentRole === window.ROLES.VISITOR) {
+        showToast('目前為訪客唯讀模式，無法變更跨檔留用狀態！', 'error');
+        renderAssetInventoryUI();
+        openModal('loginModal');
+        return;
+      }
+
+      const actKey = activityName || '__DEFAULT__';
+      if (!window.pinRetentionMap[actKey]) window.pinRetentionMap[actKey] = {};
+      window.pinRetentionMap[actKey][pinLocation] = !!checked;
+      localStorage.setItem('dome_pin_retention_map', JSON.stringify(window.pinRetentionMap));
+
+      const headers = getStoredHeaderList();
+      const idx = headers.findIndex(h => h.activity === activityName);
+      const nextActivity = (idx >= 0 && idx < headers.length - 1) ? headers[idx + 1].activity : '下一檔活動';
+
+      const updatedTxs = [];
+      window.assetTransactions.forEach(tx => {
+        if ((tx.activity_name || '') === (activityName || '') && (tx.pin_location || '主倉庫區') === pinLocation) {
+          tx.is_carried_over = !!checked;
+          if (!tx.origin_activity) tx.origin_activity = activityName || '本檔活動';
+          const basePath = tx.path_history || tx.origin_activity;
+          if (checked && !basePath.includes(activityName)) {
+            tx.path_history = `${basePath} ➔ ${activityName}`;
+          }
+          updatedTxs.push(tx);
+        }
+      });
+      localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
+
+      // ☁️ 同步寫入 Supabase 雲端，確保跨裝置狀態一致
+      if (window.supabaseClient && updatedTxs.length > 0) {
+        try {
+          await window.supabaseClient.from('asset_transactions').upsert(updatedTxs);
+        } catch (err) {
+          console.error('跨檔留用狀態雲端同步失敗', err);
+        }
+      }
+
+      showToast(
+        checked
+          ? `已勾選「${pinLocation}」跨檔留用（續用至 ${nextActivity}）`
+          : `已取消「${pinLocation}」跨檔留用，本檔將觸發點退結算`,
+        'info'
+      );
+    };
+
+
+
+
+    function getPinRetentionState(activityName, pinLocation) {
+      const actKey = activityName || '__DEFAULT__';
+      return !!(window.pinRetentionMap[actKey] && window.pinRetentionMap[actKey][pinLocation]);
+    }
+
     function renderAssetInventoryUI() {
       const tbody = document.getElementById('assetInventorySummaryBody');
       const txBody = document.getElementById('assetTransactionsBody');
       const selectedActivity = document.getElementById('assetManagerActivitySelect')?.value || '';
 
-      const targetTxs = selectedActivity 
+      const targetTxs = selectedActivity
         ? window.assetTransactions.filter(tx => tx.activity_name === selectedActivity)
         : window.assetTransactions;
 
@@ -1843,17 +1908,36 @@ window.handleSaveAssetTransaction = async function(e) {
       if (tbody) {
         const items = Object.values(summaryMap);
         if (items.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-500 text-xs">尚無任何器材庫存數據</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 text-xs">尚無任何器材庫存數據</td></tr>`;
         } else {
-          tbody.innerHTML = items.map(item => `
-            <tr class="hover:bg-slate-750 transition">
-              <td class="py-2.5 px-4 font-semibold text-indigo-300">${item.pin_location}</td>
-              <td class="py-2.5 px-4 font-bold text-white">${item.asset_name}</td>
-              <td class="py-2.5 px-4 text-right font-mono text-emerald-400 font-bold">${item.checkIn > 0 ? '+' + item.checkIn : '0'}</td>
-              <td class="py-2.5 px-4 text-right font-mono text-rose-400 font-bold">${item.change !== 0 ? item.change : '0'}</td>
-              <td class="py-2.5 px-4 text-right font-mono font-black text-amber-400 text-sm">${item.balance}</td>
-            </tr>
-          `).join('');
+          // 每個點位只顯示第一列勾選框，同點位後續品項留空以保持版面清爽
+          const renderedPinRow = new Set();
+          const safeActAttr = encodeURIComponent(selectedActivity);
+
+          tbody.innerHTML = items.map(item => {
+            const isFirstOfPin = !renderedPinRow.has(item.pin_location);
+            renderedPinRow.add(item.pin_location);
+            const isRetained = getPinRetentionState(selectedActivity, item.pin_location);
+            const safeLocAttr = encodeURIComponent(item.pin_location);
+
+            const retentionCell = isFirstOfPin
+              ? `<label class="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs font-bold ${isRetained ? 'text-purple-300' : 'text-slate-400'}">
+                   <input type="checkbox" ${isRetained ? 'checked' : ''} onchange="togglePinRetention(decodeURIComponent('${safeActAttr}'), decodeURIComponent('${safeLocAttr}'), this.checked)" class="w-4 h-4 accent-purple-500 rounded cursor-pointer">
+                   <span>${isRetained ? '留用中' : '留用'}</span>
+                 </label>`
+              : `<span class="text-[10px] text-slate-600 pl-5">↳ 同點位</span>`;
+
+            return `
+              <tr class="hover:bg-slate-750 transition">
+                <td class="py-2.5 px-3 whitespace-nowrap">${retentionCell}</td>
+                <td class="py-2.5 px-4 font-semibold text-indigo-300">${item.pin_location}</td>
+                <td class="py-2.5 px-4 font-bold text-white">${item.asset_name}</td>
+                <td class="py-2.5 px-4 text-right font-mono text-emerald-400 font-bold">${item.checkIn > 0 ? '+' + item.checkIn : '0'}</td>
+                <td class="py-2.5 px-4 text-right font-mono text-rose-400 font-bold">${item.change !== 0 ? item.change : '0'}</td>
+                <td class="py-2.5 px-4 text-right font-mono font-black text-amber-400 text-sm">${item.balance}</td>
+              </tr>
+            `;
+}).join('');
         }
       }
 
@@ -1864,7 +1948,6 @@ window.handleSaveAssetTransaction = async function(e) {
           txBody.innerHTML = window.assetTransactions.map(tx => {
             let badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300">進場點交</span>';
             if (tx.transaction_type === 'check_out') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-300">離場點退</span>';
-            if (tx.transaction_type === 'loss') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300">耗損遺失</span>';
             if (tx.transaction_type === 'carry_over') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-300">🔄 跨檔期保留</span>';
 
             return `
@@ -1884,7 +1967,7 @@ window.handleSaveAssetTransaction = async function(e) {
       renderAssetPinsPreview();
     }
 
-    function renderAssetPinsPreview() {
+function renderAssetPinsPreview() {
       const container = document.getElementById('assetPinsPreviewGrid');
       if (!container) return;
 
@@ -1919,7 +2002,8 @@ window.handleSaveAssetTransaction = async function(e) {
       }).join('');
     }
 
-    window.exportAssetPrintoutForm = function() {
+
+window.exportAssetPrintoutForm = function() {
       const selectedActivity = document.getElementById('assetManagerActivitySelect').value;
       if (!selectedActivity) {
         return showToast('請先上方選擇您要列印的「活動檔期名稱」！', 'error');
@@ -1998,14 +2082,15 @@ window.handleSaveAssetTransaction = async function(e) {
       const items = Object.values(inventoryMap);
 
       tbody.innerHTML = items.map((item, idx) => {
-        const hasPath = item.path_history && item.path_history.includes('➔');
-        const lineageText = hasPath 
-          ? `📥 <strong>【點交留用來源】</strong>：從 <span class="text-blue-700 font-bold">${item.origin_activity}</span> 開始留用，經中間檔期 [ <span class="text-indigo-700">${item.path_history}</span> ] 轉入本檔。`
-          : `📥 <strong>【本檔首發進場】</strong>：自主倉庫常態配置點交。`;
+        const isRetainedAtPin = getPinRetentionState(selectedActivity, item.pin_location);
+        const originAct = item.origin_activity || selectedActivity;
+        const fullChain = item.path_history || originAct;
 
-        const outboundText = item.balance > 0
-          ? `📤 <strong>【點退留用去向】</strong>：本檔結束後<span class="text-purple-700 font-bold">不點還撤場</span>，直接<strong>留用給下一檔 [ ${nextActivityName} ]</strong> 續用。`
-          : `✅ <strong>【正常歸還】</strong>：本檔離場全數點退歸還倉庫。`;
+        const lineageText = `📥 <strong>【留用軌跡】</strong>：起始於 <span class="text-blue-700 font-bold">[ ${originAct} ]</span> ｜ 歷經檔期：<span class="text-indigo-700 font-semibold">[ ${fullChain} ]</span> ｜ 結算檔期：<span class="text-gray-900 font-bold">[ ${isRetainedAtPin ? nextActivityName + '（續用中）' : selectedActivity + '（本檔結算）'} ]</span>`;
+
+        const outboundText = isRetainedAtPin
+          ? `🔄 <strong>【跨檔期保留】</strong>：本檔已勾選留用，不撤場歸還，直接轉移至 <strong>[ ${nextActivityName} ]</strong> 續用。`
+          : `📤 <strong>【本檔結算歸還】</strong>：本檔未勾選跨檔留用，已觸發結算（目前在庫：<strong>${item.balance}</strong>），依規辦理點退歸還。`;
 
         return `
           <tr class="align-middle print-keep-together">
@@ -2037,6 +2122,7 @@ window.handleSaveAssetTransaction = async function(e) {
         }, 100);
       });
     };
+
 
     function renderProjectHeaderListUI() {
       const list = getStoredHeaderList();
