@@ -720,45 +720,56 @@
           <span class="text-[11px] text-slate-400">※ 點退時會將耗損或數量增減結算，並成為下一檔的起始依據。</span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+
+
+<!-- 🌟 明確的點交 / 點退階段切換 -->
+        <div class="bg-slate-950/90 p-3.5 rounded-xl border border-amber-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <label class="block text-xs font-semibold mb-1">作業類型 <span class="text-rose-400">*</span></label>
-             <select id="txType" onchange="toggleTxTypeHint()" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
-              <option value="check_in">📥 進場點交 (接收/配置數量)</option>
-              <option value="check_out">📤 離場點退 (結算與耗損變動)</option>
-              <option value="carry_over">🔄 跨檔期保留/轉移 (不撤場續用)</option>
-             </select>
+            <div class="text-xs font-bold text-amber-400">作業階段切換（決定留用可否勾選與點退差額計算）</div>
+            <div id="stageStatusHint" class="text-[11px] text-slate-300 mt-0.5">目前為【進場點交階段】：顯示前一檔留用狀況，留用選項已鎖定不可點選。</div>
           </div>
+          <div class="inline-flex rounded-xl bg-slate-800 p-1 border border-slate-700 shrink-0">
+            <button type="button" id="btnStageCheckIn" onclick="switchAssetStage('check_in')" class="px-4 py-2 rounded-lg text-xs font-black bg-emerald-500 text-slate-950 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-right-to-bracket"></i> 📥 點交階段
+            </button>
+            <button type="button" id="btnStageCheckOut" onclick="switchAssetStage('check_out')" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5">
+              <i class="fa-solid fa-right-from-bracket"></i> 📤 點退階段
+            </button>
+          </div>
+        </div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold mb-1">對應地圖點位 (Asset Pin) <span class="text-rose-400">*</span></label>
-            <select id="txPinLocation" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
+            <select id="txPinLocation" onchange="updateTxAssetDropdownOptions()" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
               <option value="主倉庫區">主倉庫區</option>
             </select>
           </div>
           <div>
             <label class="block text-xs font-semibold mb-1">器材品項名稱 <span class="text-rose-400">*</span></label>
-            <div class="flex gap-1.5">
-              <select id="txAssetNameSelect" onchange="onTxAssetSelectChange(this.value)" class="flex-1 bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px] cursor-pointer">
-                <option value="">-- 請先選擇點位或自行輸入 --</option>
-              </select>
-            </div>
+            <select id="txAssetNameSelect" onchange="onTxAssetSelectChange(this.value)" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px] cursor-pointer">
+              <option value="">-- 請先選擇點位或自行輸入 --</option>
+            </select>
             <input type="text" id="txAssetName" required placeholder="例如：摺疊椅、三角錐、護欄" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px] mt-1.5">
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end pt-1">
           <div>
-            <label class="block text-xs font-semibold mb-1">數量變動 (正數為增加/點交，負數或點退請直接填寫) <span class="text-rose-400">*</span></label>
-            <input type="number" id="txQty" required placeholder="例如：100 或 -5" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
-            <p id="txQtyHint" class="text-[10px] text-slate-400 mt-1">※ 點退離場時，請輸入實際清點退回數量或耗損差額。</p>
+            <label class="block text-xs font-semibold mb-1">數量 <span class="text-rose-400">*</span></label>
+            <input type="number" id="txQty" min="0" required placeholder="例如：100（進場點交數量）" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
+            <div id="txQtyHint" class="text-[11px] text-slate-400 mt-1">※ 進場點交：請填入本次接收或配置的數量；留用狀態於點交時僅供檢視、不可點選。</div>
           </div>
-          <div class="flex items-end">
-            <button type="submit" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg text-xs shadow flex items-center justify-center gap-1.5 min-h-[36px]">
-              <i class="fa-solid fa-plus"></i> 儲存該位置品項異動
+          <div class="flex justify-end">
+            <button type="submit" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg text-xs shadow transition min-h-[38px] flex items-center gap-1.5">
+              <i class="fa-solid fa-floppy-disk"></i> 儲存器材異動
             </button>
           </div>
         </div>
       </form>
+
+
 
 
 <!-- 列表顯示 -->
@@ -779,11 +790,9 @@
             <table class="w-full text-left text-xs sm:text-sm text-slate-200">
               <thead class="bg-slate-700/80 text-slate-100 uppercase text-xs border-b border-slate-600">
                 <tr>
-                  <th class="py-2.5 px-3 w-28">跨檔留用</th>
                   <th class="py-2.5 px-4">位置 / 點位名稱</th>
                   <th class="py-2.5 px-4">器材品項名稱</th>
                   <th class="py-2.5 px-4 text-right">進場點交數量</th>
-                  <th class="py-2.5 px-4 text-right">點退/耗損異動</th>
                   <th class="py-2.5 px-4 text-right font-bold text-amber-400">目前在庫數</th>
                 </tr>
               </thead>
@@ -791,7 +800,6 @@
             </table>
           </div>
         </div>
-
 
         <!-- 點交前全場館各點位器材狀況與照片預覽模式 -->
         <div class="bg-slate-900/90 p-4 rounded-xl border border-blue-500/30 my-4 space-y-3">
@@ -840,17 +848,18 @@
           </div>
         </div>
 
-        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider pt-2">詳細異動歷史紀錄與跨檔期流轉明細</h3>
+        <div class="flex items-center justify-between pt-2">
+          <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">點退異動明細（僅顯示選定檔期・有異動之點位品項）</h3>
+          <span id="assetChangedSummaryBadge" class="text-[11px] text-amber-300 font-semibold"></span>
+        </div>
         <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden max-h-56 overflow-y-auto">
           <table class="w-full text-left text-xs text-slate-200">
             <thead class="bg-slate-700/80 text-slate-100 uppercase text-xs border-b border-slate-600 sticky top-0">
               <tr>
-                <th class="py-2 px-3">時間</th>
-                <th class="py-2 px-3">活動檔期</th>
                 <th class="py-2 px-3">位置地點</th>
                 <th class="py-2 px-3">器材名稱</th>
-                <th class="py-2 px-3">類型</th>
-                <th class="py-2 px-3 text-right">數量</th>
+                <th class="py-2 px-3">狀態</th>
+                <th class="py-2 px-3 text-right">異動數量</th>
               </tr>
             </thead>
             <tbody id="assetTransactionsBody" class="divide-y divide-slate-700/70"></tbody>
@@ -1643,18 +1652,54 @@ const idx = window.projectHeadersCache.findIndex(
       pinSelect.innerHTML = optionsHtml;
     }
 
-window.toggleTxTypeHint = function() {
-      const type = document.getElementById('txType').value;
-      const hint = document.getElementById('txQtyHint');
-      if (!hint) return;
-      if (type === 'check_in') {
-        hint.innerText = "※ 進場點交：請填入接收或配置的正數數量。";
-      } else if (type === 'check_out') {
-        hint.innerText = "※ 離場點退：請填入實際清點退回的數量（系統將自動結算與前一檔差異）。";
+
+window.currentAssetStage = 'check_in';
+
+    window.switchAssetStage = function(stage) {
+      window.currentAssetStage = stage === 'check_out' ? 'check_out' : 'check_in';
+
+      const btnIn = document.getElementById('btnStageCheckIn');
+      const btnOut = document.getElementById('btnStageCheckOut');
+      const hintEl = document.getElementById('stageStatusHint');
+
+      if (window.currentAssetStage === 'check_out') {
+        btnOut?.classList.remove('text-slate-300', 'font-bold');
+        btnOut?.classList.add('bg-amber-500', 'text-slate-950', 'font-black');
+        btnIn?.classList.remove('bg-emerald-500', 'text-slate-950', 'font-black');
+        btnIn?.classList.add('text-slate-300', 'font-bold');
+        if (hintEl) {
+          hintEl.innerHTML = '目前為【離場點退階段】：可於下方「各點位現況預覽」勾選跨檔留用；點退填寫<strong>實際清點數</strong>，系統自動算差額。';
+        }
       } else {
-        hint.innerText = "※ 跨檔期保留：請填入不隨本檔離場歸還、要直接保留轉移至下一檔續用的數量。";
+        btnIn?.classList.remove('text-slate-300', 'font-bold');
+        btnIn?.classList.add('bg-emerald-500', 'text-slate-950', 'font-black');
+        btnOut?.classList.remove('bg-amber-500', 'text-slate-950', 'font-black');
+        btnOut?.classList.add('text-slate-300', 'font-bold');
+        if (hintEl) {
+          hintEl.innerHTML = '目前為【進場點交階段】：顯示前一檔留用狀況，留用選項已鎖定不可點選。';
+        }
+      }
+
+      window.toggleTxTypeHint();
+      renderAssetInventoryUI();
+    };
+
+    window.toggleTxTypeHint = function() {
+      const type = window.currentAssetStage || 'check_in';
+      const hint = document.getElementById('txQtyHint');
+      const qtyInput = document.getElementById('txQty');
+      if (!hint) return;
+
+      if (type === 'check_in') {
+        if (qtyInput) qtyInput.placeholder = '例如：100（進場點交數量）';
+        hint.innerText = '※ 進場點交：請填入本次接收或配置的數量；留用狀態於點交時僅供檢視、不可點選。';
+      } else {
+        if (qtyInput) qtyInput.placeholder = '例如：95（實際清點剩餘/退回數）';
+        hint.innerText = '※ 離場點退：請填入「實際清點剩餘／退回數」，儲存時系統將自動與目前在庫數比對並計算差額。';
       }
     };
+
+
 
 
     window.autoLoadPreviousCheckOut = function() {
@@ -1751,8 +1796,46 @@ window.handleSaveAssetTransaction = async function(e) {
 
       const pin_location = document.getElementById('txPinLocation').value;
       const asset_name = document.getElementById('txAssetName').value.trim();
-      const transaction_type = document.getElementById('txType').value;
-      let change_qty = parseInt(document.getElementById('txQty').value || '0');
+      const transaction_type = window.currentAssetStage || 'check_in';
+      const rawInputQty = parseInt(document.getElementById('txQty').value || '0');
+      let change_qty = rawInputQty;
+
+if (transaction_type === 'check_out') {
+        // 優先從對應地圖器材點位取得目前配置數量，若無則加總該檔期異動紀錄
+        const matchedPin = (window.pins || []).find(p => {
+          const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資';
+          const fullTitle = `${p.title} (${mapName})`;
+          return fullTitle === pin_location || p.title === pin_location;
+        });
+
+        const matchedPinAsset = matchedPin && Array.isArray(matchedPin.asset_list)
+          ? matchedPin.asset_list.find(item => item.name === asset_name)
+          : null;
+
+        const txBalance = (window.assetTransactions || [])
+          .filter(tx =>
+            tx.activity_name === activity_name &&
+            (tx.pin_location || '主倉庫區') === pin_location &&
+            tx.asset_name === asset_name
+          )
+          .reduce((sum, tx) => sum + parseInt(tx.change_qty || 0), 0);
+
+        const currentBalance = matchedPinAsset
+          ? Math.max(0, parseInt(matchedPinAsset.qty || 0))
+          : Math.max(0, txBalance);
+
+        // 情境 B：輸入為「實際清點剩餘／退回數」
+        // 若實際清點數大於目前在庫數，上限對齊目前在庫數，避免產生負耗損或超額庫存
+        const safeCountedQty = Math.max(0, Math.min(rawInputQty, currentBalance));
+        change_qty = safeCountedQty - currentBalance;
+
+        if (rawInputQty > currentBalance) {
+          showToast(`實際清點數 (${rawInputQty}) 高於目前在庫數 (${currentBalance})，已自動以 ${currentBalance} 結算`, 'info');
+        }
+      }
+
+
+
 
       // 💡 移除原本會強制轉負數的 if 判斷，直接採用您在輸入框中填寫的正負數值
 
@@ -1826,6 +1909,13 @@ window.handleSaveAssetTransaction = async function(e) {
 window.pinRetentionMap = JSON.parse(localStorage.getItem('dome_pin_retention_map') || '{}');
 
 window.togglePinRetention = async function(activityName, pinLocation, checked) {
+      if (window.currentAssetStage !== 'check_out') {
+        showToast('進場點交階段不可變更跨檔留用，請切換至「點退階段」後再操作！', 'info');
+        renderAssetInventoryUI();
+        return;
+      }
+
+
       if (window.currentRole === window.ROLES.VISITOR) {
         showToast('目前為訪客唯讀模式，無法變更跨檔留用狀態！', 'error');
         renderAssetInventoryUI();
@@ -1882,125 +1972,129 @@ window.togglePinRetention = async function(activityName, pinLocation, checked) {
     }
 
     function renderAssetInventoryUI() {
-      const tbody = document.getElementById('assetInventorySummaryBody');
       const txBody = document.getElementById('assetTransactionsBody');
+      const badgeEl = document.getElementById('assetChangedSummaryBadge');
       const selectedActivity = document.getElementById('assetManagerActivitySelect')?.value || '';
-
-      const targetTxs = selectedActivity
-        ? window.assetTransactions.filter(tx => tx.activity_name === selectedActivity)
-        : window.assetTransactions;
-
-      const summaryMap = {};
-      targetTxs.forEach(tx => {
-        const loc = tx.pin_location || '主倉庫區';
-        const name = tx.asset_name || '未命名器材';
-        const key = `${loc}___${name}`;
-
-        if (!summaryMap[key]) {
-          summaryMap[key] = { pin_location: loc, asset_name: name, checkIn: 0, change: 0, balance: 0 };
-        }
-        const qty = parseInt(tx.change_qty || 0);
-        if (qty > 0) summaryMap[key].checkIn += qty;
-        else summaryMap[key].change += qty;
-        summaryMap[key].balance += qty;
-      });
-
-      if (tbody) {
-        const items = Object.values(summaryMap);
-        if (items.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 text-xs">尚無任何器材庫存數據</td></tr>`;
-        } else {
-          // 每個點位只顯示第一列勾選框，同點位後續品項留空以保持版面清爽
-          const renderedPinRow = new Set();
-          const safeActAttr = encodeURIComponent(selectedActivity);
-
-          tbody.innerHTML = items.map(item => {
-            const isFirstOfPin = !renderedPinRow.has(item.pin_location);
-            renderedPinRow.add(item.pin_location);
-            const isRetained = getPinRetentionState(selectedActivity, item.pin_location);
-            const safeLocAttr = encodeURIComponent(item.pin_location);
-
-            const retentionCell = isFirstOfPin
-              ? `<label class="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs font-bold ${isRetained ? 'text-purple-300' : 'text-slate-400'}">
-                   <input type="checkbox" ${isRetained ? 'checked' : ''} onchange="togglePinRetention(decodeURIComponent('${safeActAttr}'), decodeURIComponent('${safeLocAttr}'), this.checked)" class="w-4 h-4 accent-purple-500 rounded cursor-pointer">
-                   <span>${isRetained ? '留用中' : '留用'}</span>
-                 </label>`
-              : `<span class="text-[10px] text-slate-600 pl-5">↳ 同點位</span>`;
-
-            return `
-              <tr class="hover:bg-slate-750 transition">
-                <td class="py-2.5 px-3 whitespace-nowrap">${retentionCell}</td>
-                <td class="py-2.5 px-4 font-semibold text-indigo-300">${item.pin_location}</td>
-                <td class="py-2.5 px-4 font-bold text-white">${item.asset_name}</td>
-                <td class="py-2.5 px-4 text-right font-mono text-emerald-400 font-bold">${item.checkIn > 0 ? '+' + item.checkIn : '0'}</td>
-                <td class="py-2.5 px-4 text-right font-mono text-rose-400 font-bold">${item.change !== 0 ? item.change : '0'}</td>
-                <td class="py-2.5 px-4 text-right font-mono font-black text-amber-400 text-sm">${item.balance}</td>
-              </tr>
-            `;
-}).join('');
-        }
-      }
+      const isCheckOutStage = (window.currentAssetStage === 'check_out');
 
       if (txBody) {
-        if (window.assetTransactions.length === 0) {
-          txBody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 text-xs">尚無異動明細</td></tr>`;
+        if (!selectedActivity) {
+          if (badgeEl) badgeEl.innerText = '';
+          txBody.innerHTML = `<tr><td colspan="4" class="text-center py-5 text-slate-500 text-xs">請先於上方選擇活動檔期</td></tr>`;
+        } else if (!isCheckOutStage) {
+          if (badgeEl) badgeEl.innerText = '點交階段不顯示點退異動';
+          txBody.innerHTML = `<tr><td colspan="4" class="text-center py-5 text-slate-400 text-xs">目前為【進場點交階段】；此區主要於【點退階段】檢視有異動的點位品項與數量</td></tr>`;
         } else {
-          txBody.innerHTML = window.assetTransactions.map(tx => {
-            let badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300">進場點交</span>';
-            if (tx.transaction_type === 'check_out') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-300">離場點退</span>';
-            if (tx.transaction_type === 'carry_over') badge = '<span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-300">🔄 跨檔期保留</span>';
+          // 僅篩選目前選取檔期，並依「位置地點 + 器材名稱」彙整淨異動數量
+          const changedMap = {};
+          (window.assetTransactions || []).forEach(tx => {
+            if (!tx || tx.activity_name !== selectedActivity) return;
+            const loc = tx.pin_location || '主倉庫區';
+            const name = tx.asset_name || '未命名器材';
+            const key = `${loc}___${name}`;
+            if (!changedMap[key]) {
+              changedMap[key] = {
+                pin_location: loc,
+                asset_name: name,
+                netQty: 0,
+                hasCheckOut: false
+              };
+            }
+            changedMap[key].netQty += parseInt(tx.change_qty || 0);
+            if (tx.transaction_type === 'check_out') {
+              changedMap[key].hasCheckOut = true;
+            }
+          });
 
-            return `
-              <tr class="hover:bg-slate-700/40 transition">
-                <td class="py-2 px-3 text-slate-400 font-mono">${tx.created_at ? tx.created_at.replace('T', ' ').substring(0, 16) : '--'}</td>
-                <td class="py-2 px-3 text-amber-300 font-semibold">${tx.activity_name || '--'}</td>
-                <td class="py-2 px-3 text-indigo-200">${tx.pin_location || '主倉庫區'}</td>
-                <td class="py-2 px-3 text-white font-medium">${tx.asset_name || '--'}</td>
-                <td class="py-2 px-3">${badge}</td>
-                <td class="py-2 px-3 text-right font-mono font-bold ${tx.change_qty >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${tx.change_qty}</td>
-              </tr>
-            `;
-          }).join('');
+          // 只保留「有異動（淨數量不等於 0）」的點位內品項
+          const changedItems = Object.values(changedMap).filter(item => item.netQty !== 0);
+          if (badgeEl) {
+            badgeEl.innerText = `${selectedActivity}（${changedItems.length} 項有異動）`;
+          }
+
+          if (changedItems.length === 0) {
+            txBody.innerHTML = `<tr><td colspan="4" class="text-center py-5 text-slate-400 text-xs">「${selectedActivity}」目前尚無數量有異動的點位品項</td></tr>`;
+          } else {
+            txBody.innerHTML = changedItems.map(item => {
+              const isIncrease = item.netQty > 0;
+              const statusBadge = item.hasCheckOut
+                ? `<span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-300">點退異動</span>`
+                : `<span class="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300">數量異動</span>`;
+
+              return `
+                <tr class="hover:bg-slate-700/40 transition">
+                  <td class="py-2 px-3 text-indigo-200 font-medium">${item.pin_location}</td>
+                  <td class="py-2 px-3 text-white font-bold">${item.asset_name}</td>
+                  <td class="py-2 px-3">${statusBadge}</td>
+                  <td class="py-2 px-3 text-right font-mono font-bold ${isIncrease ? 'text-emerald-400' : 'text-rose-400'}">${isIncrease ? '+' + item.netQty : item.netQty}</td>
+                </tr>
+              `;
+            }).join('');
+          }
         }
       }
 
       renderAssetPinsPreview();
-    }
+      }
 
 function renderAssetPinsPreview() {
       const container = document.getElementById('assetPinsPreviewGrid');
       if (!container) return;
 
+      const selectedActivity = document.getElementById('assetManagerActivitySelect')?.value || '';
+      const isCheckOutStage = (window.currentAssetStage === 'check_out');
       const assetPins = (window.pins || []).filter(p => p.pin_type === 'asset');
-      
+
+
       if (assetPins.length === 0) {
         container.innerHTML = `<div class="col-span-2 text-center py-4 text-slate-500 text-xs bg-slate-950/40 rounded-lg">目前尚無在地圖上建立任何「器材配置點 (Asset Pin)」。</div>`;
         return;
       }
 
+      const safeActAttr = encodeURIComponent(selectedActivity);
+
       container.innerHTML = assetPins.map(p => {
         const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資區域';
+        const fullLocKey = `${p.title} (${mapName})`;
+        const isRetained = getPinRetentionState(selectedActivity, p.title) || getPinRetentionState(selectedActivity, fullLocKey);
         const hasImages = p.images && p.images.length > 0;
-        const assetItemsHtml = p.asset_list && p.asset_list.length > 0 
+
+        const assetItemsHtml = p.asset_list && p.asset_list.length > 0
           ? p.asset_list.map(i => `<span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded text-[11px] font-semibold">${i.name}: <strong>${i.qty}</strong></span>`).join('')
           : `<span class="text-slate-400 text-xs">總數量: ${p.asset_qty || 0}</span>`;
 
+        // 點交階段不可點選，僅顯示留用狀態；點退階段才可勾選留用
+        const retentionControlHtml = isCheckOutStage
+          ? `<label class="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs font-bold px-2.5 py-1 rounded-lg border ${isRetained ? 'bg-purple-500/20 border-purple-400 text-purple-200' : 'bg-slate-900 border-slate-600 text-slate-300'}">
+               <input type="checkbox" ${isRetained ? 'checked' : ''} onchange="togglePinRetention(decodeURIComponent('${safeActAttr}'), decodeURIComponent('${encodeURIComponent(p.title)}'), this.checked)" class="w-4 h-4 accent-purple-500 rounded cursor-pointer">
+               <span>${isRetained ? '已勾選留用下一檔' : '留用下一檔'}</span>
+             </label>`
+          : `<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border ${isRetained ? 'bg-purple-500/15 border-purple-500/40 text-purple-300' : 'bg-slate-900/70 border-slate-700 text-slate-400'}">
+               <i class="fa-solid ${isRetained ? 'fa-lock' : 'fa-circle-info'}"></i>
+               ${isRetained ? '前一檔留用中（點交鎖定）' : '一般配置（點交不可留用）'}
+             </span>`;
+
         return `
-          <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex items-start gap-3">
+          <div class="bg-slate-800 p-3 rounded-xl border ${isRetained ? 'border-purple-500/50' : 'border-slate-700'} flex items-start gap-3">
             ${hasImages ? `<img src="${p.images[0]}" class="w-16 h-16 object-cover rounded-lg border border-slate-600 shrink-0">` : `<div class="w-16 h-16 bg-slate-900 rounded-lg border border-slate-700 flex items-center justify-center text-[10px] text-slate-500 shrink-0">無照片</div>`}
-            <div class="flex-1 min-w-0 space-y-1">
-              <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0 space-y-1.5">
+              <div class="flex items-center justify-between gap-2">
                 <span class="font-bold text-white text-xs truncate">${p.title}</span>
-                <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded">${mapName}</span>
+                <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded shrink-0">${mapName}</span>
               </div>
-              <div class="flex flex-wrap gap-1.5 pt-1">
+              <div class="flex flex-wrap gap-1.5">
                 ${assetItemsHtml}
+              </div>
+              <div class="pt-1 border-t border-slate-700/70 flex items-center justify-between gap-2">
+                <span class="text-[10px] text-slate-400">${isCheckOutStage ? '點退可勾選留用' : '點交檢視模式'}</span>
+                ${retentionControlHtml}
               </div>
             </div>
           </div>
         `;
       }).join('');
     }
+
 
 
 window.exportAssetPrintoutForm = function() {
