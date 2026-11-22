@@ -397,13 +397,12 @@
           <div class="flex items-center justify-between gap-4">
   <span class="flex items-center gap-2 text-slate-200 font-medium">
     💧
-    滴漏點位
+    本樓層滴漏點位
   </span>
             <strong id="legendPending" class="text-rose-400 text-base">0</strong>
           </div>
           <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center justify-between gap-4">
-  <span class="flex items-center gap-2 text-slate-200 font-medium">
+            <span class="flex items-center gap-2 text-slate-200 font-medium">
     💦
     累計紀錄數
   </span>
@@ -1205,15 +1204,27 @@ if (diffDays > 365) {
     }
 
   
-    function updateDashboardStats() {
-      const currentMapPins = window.pins.filter(p => (p.map_id || p.mapId) === window.currentMapId);
-      const pending = currentMapPins.length;
-      const completed = currentMapPins.length;
+function updateDashboardStats() {
 
-      document.getElementById('legendPending').innerText = pending;
-      document.getElementById('legendCompleted').innerText = completed;
-      document.getElementById('totalBadge').innerText = window.pins.length;
-    }
+  const currentMapPins =
+    window.pins.filter(
+      p => (p.map_id || p.mapId) === window.currentMapId
+    );
+
+  const pending = currentMapPins.length;
+
+  const totalRecords = window.pins.length;
+
+  document.getElementById('legendPending').innerText =
+    pending;
+
+  document.getElementById('legendCompleted').innerText =
+    totalRecords;
+
+  document.getElementById('totalBadge').innerText =
+    totalRecords;
+}
+
 
     function setupInteractions() {
       const viewport = document.getElementById('viewport');
