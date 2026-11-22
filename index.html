@@ -2640,7 +2640,7 @@ if (window.photoProcessingCount > 0) {
 const imageSize =
 JSON.stringify(window.activeImages).length;
 
-if (imageSize > 1500000) {
+if (imageSize > 500000) {
   showToast(
     '照片過大，請減少照片數量或重新拍攝後再試',
     'error'
