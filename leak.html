@@ -83,6 +83,38 @@
       animation: pulse-red 2.2s infinite;
     }
 
+.pin-purple {
+  background: radial-gradient(
+    circle at 30% 30%,
+    #c084fc,
+    #7e22ce
+  );
+
+  animation: pulse-purple 2.2s infinite;
+}
+
+@keyframes pulse-purple {
+
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(168,85,247,.75),
+      0 4px 10px rgba(0,0,0,.5);
+  }
+
+  70% {
+    box-shadow:
+      0 0 0 14px rgba(168,85,247,0),
+      0 4px 10px rgba(0,0,0,.5);
+  }
+
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(168,85,247,0),
+      0 4px 10px rgba(0,0,0,.5);
+  }
+}
+
+
 .pin-red {
       background: radial-gradient(circle at 30% 30%, #f87171, #dc2626);
       animation: pulse-red 2.2s infinite;
@@ -370,6 +402,31 @@
             <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block border border-white"></span> 總記錄數</span>
             <strong id="legendCompleted" class="text-emerald-400 text-base">0</strong>
           </div>
+
+<div class="pt-2 border-t border-slate-700/80 space-y-1">
+
+  <div class="flex items-center gap-2 text-xs">
+    <span class="w-3.5 h-3.5 rounded-full bg-purple-600 inline-block border border-white"></span>
+    <span>近30日發生</span>
+  </div>
+
+  <div class="flex items-center gap-2 text-xs">
+    <span class="w-3.5 h-3.5 rounded-full bg-red-600 inline-block border border-white"></span>
+    <span>31~180日未再發生</span>
+  </div>
+
+  <div class="flex items-center gap-2 text-xs">
+    <span class="w-3.5 h-3.5 rounded-full bg-yellow-500 inline-block border border-white"></span>
+    <span>181~365日未再發生</span>
+  </div>
+
+  <div class="flex items-center gap-2 text-xs">
+    <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block border border-white"></span>
+    <span>超過365日未再發生</span>
+  </div>
+
+</div>
+
           <div class="pt-2 border-t border-slate-700/80" style="display:none;">
             <label class="flex items-center gap-2 cursor-pointer text-xs text-amber-300 font-semibold select-none hover:text-amber-200 transition">
               <input type="checkbox" id="toggleHideRestored" onchange="toggleHideRestoredPins(this.checked)" class="w-4 h-4 accent-amber-500 rounded cursor-pointer">
@@ -1091,12 +1148,22 @@ function getUpperFloors(mapId) {
         const lastDate = new Date(lastDateStr);
         const diffDays = (now - lastDate) / (1000 * 60 * 60 * 24);
 
-        let colorClass = 'pin-red';
-        if (diffDays > 365) {
-          colorClass = 'pin-green';
-        } else if (diffDays > 180) {
-          colorClass = 'pin-yellow';
-        }
+let colorClass = 'pin-purple';
+
+if (diffDays > 365) {
+
+  colorClass = 'pin-green';
+
+} else if (diffDays > 180) {
+
+  colorClass = 'pin-yellow';
+
+} else if (diffDays > 30) {
+
+  colorClass = 'pin-red';
+
+}
+
 
         const el = document.createElement('div');
         el.className = `custom-pin ${colorClass}`;
