@@ -395,37 +395,50 @@
       <div class="absolute bottom-5 right-5 z-20 flex flex-col gap-2.5">
         <div class="bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl p-3 text-xs sm:text-sm space-y-2 shadow-xl">
           <div class="flex items-center justify-between gap-4">
-            <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-rose-500 inline-block border border-white"></span> 滴漏點位</span>
+  <span class="flex items-center gap-2 text-slate-200 font-medium">
+    💧
+    滴漏點位
+  </span>
             <strong id="legendPending" class="text-rose-400 text-base">0</strong>
           </div>
           <div class="flex items-center justify-between gap-4">
-            <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block border border-white"></span> 總記錄數</span>
+            <div class="flex items-center justify-between gap-4">
+  <span class="flex items-center gap-2 text-slate-200 font-medium">
+    💦
+    累計紀錄數
+  </span>
             <strong id="legendCompleted" class="text-emerald-400 text-base">0</strong>
           </div>
 
 <div class="pt-2 border-t border-slate-700/80 space-y-1">
 
   <div class="flex items-center gap-2 text-xs">
-    <span class="w-3.5 h-3.5 rounded-full bg-purple-600 inline-block border border-white"></span>
-    <span>近30日發生</span>
+    <span>🟣</span>
+    <span>近30天仍有漏水</span>
   </div>
 
   <div class="flex items-center gap-2 text-xs">
-    <span class="w-3.5 h-3.5 rounded-full bg-red-600 inline-block border border-white"></span>
-    <span>31~180日未再發生</span>
+    <span>🔴</span>
+    <span>31~180天內曾漏水</span>
   </div>
 
   <div class="flex items-center gap-2 text-xs">
-    <span class="w-3.5 h-3.5 rounded-full bg-yellow-500 inline-block border border-white"></span>
-    <span>181~365日未再發生</span>
+    <span>🟡</span>
+    <span>181~365天未再發生</span>
   </div>
 
   <div class="flex items-center gap-2 text-xs">
-    <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block border border-white"></span>
-    <span>超過365日未再發生</span>
+    <span>🟢</span>
+    <span>超過365天未再發生</span>
+  </div>
+
+  <div class="flex items-center gap-2 text-xs">
+    <span>💦</span>
+    <span>累計案件數</span>
   </div>
 
 </div>
+
 
           <div class="pt-2 border-t border-slate-700/80" style="display:none;">
             <label class="flex items-center gap-2 cursor-pointer text-xs text-amber-300 font-semibold select-none hover:text-amber-200 transition">
