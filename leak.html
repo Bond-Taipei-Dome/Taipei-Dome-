@@ -772,6 +772,7 @@ function getUpperFloors(mapId) {
     window.currentRole = window.ROLES.VISITOR;
     window.pins = [];
     window.activeImages = [];
+    window.photoProcessingCount = 0;
     window.supabaseClient = null;
 
     let scale = 1, panX = 0, panY = 0, isDragging = false;
@@ -1377,6 +1378,7 @@ function getUpperFloors(mapId) {
 
       document.getElementById('formDamageDate').value = new Date().toISOString().split('T')[0];
       window.activeImages = [];
+      window.photoProcessingCount = 0;
       renderPhotoPreviews();
       toggleRepairFields();
       openModal('pinModal');
@@ -1487,16 +1489,84 @@ document
     };
 
     window.handlePhotoUpload = (e) => {
-      const files = Array.from(e.target.files);
-      files.forEach(f => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          window.activeImages.push(ev.target.result);
-          renderPhotoPreviews();
-        };
-        reader.readAsDataURL(f);
-      });
+
+  const files = Array.from(e.target.files);
+
+  files.forEach(file => {
+
+    window.photoProcessingCount++;
+
+    const reader = new FileReader();
+
+    reader.onload = (ev) => {
+
+      const img = new Image();
+
+      img.onload = () => {
+
+        const canvas = document.createElement('canvas');
+
+        let width = img.width;
+        let height = img.height;
+
+        const maxWidth = 800;
+
+        if (width > maxWidth) {
+
+          height = Math.round(
+            height * (maxWidth / width)
+          );
+
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+
+        ctx.drawImage(
+          img,
+          0,
+          0,
+          width,
+          height
+        );
+
+        const compressedDataUrl =
+          canvas.toDataURL(
+            'image/jpeg',
+            0.6
+          );
+
+        window.activeImages.push(
+          compressedDataUrl
+        );
+
+        window.photoProcessingCount--;
+
+        renderPhotoPreviews();
+      };
+
+      img.onerror = () => {
+
+        window.activeImages.push(
+          ev.target.result
+        );
+
+        window.photoProcessingCount--;
+
+        renderPhotoPreviews();
+      };
+
+      img.src = ev.target.result;
     };
+
+    reader.readAsDataURL(file);
+  });
+};
+
+
 
     function renderPhotoPreviews() {
       const strip = document.getElementById('photoPreviewStrip');
