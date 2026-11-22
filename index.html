@@ -848,22 +848,24 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-between pt-2">
-          <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">點退異動明細（僅顯示選定檔期・有異動之點位品項）</h3>
-          <span id="assetChangedSummaryBadge" class="text-[11px] text-amber-300 font-semibold"></span>
-        </div>
-        <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden max-h-56 overflow-y-auto">
-          <table class="w-full text-left text-xs text-slate-200">
-            <thead class="bg-slate-700/80 text-slate-100 uppercase text-xs border-b border-slate-600 sticky top-0">
-              <tr>
-                <th class="py-2 px-3">位置地點</th>
-                <th class="py-2 px-3">器材名稱</th>
-                <th class="py-2 px-3">狀態</th>
-                <th class="py-2 px-3 text-right">異動數量</th>
-              </tr>
-            </thead>
-            <tbody id="assetTransactionsBody" class="divide-y divide-slate-700/70"></tbody>
-          </table>
+<div id="assetChangedSection" class="hidden space-y-2 pt-2">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">點退異動明細（僅顯示選定檔期・有異動之點位品項）</h3>
+            <span id="assetChangedSummaryBadge" class="text-[11px] text-amber-300 font-semibold"></span>
+          </div>
+          <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden max-h-56 overflow-y-auto">
+            <table class="w-full text-left text-xs text-slate-200">
+              <thead class="bg-slate-700/80 text-slate-100 uppercase text-xs border-b border-slate-600 sticky top-0">
+                <tr>
+                  <th class="py-2 px-3">位置地點</th>
+                  <th class="py-2 px-3">器材名稱</th>
+                  <th class="py-2 px-3">狀態</th>
+                  <th class="py-2 px-3 text-right">異動數量</th>
+                </tr>
+              </thead>
+              <tbody id="assetTransactionsBody" class="divide-y divide-slate-700/70"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -964,37 +966,71 @@
     <table class="w-full border-collapse border border-black mb-6">
       <thead>
         <tr class="bg-gray-200 text-center font-bold">
-          <th class="border border-black p-2 w-12">項次</th>
-          <th class="border border-black p-2 w-40">配置位置與點位名稱</th>
-          <th class="border border-black p-2 w-28">器材品項名稱</th>
-          <th class="border border-black p-2 w-16 text-right">進場點交</th>
-          <th class="border border-black p-2 w-16 text-right">離場點退</th>
-          <th class="border border-black p-2 w-16 text-right">目前在庫</th>
-          <th class="border border-black p-2">🔄 器材留用 / 跨檔期轉移軌跡明細</th>
+          <th class="border border-black p-2 w-10">項次</th>
+          <th class="border border-black p-2 w-44">配置位置與點位名稱</th>
+          <th class="border border-black p-2">器材品項與數量明細（點交 / 點退 / 在庫）</th>
+          <th class="border border-black p-2 w-60">🔄 器材留用 / 跨檔期轉移軌跡明細</th>
         </tr>
       </thead>
       <tbody id="assetRptTableBody"></tbody>
     </table>
 
-    <div class="grid grid-cols-2 gap-8 pt-4 border-t-2 border-black print-keep-together mt-8">
-      <div class="border border-black p-4 h-32 flex flex-col justify-between relative">
-        <div class="font-bold z-10">租用單位代表簽章：</div>
-        <div class="absolute inset-0 flex items-center justify-center p-2">
-          <img id="printSigPartyA" class="max-h-24 object-contain hidden" alt="租用單位代表簽名">
-          <span id="printSigPlaceholderA" class="text-gray-300 text-xs italic">（尚未簽名）</span>
+
+<div class="space-y-4 pt-4 border-t-2 border-black print-keep-together mt-6">
+      <!-- 第一組：進場點交雙方簽章 -->
+      <div>
+        <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+          <span>📥 進場點交雙方簽章</span>
+          <span id="printCheckInSigTime" class="text-[11px] font-normal text-gray-600">簽署時間：--</span>
         </div>
-        <div class="text-right text-gray-400 text-[10px] z-10">日期：______年______月______日</div>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="border border-black p-3 h-28 flex flex-col justify-between relative">
+            <div class="font-bold z-10">租用單位代表簽章（點交）：</div>
+            <div class="absolute inset-0 flex items-center justify-center p-2">
+              <img id="printSigPartyA" class="max-h-20 object-contain hidden" alt="點交租用單位代表簽名">
+              <span id="printSigPlaceholderA" class="text-gray-300 text-xs italic">（尚未簽名）</span>
+            </div>
+            <div id="printCheckInDateA" class="text-right text-gray-500 text-[10px] z-10">日期：______年______月______日</div>
+          </div>
+          <div class="border border-black p-3 h-28 flex flex-col justify-between relative">
+            <div class="font-bold z-10">場館代表簽章（點交）：</div>
+            <div class="absolute inset-0 flex items-center justify-center p-2">
+              <img id="printSigPartyB" class="max-h-20 object-contain hidden" alt="點交場館代表簽名">
+              <span id="printSigPlaceholderB" class="text-gray-300 text-xs italic">（尚未簽名）</span>
+            </div>
+            <div id="printCheckInDateB" class="text-right text-gray-500 text-[10px] z-10">日期：______年______月______日</div>
+          </div>
+        </div>
       </div>
-      <div class="border border-black p-4 h-32 flex flex-col justify-between relative">
-        <div class="font-bold z-10">場館代表簽章：</div>
-        <div class="absolute inset-0 flex items-center justify-center p-2">
-          <img id="printSigPartyB" class="max-h-24 object-contain hidden" alt="場館代表簽名">
-          <span id="printSigPlaceholderB" class="text-gray-300 text-xs italic">（尚未簽名）</span>
+
+      <!-- 第二組：離場點退雙方簽章 -->
+      <div>
+        <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+          <span>📤 離場點退雙方簽章</span>
+          <span id="printCheckOutSigTime" class="text-[11px] font-normal text-gray-600">簽署時間：--</span>
         </div>
-        <div class="text-right text-gray-400 text-[10px] z-10">日期：______年______月______日</div>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="border border-black p-3 h-28 flex flex-col justify-between relative">
+            <div class="font-bold z-10">租用單位代表簽章（點退）：</div>
+            <div class="absolute inset-0 flex items-center justify-center p-2">
+              <img id="printCheckOutSigPartyA" class="max-h-20 object-contain hidden" alt="點退租用單位代表簽名">
+              <span id="printCheckOutSigPlaceholderA" class="text-gray-300 text-xs italic">（尚未簽名）</span>
+            </div>
+            <div id="printCheckOutDateA" class="text-right text-gray-500 text-[10px] z-10">日期：______年______月______日</div>
+          </div>
+          <div class="border border-black p-3 h-28 flex flex-col justify-between relative">
+            <div class="font-bold z-10">場館代表簽章（點退）：</div>
+            <div class="absolute inset-0 flex items-center justify-center p-2">
+              <img id="printCheckOutSigPartyB" class="max-h-20 object-contain hidden" alt="點退場館代表簽名">
+              <span id="printCheckOutSigPlaceholderB" class="text-gray-300 text-xs italic">（尚未簽名）</span>
+            </div>
+            <div id="printCheckOutDateB" class="text-right text-gray-500 text-[10px] z-10">日期：______年______月______日</div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+</div>
+
 
   <!-- 核心邏輯腳本 -->
   <script>
@@ -1642,6 +1678,7 @@ async function fetchAssetTransactionsFromCloud() {
       }
 
       renderAssetInventoryUI();
+
     }
 
 
@@ -1708,7 +1745,14 @@ window.currentAssetStage = 'check_in';
 
       window.toggleTxTypeHint();
       renderAssetInventoryUI();
+      if (typeof loadExistingSignatures === 'function') {
+        loadExistingSignatures();
+      }
     };
+
+
+
+
 
     window.toggleTxTypeHint = function() {
       const type = window.currentAssetStage || 'check_in';
@@ -1805,6 +1849,8 @@ window.currentAssetStage = 'check_in';
 
       localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
       renderAssetInventoryUI();
+      
+
       showToast(`已成功同步「${currentActivity}」之場館內器材點交基準（共 ${loadedCount} 項）！`, 'success');
     };
 
@@ -1850,16 +1896,14 @@ if (transaction_type === 'check_out') {
           ? Math.max(0, parseInt(matchedPinAsset.qty || 0))
           : Math.max(0, txBalance);
 
-        // 情境 B：輸入為「實際清點剩餘／退回數」
-        // 若實際清點數大於目前在庫數，上限對齊目前在庫數，避免產生負耗損或超額庫存
-        const safeCountedQty = Math.max(0, Math.min(rawInputQty, currentBalance));
+        // 允許實際清點剩餘／退回數大於目前在庫數（例如尋回前一檔遺失器材），正負差額皆如實計算
+        const safeCountedQty = Math.max(0, rawInputQty);
         change_qty = safeCountedQty - currentBalance;
 
-        if (rawInputQty > currentBalance) {
-          showToast(`實際清點數 (${rawInputQty}) 高於目前在庫數 (${currentBalance})，已自動以 ${currentBalance} 結算`, 'info');
+        if (safeCountedQty > currentBalance) {
+          showToast(`實際清點數 (${safeCountedQty}) 多於原在庫數 (${currentBalance})，已記錄找回/增加 +${change_qty}`, 'info');
         }
       }
-
 
 
 
@@ -1997,19 +2041,17 @@ window.togglePinRetention = async function(activityName, pinLocation, checked) {
       return !!(window.pinRetentionMap[actKey] && window.pinRetentionMap[actKey][pinLocation]);
     }
 
-    function renderAssetInventoryUI() {
+function renderAssetInventoryUI() {
+      const changedSection = document.getElementById('assetChangedSection');
       const txBody = document.getElementById('assetTransactionsBody');
       const badgeEl = document.getElementById('assetChangedSummaryBadge');
       const selectedActivity = document.getElementById('assetManagerActivitySelect')?.value || '';
       const isCheckOutStage = (window.currentAssetStage === 'check_out');
 
-      if (txBody) {
-        if (!selectedActivity) {
-          if (badgeEl) badgeEl.innerText = '';
-          txBody.innerHTML = `<tr><td colspan="4" class="text-center py-5 text-slate-500 text-xs">請先於上方選擇活動檔期</td></tr>`;
-        } else if (!isCheckOutStage) {
-          if (badgeEl) badgeEl.innerText = '點交階段不顯示點退異動';
-          txBody.innerHTML = `<tr><td colspan="4" class="text-center py-5 text-slate-400 text-xs">目前為【進場點交階段】；此區主要於【點退階段】檢視有異動的點位品項與數量</td></tr>`;
+      if (changedSection && txBody) {
+        if (!selectedActivity || !isCheckOutStage) {
+          changedSection.classList.add('hidden');
+          txBody.innerHTML = '';
         } else {
           // 僅篩選目前選取檔期，並依「位置地點 + 器材名稱」彙整淨異動數量
           const changedMap = {};
@@ -2032,27 +2074,28 @@ window.togglePinRetention = async function(activityName, pinLocation, checked) {
             }
           });
 
-          // 只保留「有異動（淨數量不等於 0）」的點位內品項
+          // 只保留「實際點退與點交有落差（淨數量不等於 0）」的點位內品項；無調整或相等（差額為 0）不視為異常
           const changedItems = Object.values(changedMap).filter(item => item.netQty !== 0);
-          if (badgeEl) {
-            badgeEl.innerText = `${selectedActivity}（${changedItems.length} 項有異動）`;
-          }
 
           if (changedItems.length === 0) {
-            txBody.innerHTML = `<tr><td colspan="4" class="text-center py-5 text-slate-400 text-xs">「${selectedActivity}」目前尚無數量有異動的點位品項</td></tr>`;
+            changedSection.classList.add('hidden');
+            txBody.innerHTML = '';
           } else {
+            changedSection.classList.remove('hidden');
+            if (badgeEl) {
+              badgeEl.innerText = `${selectedActivity}（${changedItems.length} 項有差異）`;
+            }
+
             txBody.innerHTML = changedItems.map(item => {
               const isIncrease = item.netQty > 0;
-              const statusBadge = item.hasCheckOut
-                ? `<span class="px-2 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-300">點退異動</span>`
-                : `<span class="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300">數量異動</span>`;
+              const diffLabel = isIncrease ? `+${item.netQty}` : `${item.netQty}`;
 
               return `
                 <tr class="hover:bg-slate-700/40 transition">
                   <td class="py-2 px-3 text-indigo-200 font-medium">${item.pin_location}</td>
                   <td class="py-2 px-3 text-white font-bold">${item.asset_name}</td>
-                  <td class="py-2 px-3">${statusBadge}</td>
-                  <td class="py-2 px-3 text-right font-mono font-bold ${isIncrease ? 'text-emerald-400' : 'text-rose-400'}">${isIncrease ? '+' + item.netQty : item.netQty}</td>
+                  <td class="py-2 px-3"><span class="px-2 py-0.5 rounded text-[10px] ${isIncrease ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">${isIncrease ? '多出/找回' : '短少/耗損'}</span></td>
+                  <td class="py-2 px-3 text-right font-mono font-bold ${isIncrease ? 'text-emerald-400' : 'text-rose-400'}">${diffLabel}</td>
                 </tr>
               `;
             }).join('');
@@ -2061,7 +2104,9 @@ window.togglePinRetention = async function(activityName, pinLocation, checked) {
       }
 
       renderAssetPinsPreview();
-      }
+    }
+
+
 
 function renderAssetPinsPreview() {
       const container = document.getElementById('assetPinsPreviewGrid');
@@ -2069,61 +2114,122 @@ function renderAssetPinsPreview() {
 
       const selectedActivity = document.getElementById('assetManagerActivitySelect')?.value || '';
       const isCheckOutStage = (window.currentAssetStage === 'check_out');
-      const assetPins = (window.pins || []).filter(p => p.pin_type === 'asset');
 
+      const summaryMap = {};
+      (window.assetTransactions || []).forEach(tx => {
+        if (!tx) return;
+        if (selectedActivity && tx.activity_name !== selectedActivity) return;
+        const loc = tx.pin_location || '主倉庫區';
+        const name = tx.asset_name || '未命名器材';
+        const key = `${loc}___${name}`;
+        if (!summaryMap[key]) {
+          summaryMap[key] = {
+            pin_location: loc,
+            asset_name: name,
+            checkInQty: 0,
+            balance: 0
+          };
+        }
+        const qty = parseInt(tx.change_qty || 0);
+        if (tx.transaction_type === 'check_in' || qty > 0) {
+          summaryMap[key].checkInQty += Math.max(0, qty);
+        }
+        summaryMap[key].balance += qty;
+      });
 
-      if (assetPins.length === 0) {
-        container.innerHTML = `<div class="col-span-2 text-center py-4 text-slate-500 text-xs bg-slate-950/40 rounded-lg">目前尚無在地圖上建立任何「器材配置點 (Asset Pin)」。</div>`;
+      const summaryBody = document.getElementById('assetInventorySummaryBody');
+      if (summaryBody) {
+        const summaryRows = Object.values(summaryMap);
+        if (summaryRows.length === 0) {
+          summaryBody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500 text-xs">尚無器材點交或庫存紀錄</td></tr>`;
+        } else {
+          summaryBody.innerHTML = summaryRows.map(r => `
+            <tr class="hover:bg-slate-800/60 transition">
+              <td class="py-2.5 px-4 font-semibold text-indigo-300">${r.pin_location}</td>
+              <td class="py-2.5 px-4 font-bold text-white">${r.asset_name}</td>
+              <td class="py-2.5 px-4 text-right font-mono text-emerald-400">${r.checkInQty}</td>
+              <td class="py-2.5 px-4 text-right font-mono font-bold text-amber-400">${Math.max(0, r.balance)}</td>
+            </tr>
+          `).join('');
+        }
+      }
+
+      const headers = getStoredHeaderList();
+      const actIdx = headers.findIndex(h => h.activity === selectedActivity);
+      const nextActivityName = (actIdx >= 0 && actIdx < headers.length - 1) ? headers[actIdx + 1].activity : '下一檔活動';
+
+      const pinCardMap = {};
+      (window.pins || []).filter(p => p.pin_type === 'asset').forEach(pin => {
+        const mapName = window.MAPS[pin.map_id || pin.mapId]?.name || '圖資';
+        const locKey = `${pin.title} (${mapName})`;
+        pinCardMap[locKey] = {
+          pin_location: locKey,
+          title: pin.title,
+          mapName,
+          images: pin.images || [],
+          items: Array.isArray(pin.asset_list) ? [...pin.asset_list] : []
+        };
+      });
+
+      Object.values(summaryMap).forEach(s => {
+        if (!pinCardMap[s.pin_location]) {
+          pinCardMap[s.pin_location] = {
+            pin_location: s.pin_location,
+            title: s.pin_location,
+            mapName: '',
+            images: [],
+            items: []
+          };
+        }
+        const exists = pinCardMap[s.pin_location].items.some(i => i.name === s.asset_name);
+        if (!exists) {
+          pinCardMap[s.pin_location].items.push({ name: s.asset_name, qty: Math.max(0, s.balance) });
+        }
+      });
+
+      const cards = Object.values(pinCardMap);
+      if (cards.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-6 text-slate-500 text-xs">目前尚無器材點位配置資料</div>`;
         return;
       }
 
-      const safeActAttr = encodeURIComponent(selectedActivity);
+      container.innerHTML = cards.map(card => {
+        const isRetained = getPinRetentionState(selectedActivity, card.pin_location);
+        const hasThumb = card.images && card.images.length > 0;
+        const itemsText = card.items.length > 0
+          ? card.items.map(i => `<span class="inline-block bg-slate-800 border border-slate-700 px-2 py-0.5 rounded text-[11px] text-slate-200 mr-1 mb-1">${i.name}：<strong>${i.qty}</strong></span>`).join('')
+          : `<span class="text-[11px] text-slate-500">尚未配置品項</span>`;
 
-      container.innerHTML = assetPins.map(p => {
-        const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資區域';
-        const fullLocKey = `${p.title} (${mapName})`;
-        const isRetained = getPinRetentionState(selectedActivity, p.title) || getPinRetentionState(selectedActivity, fullLocKey);
-        const hasImages = p.images && p.images.length > 0;
-
-        const assetItemsHtml = p.asset_list && p.asset_list.length > 0
-          ? p.asset_list.map(i => `<span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded text-[11px] font-semibold">${i.name}: <strong>${i.qty}</strong></span>`).join('')
-          : `<span class="text-slate-400 text-xs">總數量: ${p.asset_qty || 0}</span>`;
-
-        // 點交階段不可點選，僅顯示留用狀態；點退階段才可勾選留用
-        const retentionControlHtml = isCheckOutStage
-          ? `<label class="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs font-bold px-2.5 py-1 rounded-lg border ${isRetained ? 'bg-purple-500/20 border-purple-400 text-purple-200' : 'bg-slate-900 border-slate-600 text-slate-300'}">
-               <input type="checkbox" ${isRetained ? 'checked' : ''} onchange="togglePinRetention(decodeURIComponent('${safeActAttr}'), decodeURIComponent('${encodeURIComponent(p.title)}'), this.checked)" class="w-4 h-4 accent-purple-500 rounded cursor-pointer">
-               <span>${isRetained ? '已勾選留用下一檔' : '留用下一檔'}</span>
+        const retainControlHtml = isCheckOutStage
+          ? `<label class="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-300 cursor-pointer select-none">
+               <input type="checkbox" ${isRetained ? 'checked' : ''} onchange="togglePinRetention('${selectedActivity.replace(/'/g, "\\'")}', '${card.pin_location.replace(/'/g, "\\'")}', this.checked)" class="w-4 h-4 accent-amber-500 rounded cursor-pointer">
+               <span>留用下一檔（${nextActivityName}）</span>
              </label>`
-          : `<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border ${isRetained ? 'bg-purple-500/15 border-purple-500/40 text-purple-300' : 'bg-slate-900/70 border-slate-700 text-slate-400'}">
-               <i class="fa-solid ${isRetained ? 'fa-lock' : 'fa-circle-info'}"></i>
-               ${isRetained ? '前一檔留用中（點交鎖定）' : '一般配置（點交不可留用）'}
+          : `<span class="text-[11px] ${isRetained ? 'text-purple-300 font-bold' : 'text-slate-400'}">
+               ${isRetained ? `🔒 前檔已勾選留用至 ${nextActivityName}` : '🔒 點交階段鎖定留用勾選'}
              </span>`;
 
         return `
-          <div class="bg-slate-800 p-3 rounded-xl border ${isRetained ? 'border-purple-500/50' : 'border-slate-700'} flex items-start gap-3">
-            ${hasImages ? `<img src="${p.images[0]}" class="w-16 h-16 object-cover rounded-lg border border-slate-600 shrink-0">` : `<div class="w-16 h-16 bg-slate-900 rounded-lg border border-slate-700 flex items-center justify-center text-[10px] text-slate-500 shrink-0">無照片</div>`}
-            <div class="flex-1 min-w-0 space-y-1.5">
-              <div class="flex items-center justify-between gap-2">
-                <span class="font-bold text-white text-xs truncate">${p.title}</span>
-                <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded shrink-0">${mapName}</span>
+          <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-col justify-between gap-2.5">
+            <div class="flex items-start gap-3">
+              ${hasThumb
+                ? `<img src="${card.images[0]}" class="w-14 h-14 object-cover rounded-lg border border-slate-600 shrink-0">`
+                : `<div class="w-14 h-14 bg-slate-900 rounded-lg border border-slate-700 flex items-center justify-center text-[10px] text-slate-500 shrink-0">無照片</div>`
+              }
+              <div class="min-w-0 flex-1">
+                <div class="font-bold text-white text-xs truncate">${card.pin_location}</div>
+                <div class="mt-1.5 flex flex-wrap">${itemsText}</div>
               </div>
-              <div class="flex flex-wrap gap-1.5">
-                ${assetItemsHtml}
-              </div>
-              <div class="pt-1 border-t border-slate-700/70 flex items-center justify-between gap-2">
-                <span class="text-[10px] text-slate-400">${isCheckOutStage ? '點退可勾選留用' : '點交檢視模式'}</span>
-                ${retentionControlHtml}
-              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-700/80 flex items-center justify-between gap-2">
+              ${retainControlHtml}
             </div>
           </div>
         `;
       }).join('');
     }
 
-
-
-window.exportAssetPrintoutForm = function() {
+    window.exportAssetPrintoutForm = function() {
       const selectedActivity = document.getElementById('assetManagerActivitySelect').value;
       if (!selectedActivity) {
         return showToast('請先上方選擇您要列印的「活動檔期名稱」！', 'error');
@@ -2135,91 +2241,219 @@ window.exportAssetPrintoutForm = function() {
       const nextHeader = (currentIndex >= 0 && currentIndex < list.length - 1) ? list[currentIndex + 1] : null;
       const nextActivityName = nextHeader ? nextHeader.activity : '下一檔活動 (尚未排定)';
 
-      const imgElA = document.getElementById('printSigPartyA');
-      const placeholderA = document.getElementById('printSigPlaceholderA');
-      const imgElB = document.getElementById('printSigPartyB');
-      const placeholderB = document.getElementById('printSigPlaceholderB');
-
       const loadPromises = [];
 
-      if (headerData.sigA && imgElA && placeholderA) {
-        loadPromises.push(new Promise((resolve) => {
-          imgElA.onload = () => { imgElA.classList.remove('hidden'); placeholderA.classList.add('hidden'); resolve(); };
-          imgElA.onerror = resolve;
-          imgElA.src = headerData.sigA;
-        }));
-      } else if (imgElA && placeholderA) {
-        imgElA.classList.add('hidden'); placeholderA.classList.remove('hidden');
+      function bindPrintSig(imgEl, placeholderEl, dateEl, dataUrl, sigTimeStr) {
+        if (!imgEl || !placeholderEl) return;
+        if (dataUrl) {
+          loadPromises.push(new Promise((resolve) => {
+            imgEl.onload = () => {
+              imgEl.classList.remove('hidden');
+              placeholderEl.classList.add('hidden');
+              resolve();
+            };
+            imgEl.onerror = resolve;
+            imgEl.src = dataUrl;
+          }));
+          if (dateEl && sigTimeStr) {
+            const d = new Date(sigTimeStr);
+            if (!isNaN(d.getTime())) {
+              dateEl.innerText = `日期：${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+            }
+          }
+        } else {
+          imgEl.classList.add('hidden');
+          placeholderEl.classList.remove('hidden');
+          if (dateEl) dateEl.innerText = '日期：______年______月______日';
+        }
       }
 
-      if (headerData.sigB && imgElB && placeholderB) {
-        loadPromises.push(new Promise((resolve) => {
-          imgElB.onload = () => { imgElB.classList.remove('hidden'); placeholderB.classList.add('hidden'); resolve(); };
-          imgElB.onerror = resolve;
-          imgElB.src = headerData.sigB;
-        }));
-      } else if (imgElB && placeholderB) {
-        imgElB.classList.add('hidden'); placeholderB.classList.remove('hidden');
+      const inTimeEl = document.getElementById('printCheckInSigTime');
+      const outTimeEl = document.getElementById('printCheckOutSigTime');
+      if (inTimeEl) {
+        inTimeEl.innerText = headerData.sigTime ? `簽署時間：${formatDateToTwFullString(headerData.sigTime)}` : '簽署時間：尚未簽署';
       }
+      if (outTimeEl) {
+        outTimeEl.innerText = headerData.checkOutSigTime ? `簽署時間：${formatDateToTwFullString(headerData.checkOutSigTime)}` : '簽署時間：尚未簽署';
+      }
+
+      bindPrintSig(
+        document.getElementById('printSigPartyA'),
+        document.getElementById('printSigPlaceholderA'),
+        document.getElementById('printCheckInDateA'),
+        headerData.sigA,
+        headerData.sigTime
+      );
+      bindPrintSig(
+        document.getElementById('printSigPartyB'),
+        document.getElementById('printSigPlaceholderB'),
+        document.getElementById('printCheckInDateB'),
+        headerData.sigB,
+        headerData.sigTime
+      );
+      bindPrintSig(
+        document.getElementById('printCheckOutSigPartyA'),
+        document.getElementById('printCheckOutSigPlaceholderA'),
+        document.getElementById('printCheckOutDateA'),
+        headerData.checkOutSigA,
+        headerData.checkOutSigTime
+      );
+      bindPrintSig(
+        document.getElementById('printCheckOutSigPartyB'),
+        document.getElementById('printCheckOutSigPlaceholderB'),
+        document.getElementById('printCheckOutDateB'),
+        headerData.checkOutSigB,
+        headerData.checkOutSigTime
+      );
 
       const targetTxs = window.assetTransactions.filter(tx => tx.activity_name === selectedActivity);
       if (targetTxs.length === 0) {
         return showToast(`活動「${selectedActivity}」尚無任何器材點交或點退紀錄可供列印！`, 'info');
       }
 
-      const inventoryMap = {};
+      const locationGroupMap = {};
       targetTxs.forEach(tx => {
         const loc = tx.pin_location || '主倉庫區';
         const name = tx.asset_name || '未命名器材';
-        const mapKey = `${loc}___${name}`;
 
-        if (!inventoryMap[mapKey]) {
-          inventoryMap[mapKey] = { 
-            pin_location: loc, 
-            asset_name: name, 
-            totalIn: 0, 
-            totalOut: 0, 
-            balance: 0, 
+        if (!locationGroupMap[loc]) {
+          locationGroupMap[loc] = {
+            pin_location: loc,
             origin_activity: tx.origin_activity || selectedActivity,
-            path_history: tx.path_history || selectedActivity
+            path_history: tx.path_history || selectedActivity,
+            items: {}
           };
         }
+
+        if (!locationGroupMap[loc].items[name]) {
+          locationGroupMap[loc].items[name] = {
+            asset_name: name,
+            totalIn: 0,
+            totalOut: 0,
+            balance: 0,
+            hasCheckOut: false
+          };
+        }
+
         const qty = parseInt(tx.change_qty || 0);
-        if (qty > 0) inventoryMap[mapKey].totalIn += qty;
-        else inventoryMap[mapKey].totalOut += Math.abs(qty);
-        inventoryMap[mapKey].balance += qty;
-        if (tx.path_history) inventoryMap[mapKey].path_history = tx.path_history;
+        if (tx.transaction_type === 'check_in' || qty > 0) {
+          locationGroupMap[loc].items[name].totalIn += Math.max(0, qty);
+        }
+        if (tx.transaction_type === 'check_out') {
+          locationGroupMap[loc].items[name].hasCheckOut = true;
+          if (qty < 0) locationGroupMap[loc].items[name].totalOut += Math.abs(qty);
+        } else if (qty < 0) {
+          locationGroupMap[loc].items[name].totalOut += Math.abs(qty);
+        }
+        locationGroupMap[loc].items[name].balance += qty;
+        if (tx.path_history) locationGroupMap[loc].path_history = tx.path_history;
       });
 
       document.getElementById('assetRptActivityName').innerText = selectedActivity;
       document.getElementById('assetRptRenterUnit').innerText = headerData.unit || '未指定單位';
-      
+
       const startDisplay = formatDateToTwFullString(headerData.start);
       const endDisplay = formatDateToTwFullString(headerData.end);
       document.getElementById('assetRptRentDates').innerText = `${startDisplay} ~ ${endDisplay}`;
 
-      const tbody = document.getElementById('assetRptTableBody');
-      const items = Object.values(inventoryMap);
+      const isCheckOutStage = (window.currentAssetStage === 'check_out');
 
-      tbody.innerHTML = items.map((item, idx) => {
-        const isRetainedAtPin = getPinRetentionState(selectedActivity, item.pin_location);
-        const originAct = item.origin_activity || selectedActivity;
-        const fullChain = item.path_history || originAct;
+      // 保持與點退完全一致的 4 欄表頭結構
+      const printThead = document.querySelector('#assetPrintArea table thead');
+      if (printThead) {
+        printThead.innerHTML = `
+          <tr class="bg-gray-200 text-center font-bold">
+            <th class="border border-black p-2 w-10">項次</th>
+            <th class="border border-black p-2 w-44">配置位置與點位名稱</th>
+            <th class="border border-black p-2">器材品項與數量明細（點交 / 點退 / 在庫）</th>
+            <th class="border border-black p-2 w-60">🔄 器材留用 / 跨檔期轉移軌跡明細</th>
+          </tr>
+        `;
+      }
+
+      const checkOutSigBlock = document.getElementById('printCheckOutSigPartyA')?.closest('div.space-y-4 > div:nth-child(2)');
+      if (checkOutSigBlock) {
+        if (isCheckOutStage) checkOutSigBlock.classList.remove('hidden');
+        else checkOutSigBlock.classList.add('hidden');
+      }
+
+      const tbody = document.getElementById('assetRptTableBody');
+      const locationGroups = Object.values(locationGroupMap);
+
+      tbody.innerHTML = locationGroups.map((group, idx) => {
+        const isRetainedAtPin = getPinRetentionState(selectedActivity, group.pin_location);
+        const originAct = group.origin_activity || selectedActivity;
+        const fullChain = group.path_history || originAct;
+        const itemList = Object.values(group.items);
+
+        // 點交階段只列出有「點交數量 > 0」的品項，且只顯示點交數量，其餘欄位留白維持版面一致
+        if (!isCheckOutStage) {
+          const checkInItems = itemList.filter(item => {
+            const checkInQty = Math.max(0, item.totalIn > 0 ? item.totalIn : item.balance);
+            return checkInQty > 0;
+          });
+
+          const checkInItemsHtml = checkInItems.length > 0
+            ? checkInItems.map(item => {
+                const checkInQty = Math.max(0, item.totalIn > 0 ? item.totalIn : item.balance);
+                return `
+                  <div class="flex items-center justify-between py-1 border-b border-gray-300 last:border-b-0 text-[11px]">
+                    <span class="font-bold text-black">${item.asset_name}</span>
+                    <span class="font-mono whitespace-nowrap ml-2">
+                      點交:<strong class="text-emerald-700">${checkInQty}</strong> ｜ 
+                      點退(差異):<strong class="text-gray-400">--</strong> ｜ 
+                      在庫(點退):<strong class="text-gray-400">--</strong>
+                    </span>
+                  </div>
+                `;
+              }).join('')
+            : `<div class="py-1 text-[11px] text-gray-400">無點交器材</div>`;
+
+          const checkInTrackHtml = isRetainedAtPin
+            ? `📥 <strong>【留用軌跡】</strong>：起始於 <span class="text-blue-700 font-bold">[ ${originAct} ]</span> ｜ 歷經檔期：<span class="text-indigo-700 font-semibold">[ ${fullChain} ]</span>`
+            : `<span class="text-gray-400">--</span>`;
+
+          return `
+            <tr class="align-top print-keep-together">
+              <td class="border border-black p-2 text-center font-bold">${idx + 1}</td>
+              <td class="border border-black p-2 font-bold text-gray-900"><i class="fa-solid fa-location-dot mr-1"></i>${group.pin_location}</td>
+              <td class="border border-black px-2 py-1">${checkInItemsHtml}</td>
+              <td class="border border-black p-2 text-[11px]">${checkInTrackHtml}</td>
+            </tr>
+          `;
+        }
+
+        const itemsHtml = itemList.map(item => {
+          const checkInQty = Math.max(0, item.totalIn > 0 ? item.totalIn : Math.max(0, item.balance + item.totalOut));
+          const diffQty = item.hasCheckOut ? (item.balance - checkInQty) : 0;
+          const stockAfterCheckOut = diffQty === 0
+            ? checkInQty
+            : Math.max(0, checkInQty + diffQty);
+          const diffDisplay = diffQty === 0 ? '0' : (diffQty > 0 ? `+${diffQty}` : `${diffQty}`);
+
+          return `
+            <div class="flex items-center justify-between py-1 border-b border-gray-300 last:border-b-0 text-[11px]">
+              <span class="font-bold text-black">${item.asset_name}</span>
+              <span class="font-mono whitespace-nowrap ml-2">
+                點交:<strong class="text-emerald-700">${checkInQty}</strong> ｜ 
+                點退(差異):<strong class="${diffQty === 0 ? 'text-gray-700' : (diffQty > 0 ? 'text-blue-700' : 'text-rose-700')}">${diffDisplay}</strong> ｜ 
+                在庫(點退):<strong class="text-black text-xs underline">${stockAfterCheckOut}</strong>
+              </span>
+            </div>
+          `;
+        }).join('');
 
         const lineageText = `📥 <strong>【留用軌跡】</strong>：起始於 <span class="text-blue-700 font-bold">[ ${originAct} ]</span> ｜ 歷經檔期：<span class="text-indigo-700 font-semibold">[ ${fullChain} ]</span> ｜ 結算檔期：<span class="text-gray-900 font-bold">[ ${isRetainedAtPin ? nextActivityName + '（續用中）' : selectedActivity + '（本檔結算）'} ]</span>`;
 
         const outboundText = isRetainedAtPin
-          ? `🔄 <strong>【跨檔期保留】</strong>：本檔已勾選留用，不撤場歸還，直接轉移至 <strong>[ ${nextActivityName} ]</strong> 續用。`
-          : `📤 <strong>【本檔結算歸還】</strong>：本檔未勾選跨檔留用，已觸發結算（目前在庫：<strong>${item.balance}</strong>），依規辦理點退歸還。`;
+          ? `🔄 <strong>【跨檔期保留】</strong>：本點位已勾選留用，不撤場歸還，直接轉移至 <strong>[ ${nextActivityName} ]</strong> 續用。`
+          : `📤 <strong>【本檔結算歸還】</strong>：本點位未勾選跨檔留用，已觸發結算，依規辦理點退歸還。`;
 
         return `
-          <tr class="align-middle print-keep-together">
+          <tr class="align-top print-keep-together">
             <td class="border border-black p-2 text-center font-bold">${idx + 1}</td>
-            <td class="border border-black p-2 font-semibold text-gray-800"><i class="fa-solid fa-location-dot mr-1"></i>${item.pin_location}</td>
-            <td class="border border-black p-2 font-bold text-black">${item.asset_name}</td>
-            <td class="border border-black p-2 text-right font-mono text-emerald-700 font-bold">${item.totalIn > 0 ? '+' + item.totalIn : '0'}</td>
-            <td class="border border-black p-2 text-right font-mono text-rose-700 font-bold">${item.totalOut > 0 ? '-' + item.totalOut : '0'}</td>
-            <td class="border border-black p-2 text-right font-mono text-black font-black text-sm">${item.balance}</td>
+            <td class="border border-black p-2 font-bold text-gray-900"><i class="fa-solid fa-location-dot mr-1"></i>${group.pin_location}</td>
+            <td class="border border-black px-2 py-1">${itemsHtml}</td>
             <td class="border border-black p-2 text-[11px] space-y-1">
               <div>${lineageText}</div>
               <div class="border-t border-gray-300 pt-1">${outboundText}</div>
@@ -2228,20 +2462,26 @@ window.exportAssetPrintoutForm = function() {
         `;
       }).join('');
 
+
+
       const printArea = document.getElementById('assetPrintArea');
       printArea.classList.remove('hidden');
-      printArea.classList.add('print-active-area'); 
+      printArea.classList.add('print-active-area');
 
       Promise.all(loadPromises).then(() => {
         setTimeout(() => {
           window.print();
           setTimeout(() => {
-            printArea.classList.remove('print-active-area'); 
+            if (checkOutSigBlock) checkOutSigBlock.classList.remove('hidden');
+            printArea.classList.remove('print-active-area');
             printArea.classList.add('hidden');
           }, 500);
         }, 100);
       });
     };
+
+
+
 
 
     function renderProjectHeaderListUI() {
@@ -2947,7 +3187,21 @@ if (imageSize > 1500000) {
     };
 
 
-window.saveSignaturesToActiveHeader = async function() {
+function drawDataUrlToCanvas(pad, dataUrl) {
+      if (!pad || !pad.canvas || !pad.ctx) return;
+      const w = pad.canvas.clientWidth || pad.canvas.width;
+      const h = pad.canvas.clientHeight || pad.canvas.height;
+      pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
+      if (!dataUrl) return;
+      const img = new Image();
+      img.onload = () => {
+        pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
+        pad.ctx.drawImage(img, 0, 0, w, h);
+      };
+      img.src = dataUrl;
+    }
+
+    window.saveSignaturesToActiveHeader = async function() {
       if (window.currentRole === window.ROLES.VISITOR) {
         showToast('目前為訪客唯讀模式，無法儲存電子簽名！', 'error');
         openModal('loginModal');
@@ -2959,15 +3213,26 @@ window.saveSignaturesToActiveHeader = async function() {
 
       const imgA = sigPadA ? sigPadA.canvas.toDataURL('image/png') : '';
       const imgB = sigPadB ? sigPadB.canvas.toDataURL('image/png') : '';
+      const nowIso = new Date().toISOString();
+      const isCheckOut = (window.currentAssetStage === 'check_out');
 
       let list = getStoredHeaderList();
       const idx = list.findIndex(h => h.activity === currentActivity);
       if (idx >= 0) {
-        list[idx].sigA = imgA;
-        list[idx].sigB = imgB;
-        list[idx].sigTime = new Date().toISOString();
+        if (isCheckOut) {
+          list[idx].checkOutSigA = imgA;
+          list[idx].checkOutSigB = imgB;
+          list[idx].checkOutSigTime = nowIso;
+        } else {
+          list[idx].sigA = imgA;
+          list[idx].sigB = imgB;
+          list[idx].sigTime = nowIso;
+        }
         await saveStoredHeaderListToCloud(list[idx]);
-        showToast('雙方電子簽名已成功綁定並同步至雲端！', 'success');
+        showToast(
+          isCheckOut ? '離場點退雙方簽名已成功儲存並同步至雲端！' : '進場點交雙方簽名已成功儲存並同步至雲端！',
+          'success'
+        );
       } else {
         showToast('找不到當前活動檔期紀錄', 'error');
       }
@@ -2980,17 +3245,15 @@ window.saveSignaturesToActiveHeader = async function() {
       const h = list.find(item => item.activity === currentActivity);
       if (!h) return;
 
-      if (h.sigA && sigPadA) {
-        const img = new Image();
-        img.onload = () => sigPadA.ctx.drawImage(img, 0, 0, sigPadA.canvas.clientWidth, sigPadA.canvas.clientHeight);
-        img.src = h.sigA;
-      }
-      if (h.sigB && sigPadB) {
-        const img = new Image();
-        img.onload = () => sigPadB.ctx.drawImage(img, 0, 0, sigPadB.canvas.clientWidth, sigPadB.canvas.clientHeight);
-        img.src = h.sigB;
-      }
+      const isCheckOut = (window.currentAssetStage === 'check_out');
+      const targetA = isCheckOut ? (h.checkOutSigA || '') : (h.sigA || '');
+      const targetB = isCheckOut ? (h.checkOutSigB || '') : (h.sigB || '');
+
+      drawDataUrlToCanvas(sigPadA, targetA);
+      drawDataUrlToCanvas(sigPadB, targetB);
     }
+
+
 
     let sigPadAppendixA = null;
     let sigPadAppendixB = null;
