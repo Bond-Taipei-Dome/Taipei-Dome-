@@ -1031,6 +1031,7 @@
     window.currentMainView = 'map';
     window.currentRole = window.ROLES.VISITOR;
     window.pins = [];
+    window.photoProcessingCount = 0;
     window.activeImages = [];
     window.supabaseClient = null;
     window.projectHeadersCache = [];
@@ -1150,22 +1151,28 @@
           .order('start', { ascending: true });
 
 // 在 fetchProjectHeadersFromCloud() 成功取得 data 後：
-window.projectHeadersCache = data;
-localStorage.setItem('dome_project_headers_cache', JSON.stringify(data));
+window.projectHeadersCache = data || [];
+        localStorage.setItem('dome_project_headers_cache', JSON.stringify(window.projectHeadersCache));
 
-// 🌟 新增：若本機目前沒有選定檔期，自動預設為雲端第一筆，實現裝置間一致性
-const currentActive = localStorage.getItem('dome_active_header_id');
-if (!currentActive && data.length > 0) {
-  localStorage.setItem('dome_active_header_id', data[0].id);
-}
+        // 每支手機各自維護自己目前選定的檔期，不與他人共用全域啟用鍵
+        const currentActive = localStorage.getItem('dome_active_header_id');
+        const hasChosen = localStorage.getItem('dome_active_header_chosen') === '1';
+        const isValidHeader = window.projectHeadersCache.some(h => h.id === currentActive);
 
-renderProjectHeaderListUI();
+        if ((!currentActive && !hasChosen) || (currentActive && !isValidHeader)) {
+          if (window.projectHeadersCache.length > 0) {
+            localStorage.setItem('dome_active_header_id', window.projectHeadersCache[0].id);
+          } else {
+            localStorage.removeItem('dome_active_header_id');
+          }
+        }
 
-
+        renderProjectHeaderListUI();
       } catch (err) {
         loadProjectHeadersFromLocal();
       }
     }
+
 
     function loadProjectHeadersFromLocal() {
       const raw = localStorage.getItem('dome_project_headers_cache');
@@ -1597,28 +1604,47 @@ const idx = window.projectHeadersCache.findIndex(
       setTimeout(initSignaturePads, 100);
     };
 
-    async function fetchAssetTransactionsFromCloud() {
-      if (!window.supabaseClient) return;
+async function fetchAssetTransactionsFromCloud() {
+      if (!window.supabaseClient) {
+        const cached = localStorage.getItem('dome_asset_tx_cache');
+        if (cached) {
+          try {
+            window.assetTransactions = JSON.parse(cached);
+          } catch (e) {}
+        }
+        renderAssetInventoryUI();
+        return;
+      }
+
       try {
         const { data, error } = await window.supabaseClient
           .from('asset_transactions')
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (!error && Array.isArray(data)) {
-          window.assetTransactions = data;
-          localStorage.setItem('dome_asset_tx_cache', JSON.stringify(data));
-        } else {
-          throw error;
+        if (error) throw error;
+
+        if (Array.isArray(data)) {
+          const cloudIds = new Set(data.map(item => item.id));
+          const localOnly = (window.assetTransactions || []).filter(
+            item => item && item.id && !cloudIds.has(item.id)
+          );
+          window.assetTransactions = [...localOnly, ...data];
+          localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
         }
       } catch (err) {
         const cached = localStorage.getItem('dome_asset_tx_cache');
         if (cached) {
-          window.assetTransactions = JSON.parse(cached);
+          try {
+            window.assetTransactions = JSON.parse(cached);
+          } catch (e) {}
         }
       }
+
       renderAssetInventoryUI();
     }
+
+
 
     function renderAssetManagerActivitySelector() {
       const select = document.getElementById('assetManagerActivitySelect');
@@ -2258,22 +2284,17 @@ window.exportAssetPrintoutForm = function() {
       }
     }
 
-window.switchActiveProjectHeader = async function(headerId) {
-
-  localStorage.setItem(
-    'dome_active_header_id',
-    headerId
-  );
+window.switchActiveProjectHeader = function(headerId) {
+  const selectedId = headerId || '';
+  localStorage.setItem('dome_active_header_id', selectedId);
+  localStorage.setItem('dome_active_header_chosen', '1');
 
   renderProjectHeaderListUI();
-
   showToast(
-    '已切換當前活動檔期！',
+    selectedId ? '已切換當前活動檔期！' : '已切換為無預設檔期（手動填寫）',
     'success'
   );
-
 };
-
 
 
 
@@ -2403,6 +2424,7 @@ window.deleteProjectHeader = async function(id) {
       }
 
       document.getElementById('formDamageDate').value = new Date().toISOString().split('T')[0];
+      window.photoProcessingCount = 0;
       window.activeImages = [];
       renderPhotoPreviews();
       toggleRepairFields();
@@ -2510,17 +2532,53 @@ window.deleteProjectHeader = async function(id) {
       renderPinAssetRows();
     };
 
-    window.handlePhotoUpload = (e) => {
-      const files = Array.from(e.target.files);
-      files.forEach(f => {
+window.handlePhotoUpload = (e) => {
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+
+      files.forEach(file => {
+        window.photoProcessingCount++;
         const reader = new FileReader();
         reader.onload = (ev) => {
-          window.activeImages.push(ev.target.result);
-          renderPhotoPreviews();
+          const img = new Image();
+          img.onload = () => {
+            const maxWidth = 800;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // 壓縮為 JPEG 0.75，大幅降低手機直拍照片的容量
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+            window.activeImages.push(compressedDataUrl);
+            window.photoProcessingCount--;
+            renderPhotoPreviews();
+          };
+          img.onerror = () => {
+            // 若圖片解碼異常，退回原始 DataURL
+            window.activeImages.push(ev.target.result);
+            window.photoProcessingCount--;
+            renderPhotoPreviews();
+          };
+          img.src = ev.target.result;
         };
-        reader.readAsDataURL(f);
+        reader.readAsDataURL(file);
       });
+
+      // 清空 input 值，避免同一張照片重選時不觸發 change
+      e.target.value = '';
     };
+
+
 
     function renderPhotoPreviews() {
       const strip = document.getElementById('photoPreviewStrip');
@@ -2533,96 +2591,154 @@ window.deleteProjectHeader = async function(id) {
       `).join('');
     }
 
-window.handleSavePin = async (e) => {
+let isSavingPin = false;
+
+    window.handleSavePin = async (e) => {
       e.preventDefault();
+      if (isSavingPin) return;
+
       if (window.currentRole === window.ROLES.VISITOR) {
         showToast('目前為訪客唯讀模式，無法儲存巡檢紀錄！', 'error');
         openModal('loginModal');
         return;
       }
 
-      const pinId = document.getElementById('formPinId').value || crypto.randomUUID();
-      
-      const pinData = {
-        id: pinId,
-        map_id: document.getElementById('formMapId').value,
-        x: parseFloat(document.getElementById('formCoordX').value),
-        y: parseFloat(document.getElementById('formCoordY').value),
-        pin_type: document.getElementById('formPinType').value,
-        title: document.getElementById('formTitle').value.trim(),
-        activity_name: document.getElementById('formActivityName').value.trim(),
-        renter_unit: document.getElementById('formRenterUnit').value.trim(),
-        rent_start_date: document.getElementById('formRentStartDate').value || null,
-        rent_end_date: document.getElementById('formRentEndDate').value || null,
-        department: document.getElementById('formDepartment').value.trim(),
-        damage_date: document.getElementById('formDamageDate').value || null,
-        repair_option: document.querySelector('input[name="repairOption"]:checked')?.value || '待確定',
-        constructor_name: document.getElementById('formConstructorName').value.trim(),
-        construct_date: document.getElementById('formConstructDate').value || null,
-        actual_restore_date: document.getElementById('formActualRestoreDate').value || null,
-        description: document.getElementById('formDescription').value.trim(),
-        asset_list: [...window.pinAssetList],
-        asset_qty: window.pinAssetList.reduce((sum, item) => sum + parseInt(item.qty || 0), 0),
-        images: [...window.activeImages]
-      };
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
 
-      const idx = window.pins.findIndex(p => p.id === pinId);
-      if (idx >= 0) window.pins[idx] = pinData;
-      else window.pins.push(pinData);
+      try {
+        isSavingPin = true;
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> 儲存中...';
+        }
 
-      localStorage.setItem('dome_pins_cache', JSON.stringify(window.pins));
+        const pinId = document.getElementById('formPinId').value || crypto.randomUUID();
+        const titleVal = document.getElementById('formTitle').value.trim();
+        const activityVal = document.getElementById('formActivityName').value.trim();
 
-      if (pinData.pin_type === 'asset' && Array.isArray(pinData.asset_list)) {
-        const currentActiveActivity = document.getElementById('assetManagerActivitySelect')?.value || pinData.activity_name || '預設活動檔期';
-        
-        pinData.asset_list.forEach(assetItem => {
-          if (!assetItem.name) return;
-          const existingTxIndex = window.assetTransactions.findIndex(tx => 
-            tx.activity_name === currentActiveActivity && 
-            tx.pin_location === pinData.title && 
-            tx.asset_name === assetItem.name
-          );
+        if (!titleVal) {
+          showToast('請填寫點位名稱 / 位置地點！', 'error');
+          return;
+        }
+        if (!activityVal) {
+          showToast('請填寫活動名稱！', 'error');
+          return;
+        }
 
-          if (existingTxIndex >= 0) {
-            window.assetTransactions[existingTxIndex].change_qty = parseInt(assetItem.qty || 0);
-          } else {
-            const newTx = {
-              id: crypto.randomUUID(),
-              activity_name: currentActiveActivity,
-              pin_location: pinData.title,
-              asset_name: assetItem.name,
-              transaction_type: 'check_in',
-              change_qty: parseInt(assetItem.qty || 0),
-              origin_activity: currentActiveActivity,
-              path_history: currentActiveActivity,
-              created_at: new Date().toISOString()
-            };
-            window.assetTransactions.unshift(newTx);
-          }
-        });
-        localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
-      }
-      
-      if (window.supabaseClient) {
-        try {
-          const { error } = await window.supabaseClient
-  .from('pins')
-  .upsert([pinData]);
 
-if (error) {
-  console.error(error);
-  showToast('已存至本機！(雲端同步失敗)', 'info');
-} else {
-  showToast('點位已成功同步至雲端！', 'success');
+
+if (window.photoProcessingCount > 0) {
+
+  showToast(
+    '照片仍在處理中，請等待縮圖完成後再儲存',
+    'error'
+  );
+
+  return;
 }
-       } catch(err) {
-          showToast('已存至本機！', 'info');
+const imageSize =
+JSON.stringify(window.activeImages).length;
+
+if (imageSize > 1500000) {
+  showToast(
+    '照片過大，請減少照片數量或重新拍攝後再試',
+    'error'
+  );
+  return;
+}
+
+
+        const pinData = {
+          id: pinId,
+          map_id: document.getElementById('formMapId').value,
+          x: parseFloat(document.getElementById('formCoordX').value),
+          y: parseFloat(document.getElementById('formCoordY').value),
+          pin_type: document.getElementById('formPinType').value,
+          title: titleVal,
+          activity_name: activityVal,
+          renter_unit: document.getElementById('formRenterUnit').value.trim(),
+          rent_start_date: document.getElementById('formRentStartDate').value || null,
+          rent_end_date: document.getElementById('formRentEndDate').value || null,
+          department: document.getElementById('formDepartment').value.trim(),
+          damage_date: document.getElementById('formDamageDate').value || null,
+          repair_option: document.querySelector('input[name="repairOption"]:checked')?.value || '待確定',
+          constructor_name: document.getElementById('formConstructorName').value.trim(),
+          construct_date: document.getElementById('formConstructDate').value || null,
+          actual_restore_date: document.getElementById('formActualRestoreDate').value || null,
+          description: document.getElementById('formDescription').value.trim(),
+          asset_list: [...window.pinAssetList],
+          asset_qty: window.pinAssetList.reduce((sum, item) => sum + parseInt(item.qty || 0), 0),
+          images: [...window.activeImages]
+        };
+
+        const idx = window.pins.findIndex(p => p.id === pinId);
+        if (idx >= 0) window.pins[idx] = pinData;
+        else window.pins.push(pinData);
+
+        localStorage.setItem('dome_pins_cache', JSON.stringify(window.pins));
+
+        if (pinData.pin_type === 'asset' && Array.isArray(pinData.asset_list)) {
+          const currentActiveActivity = document.getElementById('assetManagerActivitySelect')?.value || pinData.activity_name || '預設活動檔期';
+
+          pinData.asset_list.forEach(assetItem => {
+            if (!assetItem.name) return;
+            const existingTxIndex = window.assetTransactions.findIndex(tx =>
+              tx.activity_name === currentActiveActivity &&
+              tx.pin_location === pinData.title &&
+              tx.asset_name === assetItem.name
+            );
+
+            if (existingTxIndex >= 0) {
+              window.assetTransactions[existingTxIndex].change_qty = parseInt(assetItem.qty || 0);
+            } else {
+              const newTx = {
+                id: crypto.randomUUID(),
+                activity_name: currentActiveActivity,
+                pin_location: pinData.title,
+                asset_name: assetItem.name,
+                transaction_type: 'check_in',
+                change_qty: parseInt(assetItem.qty || 0),
+                origin_activity: currentActiveActivity,
+                path_history: currentActiveActivity,
+                created_at: new Date().toISOString()
+              };
+              window.assetTransactions.unshift(newTx);
+            }
+          });
+          localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
+        }
+
+        if (window.supabaseClient) {
+          const { error } = await window.supabaseClient
+            .from('pins')
+            .upsert([pinData]);
+
+          if (error) {
+            console.error(error);
+            showToast('已存至本機，但雲端同步失敗，請檢查網路狀態！', 'error');
+          } else {
+            showToast('點位已成功同步至雲端！', 'success');
+          }
+        } else {
+          showToast('已存至本機快取！', 'info');
+        }
+
+        renderPins();
+        if (window.currentMainView === 'list') renderListViewTable();
+        closeModal('pinModal');
+      } catch (err) {
+        console.error(err);
+        showToast('儲存過程發生異常，資料已保留在表單中，請再試一次！', 'error');
+      } finally {
+        isSavingPin = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
         }
       }
-
-      renderPins();
-      closeModal('pinModal');
     };
+
 
     window.requestDeletePinFromForm = function() {
       const pinId = document.getElementById('formPinId').value;
