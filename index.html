@@ -2630,22 +2630,21 @@ let isSavingPin = false;
 
 if (window.photoProcessingCount > 0) {
 
+  if (window.photoProcessingCount > 0) {
+
   showToast(
     '照片仍在處理中，請等待縮圖完成後再儲存',
     'error'
   );
 
-  showToast(
-  '照片處理完成，可進行儲存',
-  'success'
-);
-
   return;
 }
+
+
 const imageSize =
 JSON.stringify(window.activeImages).length;
 
-if (imageSize > 500000) {
+if (imageSize > 1500000) {
   showToast(
     '照片過大，請減少照片數量或重新拍攝後再試',
     'error'
