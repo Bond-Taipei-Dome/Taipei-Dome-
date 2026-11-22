@@ -1582,6 +1582,15 @@ document
     // 安全雲端同步與容錯處置
     window.handleSavePin = async (e) => {
       e.preventDefault();
+        if (window.photoProcessingCount > 0) {
+
+    showToast(
+      '照片仍在處理中，請稍候再儲存',
+      'error'
+    );
+
+    return;
+  }
       const pinId = document.getElementById('formPinId').value || crypto.randomUUID();
       const existingPin = window.pins.find(p => p.id === pinId);
 
