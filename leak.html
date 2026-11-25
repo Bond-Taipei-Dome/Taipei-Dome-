@@ -274,38 +274,33 @@
   <!-- Toast 提示容器 -->
   <div id="toastContainer"></div>
 
-  <!-- 頂部導覽列 -->
-  <header class="h-20 bg-slate-900/95 backdrop-blur border-b border-slate-800 flex items-center justify-between px-3 sm:px-6 z-30 shrink-0 shadow-md">
-    <!-- 左側：標誌與樓層剖面選單 -->
-    <div class="flex items-center">
-      
-      <div>
-        <div class="header-title" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
-  <h1 style="margin: 0;">臺北大巨蛋滴漏點位追蹤系統</h1>
-  <span id="auto-ver"></span> ｜ 開發與維護：陳啟民
-<script>
-  (function() {
-    var d = new Date(document.lastModified);
-    var yyyy = d.getFullYear();
-    var mm = String(d.getMonth() + 1).padStart(2, '0');
-    var dd = String(d.getDate()).padStart(2, '0');
-    document.getElementById('auto-ver').textContent = 'v' + yyyy + '.' + mm + '.' + dd;
-  })();
-</script>
-</div>
-          <!-- 恆久雲端連線狀態標籤 -->
-          <span id="cloudStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="hidden sm:inline">🟢 雲端即時連線</span>
+  <!-- 頂部導覽列（比照 index 版：手機直立與橫向皆完整顯示按鈕與精簡文字） -->
+  <header class="min-h-14 h-auto py-1.5 bg-slate-900/95 backdrop-blur border-b border-slate-800 flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 px-2.5 sm:px-5 z-30 shrink-0 shadow-md">
+    <!-- 左側：系統標題、版本、雲端狀態與樓層選單 -->
+    <div class="flex items-center justify-between sm:justify-start w-full xl:w-auto gap-2 sm:gap-3">
+      <div class="min-w-0">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <h1 class="font-bold text-xs sm:text-base tracking-wide text-white leading-tight m-0">臺北大巨蛋滴漏點位追蹤系統</h1>
+          <span id="auto-ver" class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"></span>
+          <span class="hidden xl:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">開發與維護：陳啟民</span>
+          <span id="cloudStatusBadge" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
           </span>
+          <script>
+            (function() {
+              var d = new Date(document.lastModified);
+              var yyyy = d.getFullYear();
+              var mm = String(d.getMonth() + 1).padStart(2, '0');
+              var dd = String(d.getDate()).padStart(2, '0');
+              document.getElementById('auto-ver').textContent = 'v' + yyyy + '.' + mm + '.' + dd;
+            })();
+          </script>
         </div>
-       
-        </p>
       </div>
 
-      <!-- 13 大獨立樓層與剖面圖選擇下拉選單 -->
-      <div class="relative ml-2">
-        <select id="mapSelect" onchange="switchMap(this.value)" class="bg-slate-800 hover:bg-slate-750 text-amber-400 font-bold text-xs sm:text-sm rounded-lg pl-3 pr-8 py-2.5 border border-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer transition appearance-none min-h-[44px]">
+      <!-- 樓層平面圖選擇下拉選單 -->
+      <div class="relative shrink-0">
+        <select id="mapSelect" onchange="switchMap(this.value)" class="bg-slate-800 hover:bg-slate-750 text-amber-400 font-bold text-xs rounded-lg pl-2 sm:pl-2.5 pr-6 sm:pr-7 py-1.5 border border-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer transition appearance-none min-h-[32px]">
           <optgroup label="🏢 樓層平面圖 (Floor Plans)">
             <option value="map-b2">B2 層平面圖</option>
             <option value="map-b1">B1 層平面圖</option>
@@ -317,54 +312,49 @@
             <option value="map-l6">L6 層平面圖</option>
             <option value="map-rf">RF 屋頂層平面圖</option>
           </optgroup>
-         
         </select>
-        <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"></i>
       </div>
     </div>
 
-    <!-- 中間：視圖切換 (地圖 / 清單) -->
-    <div class="flex items-center space-x-3">
-      <div class="flex bg-slate-800 rounded-lg p-1 border border-slate-700 text-sm">
-        <button id="btnMapView" onclick="switchMainView('map')" class="px-3.5 sm:px-4 py-2 rounded-md bg-amber-500 text-slate-950 font-bold transition flex items-center gap-1.5 shadow min-h-[44px]">
-          <i class="fa-solid fa-map"></i> <span class="hidden sm:inline">地圖模式</span>
+    <!-- 右側：視圖切換 + 精簡文字功能按鈕群 -->
+    <div class="flex items-center justify-between sm:justify-end flex-wrap gap-1 sm:gap-1.5 w-full xl:w-auto">
+      <div class="flex bg-slate-800 rounded-lg p-0.5 border border-slate-700 text-xs shrink-0">
+        <button id="btnMapView" onclick="switchMainView('map')" class="px-2 sm:px-3 py-1 rounded-md bg-amber-500 text-slate-950 font-bold transition flex items-center gap-1 shadow min-h-[32px]">
+          <i class="fa-solid fa-map"></i> <span>地圖</span>
         </button>
-        <button id="btnListView" onclick="switchMainView('list')" class="px-3.5 sm:px-4 py-2 rounded-md text-slate-300 hover:text-white transition flex items-center gap-1.5 min-h-[44px]">
-          <i class="fa-solid fa-table-list"></i> <span class="hidden sm:inline">案件清單</span>
-          <span id="totalBadge" class="bg-slate-700 text-amber-400 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+        <button id="btnListView" onclick="switchMainView('list')" class="px-2 sm:px-3 py-1 rounded-md text-slate-300 hover:text-white transition flex items-center gap-1 min-h-[32px]">
+          <i class="fa-solid fa-table-list"></i> <span>清單</span>
+          <span id="totalBadge" class="bg-slate-700 text-amber-400 text-[11px] px-1.5 py-0.2 rounded-full font-bold">0</span>
         </button>
       </div>
-    </div>
 
-    <!-- 右側：功能按鈕群 -->
-    <div class="flex items-center space-x-2">
-      <button onclick="copyPendingListSummary()" class="flex items-center bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="一鍵複製滴漏點位案件通報文字（可貼至 LINE）">
-        <i class="fa-solid fa-share-nodes mr-1.5"></i> <span class="hidden lg:inline">通報分享</span>
-      </button>
+      <div class="flex items-center flex-wrap gap-1 sm:gap-1.5">
+        <button onclick="copyPendingListSummary()" class="flex items-center bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs px-2 sm:px-2.5 py-1.5 rounded-lg transition shadow-sm min-h-[32px]" title="一鍵複製滴漏點位案件通報文字（可貼至 LINE）">
+          <i class="fa-solid fa-share-nodes mr-1"></i> <span>通報</span>
+        </button>
 
-      
-      <button onclick="printCurrentMap()" class="flex items-center bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="列印當前樓層圖面與點位">
-        <i class="fa-solid fa-print mr-1.5"></i> <span class="hidden md:inline">列印圖面</span>
-      </button>
-      <button onclick="exportCsv()" class="flex items-center bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]" title="匯出CSV資料">
-        <i class="fa-solid fa-file-export mr-1.5"></i> <span class="hidden md:inline">統計匯出CSV</span>
-      </button>
+        <button onclick="printCurrentMap()" class="flex items-center bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-2 sm:px-2.5 py-1.5 rounded-lg transition shadow-sm min-h-[32px]" title="列印當前樓層圖面與點位">
+          <i class="fa-solid fa-print mr-1"></i> <span>列印</span>
+        </button>
 
-     <button
-  onclick="exportEventCsv()"
-  class="flex items-center bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[44px]"
-  title="匯出事件明細CSV"
->
-  <i class="fa-solid fa-calendar-days mr-1.5"></i>
-  <span class="hidden md:inline">逐次事件CSV</span>
-</button>
+        <button onclick="exportCsv()" class="flex items-center bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-2 sm:px-2.5 py-1.5 rounded-lg transition shadow-sm min-h-[32px]" title="匯出統計CSV資料">
+          <i class="fa-solid fa-file-export mr-1"></i> <span>統計CSV</span>
+        </button>
 
-      <button id="btnLogin" onclick="openModal('loginModal')" class="flex items-center bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-slate-700 transition min-h-[44px]">
-        <i class="fa-solid fa-shield-halved mr-1.5 text-amber-400"></i>
-        <span id="userRoleText">訪客</span>
-      </button>
+        <button onclick="exportEventCsv()" class="flex items-center bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-2 sm:px-2.5 py-1.5 rounded-lg transition shadow-sm min-h-[32px]" title="匯出逐次事件明細CSV">
+          <i class="fa-solid fa-calendar-days mr-1"></i> <span>事件CSV</span>
+        </button>
+
+        <button id="btnLogin" onclick="openModal('loginModal')" class="flex items-center bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs px-2 sm:px-2.5 py-1.5 rounded-lg border border-slate-700 transition min-h-[32px]">
+          <i class="fa-solid fa-shield-halved mr-1 text-amber-400"></i>
+          <span id="userRoleText">訪客</span>
+        </button>
+      </div>
     </div>
   </header>
+
+
 
   <!-- 主要內容區 -->
   <main class="flex-1 relative overflow-hidden flex flex-col">
