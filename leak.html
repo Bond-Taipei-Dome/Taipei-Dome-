@@ -1216,6 +1216,30 @@ function updateDashboardStats() {
       const stage = document.getElementById('mapStage');
       if (!viewport || !stage) return;
 
+      let isPinching = false;
+      let pinchStartDist = 0;
+      let pinchStartScale = 1;
+      let pinchMidClientX = 0;
+      let pinchMidClientY = 0;
+      let pinchStartPanX = 0;
+      let pinchStartPanY = 0;
+
+      const getTouchDist = (t1, t2) => Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+
+      const applyZoomAtPoint = (nextScale, clientX, clientY) => {
+        const clampedScale = Math.min(Math.max(0.3, nextScale), 5);
+        const vpRect = viewport.getBoundingClientRect();
+        const originX = clientX - vpRect.left;
+        const originY = clientY - vpRect.top;
+
+        // 讓縮放中心對齊手指中心或滑鼠游標位置
+        const ratio = clampedScale / scale;
+        panX = originX - (originX - panX) * ratio;
+        panY = originY - (originY - panY) * ratio;
+        scale = clampedScale;
+        requestUpdateTransform();
+      };
+
       const startPan = (x, y) => {
         isDragging = true;
         dragDistance = 0;
@@ -1236,19 +1260,76 @@ function updateDashboardStats() {
 
       const endPan = () => { isDragging = false; };
 
-      viewport.addEventListener('mousedown', (e) => { if (e.button === 0) startPan(e.clientX, e.clientY); });
+      // 桌機滑鼠拖曳
+      viewport.addEventListener('mousedown', (e) => {
+        if (e.button === 0) startPan(e.clientX, e.clientY);
+      });
       window.addEventListener('mousemove', (e) => movePan(e.clientX, e.clientY));
       window.addEventListener('mouseup', endPan);
 
+      // 可選：桌機滾輪縮放（以滑鼠游標為中心）
+      viewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+        applyZoomAtPoint(scale * factor, e.clientX, e.clientY);
+      }, { passive: false });
+
+      // 手機／平板：單指拖曳＋雙指捏合縮放
       viewport.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 1) startPan(e.touches[0].clientX, e.touches[0].clientY);
+        if (e.touches.length === 2) {
+          isDragging = false;
+          isPinching = true;
+          dragDistance = 999; // 防止雙指放開後誤觸點擊新增點位
+          const t1 = e.touches[0];
+          const t2 = e.touches[1];
+          pinchStartDist = getTouchDist(t1, t2);
+          pinchStartScale = scale;
+          pinchMidClientX = (t1.clientX + t2.clientX) / 2;
+          pinchMidClientY = (t1.clientY + t2.clientY) / 2;
+          pinchStartPanX = panX;
+          pinchStartPanY = panY;
+        } else if (e.touches.length === 1 && !isPinching) {
+          startPan(e.touches[0].clientX, e.touches[0].clientY);
+        }
       }, { passive: true });
 
-      window.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 1) movePan(e.touches[0].clientX, e.touches[0].clientY);
+      viewport.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && isPinching) {
+          const t1 = e.touches[0];
+          const t2 = e.touches[1];
+          const currentDist = getTouchDist(t1, t2);
+          if (pinchStartDist <= 0) return;
+
+          const currentMidX = (t1.clientX + t2.clientX) / 2;
+          const currentMidY = (t1.clientY + t2.clientY) / 2;
+          const vpRect = viewport.getBoundingClientRect();
+
+          const nextScale = Math.min(Math.max(0.3, pinchStartScale * (currentDist / pinchStartDist)), 5);
+          const originX = pinchMidClientX - vpRect.left;
+          const originY = pinchMidClientY - vpRect.top;
+          const ratio = nextScale / pinchStartScale;
+
+          // 同時支援捏合縮放與雙指移動跟隨
+          panX = originX - (originX - pinchStartPanX) * ratio + (currentMidX - pinchMidClientX);
+          panY = originY - (originY - pinchStartPanY) * ratio + (currentMidY - pinchMidClientY);
+          scale = nextScale;
+          requestUpdateTransform();
+        } else if (e.touches.length === 1 && !isPinching) {
+          movePan(e.touches[0].clientX, e.touches[0].clientY);
+        }
       }, { passive: true });
 
-      window.addEventListener('touchend', endPan);
+      viewport.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) {
+          isPinching = false;
+        }
+        if (e.touches.length === 1) {
+          // 雙指放開剩單指時，平滑銜接單指拖曳，不跳位
+          startPan(e.touches[0].clientX, e.touches[0].clientY);
+        } else if (e.touches.length === 0) {
+          endPan();
+        }
+      });
 
       stage.onclick = (e) => {
         if (dragDistance > 8) return;
@@ -1263,6 +1344,8 @@ function updateDashboardStats() {
         openPinModalForCreate(px, py);
       };
     }
+
+
 
     function requestUpdateTransform() {
       if (!isTransformPending) {
