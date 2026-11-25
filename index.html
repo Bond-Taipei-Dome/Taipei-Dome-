@@ -971,7 +971,7 @@
         <tr class="bg-gray-200 text-center font-bold">
           <th class="border border-black p-2 w-10">項次</th>
           <th class="border border-black p-2 w-44">配置位置與點位名稱</th>
-          <th class="border border-black p-2">器材品項與數量明細（點交 / 點退 / 在庫）</th>
+          <th class="border border-black p-2">器材品項與數量明細（點交 / 點退 / 差異）</th>
           <th class="border border-black p-2 w-60">🔄 器材留用 / 跨檔期轉移軌跡明細</th>
         </tr>
       </thead>
@@ -2399,7 +2399,7 @@ function renderAssetPinsPreview() {
           <tr class="bg-gray-200 text-center font-bold">
             <th class="border border-black p-2 w-10">項次</th>
             <th class="border border-black p-2 w-44">配置位置與點位名稱</th>
-            <th class="border border-black p-2">器材品項與數量明細（點交 / 點退 / 在庫）</th>
+            <th class="border border-black p-2">器材品項與數量明細（點交 / 點退 / 差異）</th>
             <th class="border border-black p-2 w-60">🔄 器材留用 / 跨檔期轉移軌跡明細</th>
           </tr>
         `;
@@ -2435,8 +2435,8 @@ function renderAssetPinsPreview() {
                     <span class="font-bold text-black">${item.asset_name}</span>
                     <span class="font-mono whitespace-nowrap ml-2">
                       點交:<strong class="text-emerald-700">${checkInQty}</strong> ｜ 
-                      點退(差異):<strong class="text-gray-400">--</strong> ｜ 
-                      在庫(點退):<strong class="text-gray-400">--</strong>
+                      點退:<strong class="text-gray-400">--</strong> ｜ 
+                      差異:<strong class="text-gray-400">--</strong>
                     </span>
                   </div>
                 `;
@@ -2470,8 +2470,8 @@ function renderAssetPinsPreview() {
               <span class="font-bold text-black">${item.asset_name}</span>
               <span class="font-mono whitespace-nowrap ml-2">
                 點交:<strong class="text-emerald-700">${checkInQty}</strong> ｜ 
-                點退(差異):<strong class="${diffQty === 0 ? 'text-gray-700' : (diffQty > 0 ? 'text-blue-700' : 'text-rose-700')}">${diffDisplay}</strong> ｜ 
-                在庫(點退):<strong class="text-black text-xs underline">${stockAfterCheckOut}</strong>
+                點退:<strong class="${diffQty === 0 ? 'text-gray-700' : (diffQty > 0 ? 'text-blue-700' : 'text-rose-700')}">${diffDisplay}</strong> ｜ 
+                差異:<strong class="text-black text-xs underline">${stockAfterCheckOut}</strong>
               </span>
             </div>
           `;
