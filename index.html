@@ -142,14 +142,14 @@
         <div class="flex items-center gap-2 flex-wrap">
           <h1 class="font-bold text-sm sm:text-lg tracking-wide text-white leading-tight">臺北大巨蛋場館現況管理系統</h1>
           <span id="autoVersionBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v2026.11.16</span>
-          <!--<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">開發與維護：陳啟民</span>-->
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">開發與維護：陳啟民</span>
           <span id="cloudStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <!--<span class="hidden sm:inline">🟢 雲端即時連線</span>-->
           </span>
         </div>
-        <!--<p id="headerActiveProjectText" class="text-xs text-amber-400/90 truncate max-w-[180px] sm:max-w-xs mt-0.5 font-medium">-->
-          <i class="fa-solid fa-file-signature mr-1"></i>當前檔期：未設定
+        <p id="headerActiveProjectText" class="text-xs text-amber-400/90 truncate max-w-[180px] sm:max-w-xs mt-0.5 font-medium">
+           <i class="fa-solid fa-file-signature mr-1"></i>當前檔期：未設定
         </p>
       </div>
 
@@ -191,25 +191,25 @@
 
     <!-- 右側功能按鈕群 -->
     <div class="flex items-center space-x-2">
-      <!--<button onclick="copyPendingListSummary()" class="flex items-center bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="一鍵複製待修復案件通報文字（可貼至 LINE）">
+      <button onclick="copyPendingListSummary()" class="flex items-center bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="一鍵複製待修復案件通報文字（可貼至 LINE）">
         <i class="fa-solid fa-share-nodes mr-1.5"></i> <span class="hidden lg:inline">通報分享</span>
-      </button>-->
+      </button>
 
       <button onclick="openProjectHeaderManager()" class="flex items-center bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="管理與切換多筆活動檔期抬頭">
         <i class="fa-solid fa-folder-tree mr-1.5"></i> <span class="hidden md:inline">檔期抬頭</span>
       </button>
 
-      <!--<button onclick="openAssetManagerModal()" class="flex items-center bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="管理器材點交、點退與跨檔期數量流轉">
+      <button onclick="openAssetManagerModal()" class="flex items-center bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="管理器材點交、點退與跨檔期數量流轉">
         <i class="fa-solid fa-boxes-stacked mr-1.5"></i> <span class="hidden md:inline">器材點交管理</span>
-      </button>-->
+      </button>
 
-      <!--<button onclick="exportAppendix24ModeA()" class="flex items-center bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="匯出設施設備損害異常紀錄表 A4 紙本報表">
+      <button onclick="exportAppendix24ModeA()" class="flex items-center bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="匯出設施設備損害異常紀錄表 A4 紙本報表">
         <i class="fa-solid fa-file-export mr-1.5"></i> <span class="hidden md:inline">設施設備損害異常紀錄表</span>
-      </button>-->
+      </button>
 
-     <!-- <button onclick="exportAllVenuePendingReport()" class="flex items-center bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="匯出全場館所有待修復異常案件總表 A4 紙本報表">
+     <button onclick="exportAllVenuePendingReport()" class="flex items-center bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition shadow-sm min-h-[36px]" title="匯出全場館所有待修復異常案件總表 A4 紙本報表">
         <i class="fa-solid fa-clipboard-list mr-1.5"></i> <span class="hidden md:inline">全場館待修案件總表</span>
-      </button>-->
+      </button>
 
       <button id="btnLogin" onclick="openModal('loginModal')" class="flex items-center bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-slate-700 transition min-h-[36px]">
         <i class="fa-solid fa-shield-halved mr-1.5 text-amber-400"></i>
