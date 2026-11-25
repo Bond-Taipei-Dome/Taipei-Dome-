@@ -18,7 +18,8 @@
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      overflow: hidden;
+      overflow-x: hidden; 
+      overflow-y: auto;
       background-color: #090d16;
     }
 
@@ -129,13 +130,13 @@
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 flex flex-col h-screen select-none">
+<body class="bg-slate-950 text-slate-100 flex flex-col min-h-screen select-none">
 
   <!-- Toast 提示容器 -->
   <div id="toastContainer"></div>
 
   <!-- 頂部導覽列 -->
-  <header class="h-20 bg-slate-900/95 backdrop-blur border-b border-slate-800 flex items-center justify-between px-3 sm:px-6 z-30 shrink-0 shadow-md">
+  <header class="min-h-20 bg-slate-900/95 backdrop-blur border-b border-slate-800 flex items-center justify-between px-3 sm:px-6 z-30 shrink-0 shadow-md">
     <div class="flex items-center space-x-3 sm:space-x-4">
       <div>
         <div class="flex items-center gap-2 flex-wrap">
@@ -704,7 +705,7 @@
           </div>
           <div class="flex items-center gap-2 flex-wrap">
             <button type="button" onclick="autoLoadPreviousCheckOut()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs transition shadow flex items-center gap-1.5 min-h-[38px]" title="結算場館內各位置品項與數量帶入本檔點交基準">
-              <i class="fa-solid fa-file-arrow-down"></i> 📥 結算場館內器材數量
+              <i class="fa-solid fa-file-arrow-down"></i> 📥 重新載入場館現況
             </button>
             <button type="button" onclick="exportAssetPrintoutForm()" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-xs transition shadow flex items-center gap-1.5 min-h-[38px]" title="列印當前活動器材點交與點退紀錄表 A4 紙本報表">
               <i class="fa-solid fa-print"></i> 🖨️ 列印器材點交/點退表單
@@ -743,7 +744,7 @@
           <div>
             <label class="block text-xs font-semibold mb-1">對應地圖點位 (Asset Pin) <span class="text-rose-400">*</span></label>
             <select id="txPinLocation" onchange="updateTxAssetDropdownOptions()" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
-              <option value="主倉庫區">主倉庫區</option>
+              <option value="">請選擇器材所在位置</option>
             </select>
           </div>
           <div>
@@ -1706,7 +1707,7 @@ async function fetchAssetTransactionsFromCloud() {
       if (!pinSelect) return;
       
       const assetPins = window.pins.filter(p => p.pin_type === 'asset');
-      let optionsHtml = '<option value="主倉庫區">主倉庫區 (預設)</option>';
+      let optionsHtml = '<option value="">請選擇器材所在位置</option>';
       
       assetPins.forEach(p => {
         const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資';
@@ -1772,88 +1773,30 @@ window.currentAssetStage = 'check_in';
 
 
 
-    window.autoLoadPreviousCheckOut = function() {
-      const currentActivity = document.getElementById('assetManagerActivitySelect').value;
-      if (!currentActivity) {
-        return showToast('請先上方選擇您要操作的「本檔活動名稱」！', 'error');
-      }
+    window.autoLoadPreviousCheckOut = function () {
 
-      window.assetTransactions = window.assetTransactions.filter(tx => 
-        !(tx.activity_name === currentActivity && tx.transaction_type === 'check_in')
-      );
+  const currentActivity =
+    document.getElementById('assetManagerActivitySelect').value;
 
-      let loadedCount = 0;
-      const assetPins = (window.pins || []).filter(p => p.pin_type === 'asset');
+  if (!currentActivity) {
+    return showToast(
+      '請先上方選擇您要操作的活動檔期！',
+      'error'
+    );
+  }
+
+  renderAssetInventoryUI();
+
+  showToast(
+    '已重新載入場館現況',
+    'success'
+  );
+
+};
+
+
+
       
-      if (assetPins.length > 0) {
-        assetPins.forEach(pin => {
-          const pinLocationName = pin.title || '未命名點位';
-          if (Array.isArray(pin.asset_list)) {
-            pin.asset_list.forEach(item => {
-              if (!item.name || !item.qty) return;
-
-              const newTx = {
-                id: crypto.randomUUID(),
-                activity_name: currentActivity,
-                pin_location: pinLocationName,
-                asset_name: item.name,
-                transaction_type: 'check_in',
-                change_qty: parseInt(item.qty),
-                origin_activity: currentActivity,
-                path_history: currentActivity,
-                created_at: new Date().toISOString()
-              };
-              window.assetTransactions.unshift(newTx);
-              loadedCount++;
-            });
-          }
-        });
-      } else {
-        const inventoryMap = {};
-        (window.assetTransactions || []).forEach(tx => {
-          if (!tx) return;
-          const loc = tx.pin_location || '主倉庫區';
-          const name = tx.asset_name || '未命名器材';
-          const key = `${loc}___${name}`;
-          
-          if (!inventoryMap[key]) {
-            inventoryMap[key] = { 
-              pin_location: loc, 
-              asset_name: name, 
-              balance: 0,
-              origin_activity: tx.origin_activity || currentActivity,
-              path_history: tx.path_history || currentActivity
-            };
-          }
-          inventoryMap[key].balance += parseInt(tx.change_qty || 0);
-        });
-
-        Object.values(inventoryMap).forEach(item => {
-          if (item.balance > 0) {
-            const newTx = {
-              id: crypto.randomUUID(),
-              activity_name: currentActivity,
-              pin_location: item.pin_location,
-              asset_name: item.asset_name,
-              transaction_type: 'check_in',
-              change_qty: item.balance,
-              origin_activity: item.origin_activity,
-              path_history: item.path_history ? `${item.path_history} ➔ ${currentActivity}` : currentActivity,
-              created_at: new Date().toISOString()
-            };
-            window.assetTransactions.unshift(newTx);
-            loadedCount++;
-          }
-        });
-      }
-
-      localStorage.setItem('dome_asset_tx_cache', JSON.stringify(window.assetTransactions));
-      renderAssetInventoryUI();
-      
-
-      showToast(`已成功同步「${currentActivity}」之場館內器材點交基準（共 ${loadedCount} 項）！`, 'success');
-    };
-
 
 window.handleSaveAssetTransaction = async function(e) {
       e.preventDefault();
@@ -1866,7 +1809,15 @@ window.handleSaveAssetTransaction = async function(e) {
       const activity_name = document.getElementById('assetManagerActivitySelect').value;
       if (!activity_name) return showToast('請先選擇活動檔期名稱！', 'error');
 
-      const pin_location = document.getElementById('txPinLocation').value;
+      const pin_location =
+document.getElementById('txPinLocation').value;
+
+if (!pin_location) {
+  return showToast(
+    '請先選擇器材所在位置！',
+    'error'
+  );
+}
       const asset_name = document.getElementById('txAssetName').value.trim();
       const transaction_type = window.currentAssetStage || 'check_in';
       const rawInputQty = parseInt(document.getElementById('txQty').value || '0');
@@ -1887,7 +1838,7 @@ if (transaction_type === 'check_out') {
         const txBalance = (window.assetTransactions || [])
           .filter(tx =>
             tx.activity_name === activity_name &&
-            (tx.pin_location || '主倉庫區') === pin_location &&
+            (tx.pin_location || '未指定位置') === pin_location &&
             tx.asset_name === asset_name
           )
           .reduce((sum, tx) => sum + parseInt(tx.change_qty || 0), 0);
@@ -2004,7 +1955,7 @@ window.togglePinRetention = async function(activityName, pinLocation, checked) {
 
       const updatedTxs = [];
       window.assetTransactions.forEach(tx => {
-        if ((tx.activity_name || '') === (activityName || '') && (tx.pin_location || '主倉庫區') === pinLocation) {
+        if ((tx.activity_name || '') === (activityName || '') && (tx.pin_location || '未指定位置') === pinLocation) {
           tx.is_carried_over = !!checked;
           if (!tx.origin_activity) tx.origin_activity = activityName || '本檔活動';
           const basePath = tx.path_history || tx.origin_activity;
@@ -2057,7 +2008,7 @@ function renderAssetInventoryUI() {
           const changedMap = {};
           (window.assetTransactions || []).forEach(tx => {
             if (!tx || tx.activity_name !== selectedActivity) return;
-            const loc = tx.pin_location || '主倉庫區';
+            const loc = tx.pin_location || '未指定位置';
             const name = tx.asset_name || '未命名器材';
             const key = `${loc}___${name}`;
             if (!changedMap[key]) {
@@ -2116,26 +2067,34 @@ function renderAssetPinsPreview() {
       const isCheckOutStage = (window.currentAssetStage === 'check_out');
 
       const summaryMap = {};
-      (window.assetTransactions || []).forEach(tx => {
-        if (!tx) return;
-        if (selectedActivity && tx.activity_name !== selectedActivity) return;
-        const loc = tx.pin_location || '主倉庫區';
-        const name = tx.asset_name || '未命名器材';
-        const key = `${loc}___${name}`;
-        if (!summaryMap[key]) {
-          summaryMap[key] = {
-            pin_location: loc,
-            asset_name: name,
-            checkInQty: 0,
-            balance: 0
-          };
-        }
-        const qty = parseInt(tx.change_qty || 0);
-        if (tx.transaction_type === 'check_in' || qty > 0) {
-          summaryMap[key].checkInQty += Math.max(0, qty);
-        }
-        summaryMap[key].balance += qty;
-      });
+
+(window.pins || [])
+  .filter(p => p.pin_type === 'asset')
+  .forEach(pin => {
+
+    const mapName =
+      window.MAPS[pin.map_id || pin.mapId]?.name || '圖資';
+
+    const locationName =
+      `${pin.title} (${mapName})`;
+
+    (pin.asset_list || []).forEach(item => {
+
+      const key =
+        `${locationName}__${item.name}`;
+
+      summaryMap[key] = {
+        pin_location: locationName,
+        asset_name: item.name,
+        checkInQty: parseInt(item.qty || 0),
+        balance: parseInt(item.qty || 0)
+      };
+
+    });
+
+  });
+
+        
 
       const summaryBody = document.getElementById('assetInventorySummaryBody');
       if (summaryBody) {
@@ -2306,48 +2265,43 @@ function renderAssetPinsPreview() {
         headerData.checkOutSigTime
       );
 
-      const targetTxs = window.assetTransactions.filter(tx => tx.activity_name === selectedActivity);
-      if (targetTxs.length === 0) {
-        return showToast(`活動「${selectedActivity}」尚無任何器材點交或點退紀錄可供列印！`, 'info');
-      }
-
       const locationGroupMap = {};
-      targetTxs.forEach(tx => {
-        const loc = tx.pin_location || '主倉庫區';
-        const name = tx.asset_name || '未命名器材';
 
-        if (!locationGroupMap[loc]) {
-          locationGroupMap[loc] = {
-            pin_location: loc,
-            origin_activity: tx.origin_activity || selectedActivity,
-            path_history: tx.path_history || selectedActivity,
-            items: {}
-          };
-        }
+(window.pins || [])
+  .filter(p => p.pin_type === 'asset')
+  .forEach(pin => {
 
-        if (!locationGroupMap[loc].items[name]) {
-          locationGroupMap[loc].items[name] = {
-            asset_name: name,
-            totalIn: 0,
-            totalOut: 0,
-            balance: 0,
-            hasCheckOut: false
-          };
-        }
+    const mapName =
+      window.MAPS[
+        pin.map_id || pin.mapId
+      ]?.name || '圖資';
 
-        const qty = parseInt(tx.change_qty || 0);
-        if (tx.transaction_type === 'check_in' || qty > 0) {
-          locationGroupMap[loc].items[name].totalIn += Math.max(0, qty);
-        }
-        if (tx.transaction_type === 'check_out') {
-          locationGroupMap[loc].items[name].hasCheckOut = true;
-          if (qty < 0) locationGroupMap[loc].items[name].totalOut += Math.abs(qty);
-        } else if (qty < 0) {
-          locationGroupMap[loc].items[name].totalOut += Math.abs(qty);
-        }
-        locationGroupMap[loc].items[name].balance += qty;
-        if (tx.path_history) locationGroupMap[loc].path_history = tx.path_history;
-      });
+    const locationName =
+      `${pin.title} (${mapName})`;
+
+    locationGroupMap[locationName] = {
+      pin_location: locationName,
+      origin_activity: selectedActivity,
+      path_history: selectedActivity,
+      items: {}
+    };
+
+    (pin.asset_list || []).forEach(item => {
+
+      locationGroupMap[locationName]
+        .items[item.name] = {
+
+        asset_name: item.name,
+        totalIn: parseInt(item.qty || 0),
+        totalOut: 0,
+        balance: parseInt(item.qty || 0),
+        hasCheckOut: false
+
+      };
+
+    });
+
+  });
 
       document.getElementById('assetRptActivityName').innerText = selectedActivity;
       document.getElementById('assetRptRenterUnit').innerText = headerData.unit || '未指定單位';
@@ -3518,7 +3472,7 @@ function drawDataUrlToCanvas(pad, dataUrl) {
         return fullTitle === selectedPinTitle || p.title === selectedPinTitle;
       });
 
-      let optionsHtml = '<option value="">-- 選擇該點位配置之品項 (或下方直接手動輸入) --</option>';
+      let optionsHtml = '<option value="">-- 請選擇器材品項 --</option>';
       
       if (targetPin && Array.isArray(targetPin.asset_list) && targetPin.asset_list.length > 0) {
         targetPin.asset_list.forEach(item => {
