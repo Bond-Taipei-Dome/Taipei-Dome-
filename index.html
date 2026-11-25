@@ -190,7 +190,7 @@
       </div>
 
       <div class="flex items-center flex-wrap gap-1 sm:gap-1.5">
-        <button onclick="copyPendingListSummary()" class="flex items-center bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs px-2 sm:px-2.5 py-1.5 rounded-lg transition shadow-sm min-h-[32px]" title="一鍵複製待修復案件通報文字（可貼至 LINE）">
+        <button onclick="copyPendingListSummary()" class="flex items-center bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs px-2 sm:px-2.5 py-1.5 rounded-lg transition shadow-sm min-h-[32px]" title="一鍵複製待復原案件通報文字（可貼至 LINE）">
           <i class="fa-solid fa-share-nodes mr-1"></i> <span>通報</span>
         </button>
 
@@ -206,7 +206,7 @@
           <i class="fa-solid fa-file-export mr-1"></i> <span>異常紀錄表</span>
         </button>
 
-        <button onclick="exportAllVenuePendingReport()" class="flex items-center bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-2 sm:px-2.5 py-1.5 rounded-lg transition shadow-sm min-h-[32px]" title="匯出全場館所有待修復異常案件總表 A4 紙本報表">
+        <button onclick="exportAllVenuePendingReport()" class="flex items-center bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-2 sm:px-2.5 py-1.5 rounded-lg transition shadow-sm min-h-[32px]" title="匯出全場館所有待復原異常案件總表 A4 紙本報表">
           <i class="fa-solid fa-clipboard-list mr-1"></i> <span>待修總表</span>
         </button>
 
@@ -246,11 +246,11 @@
       <div class="absolute bottom-5 right-5 z-20 flex flex-col gap-2.5">
         <div class="bg-slate-900/90 backdrop-blur border border-slate-700 rounded-xl p-3 text-xs sm:text-sm space-y-2 shadow-xl">
           <div class="flex items-center justify-between gap-4">
-            <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-rose-500 inline-block border border-white"></span> 待修復</span>
+            <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-rose-500 inline-block border border-white"></span> 待復原</span>
             <strong id="legendPending" class="text-rose-400 text-base">0</strong>
           </div>
           <div class="flex items-center justify-between gap-4">
-            <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block border border-white"></span> 已修復</span>
+            <span class="flex items-center gap-2 text-slate-200 font-medium"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block border border-white"></span> 已復原</span>
             <strong id="legendCompleted" class="text-emerald-400 text-base">0</strong>
           </div>
           <div class="pt-2 border-t border-slate-700/80">
@@ -303,11 +303,11 @@
             </select>
             <select id="filterStatus" onchange="renderListViewTable()" class="bg-slate-700 text-white text-xs sm:text-sm rounded-lg px-3.5 py-2.5 border border-slate-600 focus:outline-none focus:border-amber-500 min-h-[36px]">
               <option value="all">全部狀態</option>
-              <option value="unrestored">🔴 待修復案件</option>
-              <option value="restored">🟢 已修復案件</option>
+              <option value="unrestored">🔴 待復原案件</option>
+              <option value="restored">🟢 已復原案件</option>
             </select>
             <button onclick="copyPendingListSummary()" class="bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-teal-500 transition min-h-[36px] flex items-center gap-1.5 shadow">
-              <i class="fa-solid fa-copy"></i> 一鍵複製待修清單
+              <i class="fa-solid fa-copy"></i> 一鍵複製待復原清單
             </button>
           </div>
           <div class="relative flex-1 sm:w-72">
@@ -325,7 +325,7 @@
                   <th class="py-3.5 px-4">圖資區域</th>
                   <th class="py-3.5 px-4">活動抬頭與損壞標題</th>
                   <th class="py-3.5 px-4">責任單位</th>
-                  <th class="py-3.5 px-4">修復方式</th>
+                  <th class="py-3.5 px-4">復原方式</th>
                   <th class="py-3.5 px-4 text-right">操作</th>
                 </tr>
               </thead>
@@ -353,7 +353,7 @@
           <div><strong>活動名稱：</strong><span id="modalRptActivity" class="text-amber-400 font-bold">--</span></div>
           <div><strong>租用單位：</strong><span id="modalRptUnit" class="text-slate-200">--</span></div>
           <div><strong>租用期間：</strong><span id="modalRptDates" class="text-slate-200">--</span></div>
-          <div><strong>待修復總件數：</strong><span id="modalRptCount" class="text-rose-400 font-bold">0 件</span></div>
+          <div><strong>待復原總件數：</strong><span id="modalRptCount" class="text-rose-400 font-bold">0 件</span></div>
           <div id="appendix24PreviewList" class="bg-slate-900 rounded-xl border border-slate-700 p-3 max-h-80 overflow-y-auto text-xs space-y-2 mt-2"></div>
         </div>
 
@@ -410,7 +410,7 @@
 
         <div class="bg-slate-900/90 p-4 rounded-xl border border-rose-500/30 mb-4 space-y-2 text-xs">
           <div><strong>列印對象：</strong><span class="text-rose-400 font-bold">臺北大巨蛋全場館（含 B2 ~ RF 所有樓層與剖面）</span></div>
-          <div><strong>目前全館待修復總件數：</strong><span id="allVenueModalCount" class="text-rose-400 font-bold text-base">0 件</span></div>
+          <div><strong>目前全館待復原總件數：</strong><span id="allVenueModalCount" class="text-rose-400 font-bold text-base">0 件</span></div>
           <div id="allVenuePreviewList" class="bg-slate-900 rounded-xl border border-slate-700 p-3 max-h-80 overflow-y-auto text-xs space-y-2"></div>
           <div><strong>彙整時間：</strong><span id="allVenueModalTime" class="text-slate-200">--</span></div>
         </div>
@@ -613,15 +613,15 @@
         </div>
 
         <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-700/60 space-y-1">
-          <label class="block text-xs font-bold text-indigo-300">預計修復方式 (repair_option)</label>
+          <label class="block text-xs font-bold text-indigo-300">預計復原方式 (repair_option)</label>
           <div class="flex items-center space-x-4 text-xs">
             <label class="flex items-center space-x-1.5 cursor-pointer py-1">
-              <input type="radio" name="repairOption" value="租用方自行修復" onchange="toggleRepairFields()" class="w-4 h-4 text-amber-500">
-              <span>租用方自行修復</span>
+              <input type="radio" name="repairOption" value="租用方自行復原" onchange="toggleRepairFields()" class="w-4 h-4 text-amber-500">
+              <span>租用方自行復原</span>
             </label>
             <label class="flex items-center space-x-1.5 cursor-pointer py-1">
-              <input type="radio" name="repairOption" value="租用方付費維修" onchange="toggleRepairFields()" class="w-4 h-4 text-amber-500">
-              <span>租用方付費維修</span>
+              <input type="radio" name="repairOption" value="租用方付費復原" onchange="toggleRepairFields()" class="w-4 h-4 text-amber-500">
+              <span>租用方付費復原</span>
             </label>
           </div>
 
@@ -636,7 +636,7 @@
             </div>
           </div>
           <div id="paidRepairNotice" class="hidden text-xs text-amber-400 bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20">
-            <i class="fa-solid fa-circle-info mr-1"></i> 將由場務管理科提供後續維修報價單。
+            <i class="fa-solid fa-circle-info mr-1"></i> 將由場務管理科提供後續復原報價單。
           </div>
         </div>
 
@@ -1334,7 +1334,7 @@ const idx = window.projectHeadersCache.findIndex(
           <tr class="hover:bg-slate-700/40 transition">
             <td class="py-3.5 px-4 whitespace-nowrap">
               <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isRestored ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'}">
-                ${isRestored ? '🟢 已修復' : '🔴 待修復'}
+                ${isRestored ? '🟢 已復原' : '🔴 待復原'}
               </span>
             </td>
             <td class="py-3.5 px-4 font-semibold text-indigo-300">${mapName}</td>
@@ -1398,7 +1398,7 @@ const idx = window.projectHeadersCache.findIndex(
       if (!pin) return showToast('請先選擇或儲存點位', 'info');
 
       const mapName = window.MAPS[pin.map_id || pin.mapId]?.name || '圖資區域';
-      const statusText = pin.actual_restore_date ? '🟢 已修復' : '🔴 待修復';
+      const statusText = pin.actual_restore_date ? '🟢 已復原' : '🔴 待復原';
       const text = `【大巨蛋場務巡檢通報】\n` +
         `------------------------\n` +
         `● 案件名稱：${pin.title}\n` +
@@ -1406,7 +1406,7 @@ const idx = window.projectHeadersCache.findIndex(
         `● 案件狀態：${statusText}\n` +
         `● 責任單位：${pin.department || '未指定'}\n` +
         `● 損害日期：${pin.damage_date || '未指定'}\n` +
-        `● 預計修復：${pin.repair_option || '待確定'}\n` +
+        `● 預計復原：${pin.repair_option || '待確定'}\n` +
         `● 現況說明：${pin.description || '無備註'}\n` +
         `------------------------\n` +
         `（來自 臺北大巨蛋場館現況管理系統）`;
@@ -1429,10 +1429,10 @@ const idx = window.projectHeadersCache.findIndex(
       }
 
       if (pendingPins.length === 0) {
-        return showToast('當前視角下無任何「待修復」案件需要通報！', 'info');
+        return showToast('當前視角下無任何「待復原」案件需要通報！', 'info');
       }
 
-      let summary = `🚨【臺北大巨蛋 待修復異常通報清單】🚨\n`;
+      let summary = `🚨【臺北大巨蛋 待復原異常通報清單】🚨\n`;
       if (activeHeader?.activity) summary += `活動檔期：${activeHeader.activity}\n`;
       summary += `待處理總件數：${pendingPins.length} 件\n`;
       summary += `========================\n`;
@@ -1440,13 +1440,13 @@ const idx = window.projectHeadersCache.findIndex(
       pendingPins.forEach((p, idx) => {
         const mapName = window.MAPS[p.map_id || p.mapId]?.name || '圖資區域';
         summary += `${idx + 1}. [${mapName}] ${p.title}\n`;
-        summary += `   • 責任單位：${p.department || '未指定'} | 修復方式：${p.repair_option || '待確定'}\n`;
+        summary += `   • 責任單位：${p.department || '未指定'} | 復原方式：${p.repair_option || '待確定'}\n`;
         if (p.description) summary += `   • 備註：${p.description}\n`;
       });
       summary += `========================\n（報告時間：${formatDateToTwFullString(new Date())}）`;
 
       navigator.clipboard.writeText(summary).then(() => {
-        showToast(`已成功複製 ${pendingPins.length} 筆待修復通報文字！`, 'success');
+        showToast(`已成功複製 ${pendingPins.length} 筆待復原通報文字！`, 'success');
       }).catch(() => {
         showToast('複製失敗，請手動複製', 'error');
       });
@@ -2761,10 +2761,10 @@ window.deleteProjectHeader = async function(id) {
       const selected = document.querySelector('input[name="repairOption"]:checked')?.value;
       const selfDiv = document.getElementById('selfRepairFields');
       const paidDiv = document.getElementById('paidRepairNotice');
-      if (selected === '租用方自行修復') {
+      if (selected === '租用方自行復原') {
         selfDiv?.classList.remove('hidden'); selfDiv?.classList.add('grid');
         paidDiv?.classList.add('hidden');
-      } else if (selected === '租用方付費維修') {
+      } else if (selected === '租用方付費復原') {
         selfDiv?.classList.add('hidden'); selfDiv?.classList.remove('grid');
         paidDiv?.classList.remove('hidden');
       } else {
@@ -3079,7 +3079,7 @@ if (imageSize > 1500000) {
       pinsToExport = pinsToExport.filter(p => !p.actual_restore_date);
 
       if (pinsToExport.length === 0) {
-        return showToast('當前檔期與視角下無任何「待修復」損害案件可供列印！', 'info');
+        return showToast('當前檔期與視角下無任何「待復原」損害案件可供列印！', 'info');
       }
 
       window.currentExportPins = pinsToExport;
@@ -3119,7 +3119,7 @@ if (imageSize > 1500000) {
       const allPendingPins = (window.pins || []).filter(p => p.pin_type !== 'asset' && !p.actual_restore_date);
 
       if (allPendingPins.length === 0) {
-        return showToast('目前全場館無任何「待修復」異常案件！', 'info');
+        return showToast('目前全場館無任何「待復原」異常案件！', 'info');
       }
 
       window.allVenueExportPins = allPendingPins;
@@ -3401,11 +3401,11 @@ function drawDataUrlToCanvas(pad, dataUrl) {
               <div class="space-y-1">
                 <div class="flex items-center gap-1 font-bold">
                   <span>■</span>
-                  <span>${p.repair_option || '租用方自行修復'}</span>
+                  <span>${p.repair_option || '租用方自行復原'}</span>
                 </div>
               </div>
               <div class="pt-1 border-t border-gray-200 text-[11px] space-y-1">
-                <div><strong>預計修復日期：</strong><span class="font-mono font-semibold">${p.construct_date || p.damage_date || '配合檔期排程'}</span></div>
+                <div><strong>預計復原日期：</strong><span class="font-mono font-semibold">${p.construct_date || p.damage_date || '配合檔期排程'}</span></div>
                 ${p.constructor_name ? `<div><strong>施工單位：</strong>${p.constructor_name}</div>` : ''}
               </div>
             </td>
