@@ -545,19 +545,26 @@
 
         <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-700/60 space-y-3">
           <div class="text-xs font-bold text-amber-400 uppercase tracking-wider">專案抬頭資訊 (Header Scoped)</div>
+          <div>
+            <label class="block text-xs font-semibold mb-1 text-indigo-300">快速套用既有檔期</label>
+            <select id="formHeaderQuickSelect" onchange="applyHeaderToPinForm(this.value)" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-indigo-500/50 text-white min-h-[36px] cursor-pointer">
+              <option value="">-- 手動填寫 / 維持目前欄位 --</option>
+            </select>
+          </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold mb-1">活動名稱 (activity_name) <span class="text-rose-400">*</span></label>
-              <input type="text" id="formActivityName" required class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
+              <input type="text" id="formActivityName" required placeholder="例如：2026 職棒總冠軍賽" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
             </div>
             <div>
               <label class="block text-xs font-semibold mb-1">租用單位 (renter_unit)</label>
-              <input type="text" id="formRenterUnit" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
+              <input type="text" id="formRenterUnit" placeholder="例如：○○棒球協會" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold mb-1">租用開始時間 (24小時制)</label>
+
               <input type="datetime-local" id="formRentStartDate" step="60" class="w-full bg-slate-800 rounded-lg p-2.5 text-xs border border-slate-600 text-white min-h-[36px]">
             </div>
             <div>
@@ -878,11 +885,14 @@
   <div id="appendix24PrintArea" class="hidden bg-white text-black p-2 font-sans">
     <div class="text-center font-black text-xl mb-0.5 tracking-wider">臺北大巨蛋設施設備損害異常紀錄表</div>
     <div class="text-center text-[10px] text-gray-600 mb-2 font-semibold">（表單編號：DI-VM-05-2023-01）</div>
-    <div class="border border-black p-3 mb-3 text-xs space-y-1">
-      <div><strong>活動名稱：</strong><span id="rptActivityName">--</span></div>
-      <div><strong>租用單位：</strong><span id="rptRenterUnit">--</span></div>
+    <div class="border border-black p-2.5 mb-3 text-xs space-y-1">
+      <div class="flex flex-wrap justify-between gap-x-4">
+        <div><strong>活動名稱：</strong><span id="rptActivityName">--</span></div>
+        <div><strong>租用單位：</strong><span id="rptRenterUnit">--</span></div>
+      </div>
       <div><strong>租用期間：</strong><span id="rptRentDates">--</span></div>
     </div>
+
     <table class="w-full text-xs border-collapse border border-black mb-6">
       <thead>
         <tr class="bg-gray-200 text-center">
@@ -919,10 +929,16 @@
   <div id="allVenuePrintArea" class="hidden bg-white text-black p-2 font-sans">
     <div class="text-center font-black text-xl mb-0.5 tracking-wider">臺北大巨蛋全場館待修案件總表</div>
     <div class="text-center text-[10px] text-gray-600 mb-2 font-semibold">（表單編號：DI-VM-ALL-2026-01）</div>
-    <div class="border border-black p-3 mb-3 text-xs space-y-1">
-      <div><strong>彙整範圍：</strong><span>全場館所有樓層與剖面 (B2 ~ RF) 之未完修異常案件</span></div>
-      <div><strong>列印時間：</strong><span id="allVenuePrintTime">--</span></div>
-      <div><strong>待修總件數：</strong><span id="allVenuePrintCount" class="font-bold">0 件</span></div>
+    <div class="border border-black p-2.5 mb-3 text-xs space-y-1">
+      <div class="flex flex-wrap justify-between gap-x-4">
+        <div><strong>彙整範圍：</strong><span>全場館所有樓層與剖面 (B2 ~ RF) 之未完修異常案件</span></div>
+        <div><strong>目前檔期：</strong><span id="allVenuePrintActivity" class="font-bold">--</span></div>
+      </div>
+      <div class="flex flex-wrap justify-between gap-x-4">
+        <div><strong>檔期期間：</strong><span id="allVenuePrintDates">--</span></div>
+        <div><strong>列印時間：</strong><span id="allVenuePrintTime">--</span></div>
+        <div><strong>待修總件數：</strong><span id="allVenuePrintCount" class="font-bold">0 件</span></div>
+      </div>
     </div>
     <table class="w-full text-xs border-collapse border border-black mb-6">
       <thead>
@@ -960,9 +976,11 @@
     <div class="text-center font-black text-xl mb-1 tracking-wider">臺北大巨蛋活動器材點交與點退紀錄表</div>
     <div class="text-center text-[10px] text-gray-600 mb-3 font-semibold">（表單編號：DI-AST-02-2026-01）</div>
     
-    <div class="border border-black p-3 mb-4 space-y-1 bg-gray-50">
-      <div><strong>活動名稱：</strong><span id="assetRptActivityName">--</span></div>
-      <div><strong>租用/主辦單位：</strong><span id="assetRptRenterUnit">--</span></div>
+    <div class="border border-black p-2.5 mb-4 space-y-1 bg-gray-50">
+      <div class="flex flex-wrap justify-between gap-x-4">
+        <div><strong>活動名稱：</strong><span id="assetRptActivityName">--</span></div>
+        <div><strong>租用/主辦單位：</strong><span id="assetRptRenterUnit">--</span></div>
+      </div>
       <div><strong>檔期期間：</strong><span id="assetRptRentDates">--</span></div>
     </div>
 
@@ -2420,7 +2438,7 @@ function renderAssetPinsPreview() {
         const fullChain = group.path_history || originAct;
         const itemList = Object.values(group.items);
 
-        // 點交階段只列出有「點交數量 > 0」的品項，且只顯示點交數量，其餘欄位留白維持版面一致
+        // 點交階段只列出有「點交數量 > 0」的品項，且只顯示點交數量，不顯示點退與差異字樣
         if (!isCheckOutStage) {
           const checkInItems = itemList.filter(item => {
             const checkInQty = Math.max(0, item.totalIn > 0 ? item.totalIn : item.balance);
@@ -2431,21 +2449,51 @@ function renderAssetPinsPreview() {
             ? checkInItems.map(item => {
                 const checkInQty = Math.max(0, item.totalIn > 0 ? item.totalIn : item.balance);
                 return `
-                  <div class="flex items-center justify-between py-1 border-b border-gray-300 last:border-b-0 text-[11px]">
+                  <div class="flex items-center justify-start py-1 border-b border-gray-300 last:border-b-0 text-[11px]">
                     <span class="font-bold text-black">${item.asset_name}</span>
-                    <span class="font-mono whitespace-nowrap ml-2">
-                      點交:<strong class="text-emerald-700">${checkInQty}</strong> ｜ 
-                      點退:<strong class="text-gray-400">--</strong> ｜ 
-                      差異:<strong class="text-gray-400">--</strong>
+                    <span class="font-mono whitespace-nowrap ml-3">
+                      點交:<strong class="text-emerald-700">${checkInQty}</strong>
                     </span>
                   </div>
                 `;
               }).join('')
             : `<div class="py-1 text-[11px] text-gray-400">無點交器材</div>`;
 
-          const checkInTrackHtml = isRetainedAtPin
-            ? `📥 <strong>【留用軌跡】</strong>：起始於 <span class="text-blue-700 font-bold">[ ${originAct} ]</span> ｜ 歷經檔期：<span class="text-indigo-700 font-semibold">[ ${fullChain} ]</span>`
-            : `<span class="text-gray-400">--</span>`;
+          // 檢查是否有「來自前面檔期」的留用資訊
+          const prevHeader = currentIndex > 0 ? list[currentIndex - 1] : null;
+          const prevActivityName = prevHeader ? prevHeader.activity : '';
+          const retainedFromPrevByFlag = !!(
+            prevActivityName &&
+            window.pinRetentionMap &&
+            window.pinRetentionMap[prevActivityName] &&
+            window.pinRetentionMap[prevActivityName][group.pin_location]
+          );
+
+          const carryOverTx = (window.assetTransactions || []).find(tx => {
+            if (!tx || (tx.pin_location || '未指定位置') !== group.pin_location) return false;
+            const belongsToCurrent = tx.activity_name === selectedActivity;
+            const hasCarryFlag = !!tx.is_carried_over;
+            const hasPrevOrigin = !!(tx.origin_activity && tx.origin_activity !== selectedActivity);
+            const hasPrevPath = !!(tx.path_history && tx.path_history !== selectedActivity && tx.path_history.includes(selectedActivity));
+            return (belongsToCurrent && (hasCarryFlag || hasPrevOrigin || hasPrevPath)) ||
+                   (prevActivityName && tx.activity_name === prevActivityName && hasCarryFlag);
+          });
+
+          const hasCarryOverFromPrevious = retainedFromPrevByFlag || !!carryOverTx;
+
+          let checkInTrackHtml = '';
+          if (hasCarryOverFromPrevious) {
+            const originAct = (carryOverTx && carryOverTx.origin_activity) || prevActivityName || group.origin_activity || '前面檔期';
+            const rawChain = (carryOverTx && carryOverTx.path_history) || (prevActivityName ? `${originAct} ➔ ${prevActivityName} ➔ ${selectedActivity}` : `${originAct} ➔ ${selectedActivity}`);
+            const fullChain = rawChain.includes(selectedActivity) ? rawChain : `${rawChain} ➔ ${selectedActivity}`;
+
+            checkInTrackHtml = `
+              <div class="space-y-1">
+                <div>📥 <strong>【前檔留用轉入】</strong>：自 <span class="text-blue-700 font-bold">[ ${originAct} ]</span> 留用續用至本檔</div>
+                <div>🔄 <strong>【轉移軌跡】</strong>：<span class="text-indigo-700 font-semibold">[ ${fullChain} ]</span></div>
+              </div>
+            `;
+          }
 
           return `
             <tr class="align-top print-keep-together">
@@ -2456,6 +2504,8 @@ function renderAssetPinsPreview() {
             </tr>
           `;
         }
+
+
 
         const itemsHtml = itemList.map(item => {
           const checkInQty = Math.max(0, item.totalIn > 0 ? item.totalIn : Math.max(0, item.balance + item.totalOut));
@@ -2670,6 +2720,33 @@ window.deleteProjectHeader = async function(id) {
       showToast('已切換為訪客模式', 'info');
     };
 
+    window.populatePinHeaderSelect = function(matchedActivityName = '') {
+      const sel = document.getElementById('formHeaderQuickSelect');
+      if (!sel) return;
+      const list = typeof getStoredHeaderList === 'function' ? getStoredHeaderList() : [];
+      sel.innerHTML = '<option value="">-- 手動填寫 / 維持目前欄位 --</option>' +
+        list.map(h => {
+          const selected = matchedActivityName && h.activity === matchedActivityName ? 'selected' : '';
+          return `<option value="${h.id}" ${selected}>${h.activity} (${h.unit || '未設定單位'})</option>`;
+        }).join('');
+    };
+
+    window.applyHeaderToPinForm = function(headerId) {
+      if (!headerId) return;
+      const list = typeof getStoredHeaderList === 'function' ? getStoredHeaderList() : [];
+      const h = list.find(item => item.id === headerId);
+      if (!h) return;
+
+      const actEl = document.getElementById('formActivityName');
+      const unitEl = document.getElementById('formRenterUnit');
+      if (actEl && h.activity) actEl.value = h.activity;
+      if (unitEl && h.unit !== undefined) unitEl.value = h.unit || '';
+      document.getElementById('formRentStartDate').value = safeFormatForDatetimeInput(h.start);
+      document.getElementById('formRentEndDate').value = safeFormatForDatetimeInput(h.end);
+      showToast(`已套用檔期：${h.activity}`, 'info');
+    };
+
+
     function safeFormatForDatetimeInput(dtStr) {
       if (!dtStr) return '';
       return dtStr.length === 16 ? dtStr : dtStr.substring(0, 16);
@@ -2690,12 +2767,15 @@ window.deleteProjectHeader = async function(id) {
       const activeId = localStorage.getItem('dome_active_header_id') || '';
       const activeHeader = list.find(h => h.id === activeId);
 
+      const actEl = document.getElementById('formActivityName');
+      const unitEl = document.getElementById('formRenterUnit');
       if (activeHeader) {
-        if (activeHeader.activity) document.getElementById('formActivityName').value = activeHeader.activity;
-        if (activeHeader.unit) document.getElementById('formRenterUnit').value = activeHeader.unit;
+        if (actEl && activeHeader.activity) actEl.value = activeHeader.activity;
+        if (unitEl && activeHeader.unit) unitEl.value = activeHeader.unit;
         if (activeHeader.start) document.getElementById('formRentStartDate').value = safeFormatForDatetimeInput(activeHeader.start);
         if (activeHeader.end) document.getElementById('formRentEndDate').value = safeFormatForDatetimeInput(activeHeader.end);
       }
+      populatePinHeaderSelect(activeHeader?.activity || '');
 
       document.getElementById('formDamageDate').value = new Date().toISOString().split('T')[0];
       window.photoProcessingCount = 0;
@@ -2719,8 +2799,11 @@ window.deleteProjectHeader = async function(id) {
       document.getElementById('formCoordY').value = pin.y;
       document.getElementById('formPinType').value = pin.pin_type || 'damage';
       document.getElementById('formTitle').value = pin.title || '';
-      document.getElementById('formActivityName').value = pin.activity_name || '';
-      document.getElementById('formRenterUnit').value = pin.renter_unit || '';
+      const actEl = document.getElementById('formActivityName');
+      const unitEl = document.getElementById('formRenterUnit');
+      if (actEl) actEl.value = pin.activity_name || '';
+      if (unitEl) unitEl.value = pin.renter_unit || '';
+      populatePinHeaderSelect(pin.activity_name || '');
       document.getElementById('formRentStartDate').value = safeFormatForDatetimeInput(pin.rent_start_date);
       document.getElementById('formRentEndDate').value = safeFormatForDatetimeInput(pin.rent_end_date);
       document.getElementById('formDepartment').value = pin.department || '';
@@ -2889,7 +2972,8 @@ let isSavingPin = false;
 
         const pinId = document.getElementById('formPinId').value || crypto.randomUUID();
         const titleVal = document.getElementById('formTitle').value.trim();
-        const activityVal = document.getElementById('formActivityName').value.trim();
+        const activityVal = (document.getElementById('formActivityName')?.value || '').trim();
+        const renterUnitVal = (document.getElementById('formRenterUnit')?.value || '').trim();
 
         if (!titleVal) {
           showToast('請填寫點位名稱 / 位置地點！', 'error');
@@ -2933,7 +3017,7 @@ if (imageSize > 1500000) {
           pin_type: document.getElementById('formPinType').value,
           title: titleVal,
           activity_name: activityVal,
-          renter_unit: document.getElementById('formRenterUnit').value.trim(),
+          renter_unit: renterUnitVal,
           rent_start_date: document.getElementById('formRentStartDate').value || null,
           rent_end_date: document.getElementById('formRentEndDate').value || null,
           department: document.getElementById('formDepartment').value.trim(),
@@ -3469,6 +3553,21 @@ function drawDataUrlToCanvas(pad, dataUrl) {
     };
 
     function generateAllVenuePrintout(pinsList, sigData = {}) {
+      const list = getStoredHeaderList();
+      const activeId = localStorage.getItem('dome_active_header_id') || '';
+      const activeHeader = list.find(h => h.id === activeId) || {};
+
+      const activityEl = document.getElementById('allVenuePrintActivity');
+      const datesEl = document.getElementById('allVenuePrintDates');
+      if (activityEl) {
+        activityEl.innerText = activeHeader.activity || '全部／未指定檔期';
+      }
+      if (datesEl) {
+        datesEl.innerText = (activeHeader.start || activeHeader.end)
+          ? `${formatDateToTwFullString(activeHeader.start)} ~ ${formatDateToTwFullString(activeHeader.end)}`
+          : '依各案標示';
+      }
+
       document.getElementById('allVenuePrintTime').innerText = formatDateToTwFullString(new Date());
       document.getElementById('allVenuePrintCount').innerText = `${pinsList.length} 件`;
 
