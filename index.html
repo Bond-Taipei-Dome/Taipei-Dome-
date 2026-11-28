@@ -782,44 +782,30 @@
 
 
 
-<!-- 列表顯示 -->
-      <div class="space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">🏢 全館所有位置之器材種類與目前庫存 / 檔期結算狀態</h3>
-          <button type="button" onclick="renderAssetInventoryUI()" class="text-xs text-amber-400 hover:underline"><i class="fa-solid fa-rotate mr-1"></i>重新整理數據</button>
-        </div>
-
-        <!-- 精簡版面：說明文字另外獨立呈現 -->
-        <div class="bg-slate-900/70 border border-purple-500/25 rounded-lg px-3.5 py-2 text-[11px] text-slate-300 leading-relaxed">
-          <span class="text-purple-300 font-bold">🔄 點位跨檔留用說明：</span>
-          於總表各<strong>點位</strong>勾選「留用下一檔」，代表該點位內所有器材不撤場直接續用，紙本表單會自動記錄「起始檔期 ➔ 經歷檔期 ➔ 本檔/下檔」軌跡；若某檔<strong>未勾選</strong>，則該點位將於本檔自動觸發點退歸還結算。
-        </div>
-        
-        <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs sm:text-sm text-slate-200">
-              <thead class="bg-slate-700/80 text-slate-100 uppercase text-xs border-b border-slate-600">
-                <tr>
-                  <th class="py-2.5 px-4">位置 / 點位名稱</th>
-                  <th class="py-2.5 px-4">器材品項名稱</th>
-                  <th class="py-2.5 px-4 text-right">進場點交數量</th>
-                  <th class="py-2.5 px-4 text-right font-bold text-amber-400">目前在庫數</th>
-                </tr>
-              </thead>
-              <tbody id="assetInventorySummaryBody" class="divide-y divide-slate-700/70"></tbody>
-            </table>
+<!-- 列表顯示（整合版：各點位器材配置、庫存核對與跨檔留用總覽） -->
+      <div class="space-y-3">
+        <div class="bg-slate-900/90 p-4 rounded-xl border border-blue-500/30 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-boxes-packing"></i> 🏢 各點位器材配置、在庫核對與跨檔留用總覽
+              </h3>
+              <p class="text-[11px] text-slate-400 mt-0.5">
+                點退階段可於卡片下方勾選「留用下一檔」直接續用；未勾選則於本檔觸發點退結算。
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="relative flex-1 sm:w-52">
+                <i class="fa-solid fa-magnifying-glass text-slate-400 text-[11px] absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" id="assetCardFilterInput" oninput="renderAssetPinsPreview()" placeholder="篩選點位、樓層或器材..." class="w-full bg-slate-800 text-white text-xs rounded-lg pl-7 pr-2.5 py-1.5 border border-slate-600 focus:outline-none focus:border-amber-500">
+              </div>
+              <button type="button" onclick="renderAssetInventoryUI()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg border border-slate-700 text-xs font-semibold shrink-0" title="重新整理數據">
+                <i class="fa-solid fa-rotate"></i>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <!-- 點交前全場館各點位器材狀況與照片預覽模式 -->
-        <div class="bg-slate-900/90 p-4 rounded-xl border border-blue-500/30 my-4 space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
-              <i class="fa-solid fa-eye"></i> 👀 點交核對：各點位器材配置與地圖點位現況預覽
-            </h3>
-            <span class="text-[11px] text-slate-400">※ 請租用方在簽名前核對下方各點位之現場配置狀況</span>
-          </div>
-          <div id="assetPinsPreviewGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1"></div>
+          <div id="assetPinsPreviewGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-[26rem] overflow-y-auto pr-1"></div>
         </div>
 
         <!-- 點交雙方電子簽名介面 -->
@@ -1830,7 +1816,7 @@ window.currentAssetStage = 'check_in';
         btnIn?.classList.remove('bg-emerald-500', 'text-slate-950', 'font-black');
         btnIn?.classList.add('text-slate-300', 'font-bold');
         if (hintEl) {
-          hintEl.innerHTML = '目前為【離場點退階段】：可於下方「各點位現況預覽」勾選跨檔留用；點退填寫<strong>實際清點數</strong>，系統自動算差額。';
+          hintEl.innerHTML = '目前為【離場點退階段】：可於下方「各點位器材配置與庫存總覽」勾選跨檔留用；點退填寫<strong>實際清點數</strong>，系統自動算差額。';
         }
       } else {
         btnIn?.classList.remove('text-slate-300', 'font-bold');
@@ -1958,6 +1944,21 @@ if (transaction_type === 'check_out') {
 
       // 💡 移除原本會強制轉負數的 if 判斷，直接採用您在輸入框中填寫的正負數值
 
+      const existingCheckInTx = (window.assetTransactions || []).find(tx =>
+        tx.activity_name === activity_name &&
+        (tx.pin_location || '未指定位置') === pin_location &&
+        tx.asset_name === asset_name &&
+        tx.transaction_type === 'check_in'
+      );
+
+      const lockedCheckInQty = transaction_type === 'check_in'
+        ? (existingCheckInTx
+            ? parseInt(existingCheckInTx.initial_check_in_qty ?? existingCheckInTx.change_qty ?? change_qty)
+            : parseInt(change_qty || 0))
+        : (existingCheckInTx
+            ? parseInt(existingCheckInTx.initial_check_in_qty ?? existingCheckInTx.change_qty ?? 0)
+            : null);
+
       const newTx = {
         id: crypto.randomUUID(),
         activity_name,
@@ -1965,6 +1966,7 @@ if (transaction_type === 'check_out') {
         asset_name,
         transaction_type,
         change_qty,
+        initial_check_in_qty: lockedCheckInQty,
         origin_activity: activity_name,
         path_history: activity_name,
         created_at: new Date().toISOString()
@@ -2157,109 +2159,169 @@ function renderAssetInventoryUI() {
 
 
 
-function renderAssetPinsPreview() {
+window.quickSelectPinForAssetTx = function(pinLocation, firstAssetName = '') {
+      const pinSelect = document.getElementById('txPinLocation');
+      if (pinSelect) {
+        pinSelect.value = pinLocation;
+        updateTxAssetDropdownOptions();
+      }
+      if (firstAssetName) {
+        const assetSelect = document.getElementById('txAssetNameSelect');
+        if (assetSelect) assetSelect.value = firstAssetName;
+        onTxAssetSelectChange(firstAssetName);
+      }
+      const qtyInput = document.getElementById('txQty');
+      if (qtyInput) {
+        qtyInput.focus();
+        qtyInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      showToast(`已帶入點位：${pinLocation}`, 'info');
+    };
+
+    function renderAssetPinsPreview() {
       const container = document.getElementById('assetPinsPreviewGrid');
       if (!container) return;
 
       const selectedActivity = document.getElementById('assetManagerActivitySelect')?.value || '';
       const isCheckOutStage = (window.currentAssetStage === 'check_out');
-
-      const summaryMap = {};
-
-(window.pins || [])
-  .filter(p => p.pin_type === 'asset')
-  .forEach(pin => {
-
-    const mapName =
-      window.MAPS[pin.map_id || pin.mapId]?.name || '圖資';
-
-    const locationName =
-      `${pin.title} (${mapName})`;
-
-    (pin.asset_list || []).forEach(item => {
-
-      const key =
-        `${locationName}__${item.name}`;
-
-      summaryMap[key] = {
-        pin_location: locationName,
-        asset_name: item.name,
-        checkInQty: parseInt(item.qty || 0),
-        balance: parseInt(item.qty || 0)
-      };
-
-    });
-
-  });
-
-        
-
-      const summaryBody = document.getElementById('assetInventorySummaryBody');
-      if (summaryBody) {
-        const summaryRows = Object.values(summaryMap);
-        if (summaryRows.length === 0) {
-          summaryBody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500 text-xs">尚無器材點交或庫存紀錄</td></tr>`;
-        } else {
-          summaryBody.innerHTML = summaryRows.map(r => `
-            <tr class="hover:bg-slate-800/60 transition">
-              <td class="py-2.5 px-4 font-semibold text-indigo-300">${r.pin_location}</td>
-              <td class="py-2.5 px-4 font-bold text-white">${r.asset_name}</td>
-              <td class="py-2.5 px-4 text-right font-mono text-emerald-400">${r.checkInQty}</td>
-              <td class="py-2.5 px-4 text-right font-mono font-bold text-amber-400">${Math.max(0, r.balance)}</td>
-            </tr>
-          `).join('');
-        }
-      }
+      const filterKeyword = (document.getElementById('assetCardFilterInput')?.value || '').trim().toLowerCase();
 
       const headers = getStoredHeaderList();
       const actIdx = headers.findIndex(h => h.activity === selectedActivity);
       const nextActivityName = (actIdx >= 0 && actIdx < headers.length - 1) ? headers[actIdx + 1].activity : '下一檔活動';
 
+      const pinTitleToLocationKey = {};
       const pinCardMap = {};
+
       (window.pins || []).filter(p => p.pin_type === 'asset').forEach(pin => {
         const mapName = window.MAPS[pin.map_id || pin.mapId]?.name || '圖資';
         const locKey = `${pin.title} (${mapName})`;
+        pinTitleToLocationKey[pin.title] = locKey;
+        pinTitleToLocationKey[locKey] = locKey;
+
+        const itemsMap = {};
+        (Array.isArray(pin.asset_list) ? pin.asset_list : []).forEach(i => {
+          if (!i.name) return;
+          const currentQty = Math.max(0, parseInt(i.qty || 0));
+          itemsMap[i.name] = {
+            name: i.name,
+            checkInQty: currentQty,
+            balance: currentQty,
+            hasCheckInRecord: false,
+            checkOutDeltaSum: 0,
+            hasCheckOutRecord: false
+          };
+        });
+
         pinCardMap[locKey] = {
           pin_location: locKey,
           title: pin.title,
           mapName,
           images: pin.images || [],
-          items: Array.isArray(pin.asset_list) ? [...pin.asset_list] : []
+          itemsMap
         };
       });
 
-      Object.values(summaryMap).forEach(s => {
-        if (!pinCardMap[s.pin_location]) {
-          pinCardMap[s.pin_location] = {
-            pin_location: s.pin_location,
-            title: s.pin_location,
+      // 結合選定檔期之點交／點退紀錄，計算進場點交數與目前在庫數
+      (window.assetTransactions || []).forEach(tx => {
+        if (!tx || (selectedActivity && tx.activity_name !== selectedActivity)) return;
+        const rawLoc = tx.pin_location || '未指定位置';
+        const locKey = pinTitleToLocationKey[rawLoc] || rawLoc;
+        const assetName = tx.asset_name || '未命名器材';
+
+        if (!pinCardMap[locKey]) {
+          pinCardMap[locKey] = {
+            pin_location: locKey,
+            title: locKey,
             mapName: '',
             images: [],
-            items: []
+            itemsMap: {}
           };
         }
-        const exists = pinCardMap[s.pin_location].items.some(i => i.name === s.asset_name);
-        if (!exists) {
-          pinCardMap[s.pin_location].items.push({ name: s.asset_name, qty: Math.max(0, s.balance) });
+        if (!pinCardMap[locKey].itemsMap[assetName]) {
+          pinCardMap[locKey].itemsMap[assetName] = {
+            name: assetName,
+            checkInQty: 0,
+            balance: 0,
+            hasCheckInRecord: false,
+            checkOutDeltaSum: 0,
+            hasCheckOutRecord: false
+          };
+        }
+
+        const entry = pinCardMap[locKey].itemsMap[assetName];
+        if (tx.transaction_type === 'check_in') {
+          const recordedQty = parseInt(tx.initial_check_in_qty ?? tx.change_qty ?? 0);
+          if (!entry.hasCheckInRecord) {
+            entry.checkInQty = recordedQty;
+            entry.hasCheckInRecord = true;
+          } else {
+            entry.checkInQty += recordedQty;
+          }
+        } else if (tx.transaction_type === 'check_out') {
+          entry.checkOutDeltaSum += parseInt(tx.change_qty || 0);
+          entry.hasCheckOutRecord = true;
         }
       });
 
-      const cards = Object.values(pinCardMap);
+      Object.values(pinCardMap).forEach(card => {
+        Object.values(card.itemsMap).forEach(entry => {
+          if (!entry.hasCheckInRecord && entry.hasCheckOutRecord) {
+            entry.checkInQty = Math.max(0, entry.balance - entry.checkOutDeltaSum);
+          }
+        });
+      });
+
+      let cards = Object.values(pinCardMap);
+      if (filterKeyword) {
+        cards = cards.filter(card => {
+          const locMatch = card.pin_location.toLowerCase().includes(filterKeyword);
+          const itemMatch = Object.keys(card.itemsMap).some(name => name.toLowerCase().includes(filterKeyword));
+          return locMatch || itemMatch;
+        });
+      }
+
       if (cards.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-6 text-slate-500 text-xs">目前尚無器材點位配置資料</div>`;
+        container.innerHTML = `<div class="col-span-full text-center py-6 text-slate-500 text-xs">${filterKeyword ? '查無符合關鍵字的點位或器材' : '目前尚無器材點位配置資料'}</div>`;
         return;
       }
 
       container.innerHTML = cards.map(card => {
         const isRetained = getPinRetentionState(selectedActivity, card.pin_location);
         const hasThumb = card.images && card.images.length > 0;
-        const itemsText = card.items.length > 0
-          ? card.items.map(i => `<span class="inline-block bg-slate-800 border border-slate-700 px-2 py-0.5 rounded text-[11px] text-slate-200 mr-1 mb-1">${i.name}：<strong>${i.qty}</strong></span>`).join('')
-          : `<span class="text-[11px] text-slate-500">尚未配置品項</span>`;
+        const itemEntries = Object.values(card.itemsMap);
+        const firstAssetName = itemEntries.length > 0 ? itemEntries[0].name : '';
+
+        const itemsTableHtml = itemEntries.length > 0
+          ? `<div class="mt-2 bg-slate-900/80 rounded-lg border border-slate-700/80 overflow-hidden">
+               <table class="w-full text-left text-[11px]">
+                 <thead class="bg-slate-800/90 text-slate-400 border-b border-slate-700/80">
+                   <tr>
+                     <th class="py-1 px-2.5 font-semibold">器材品項</th>
+                     <th class="py-1 px-2 text-right font-semibold text-emerald-400">點交數</th>
+                     <th class="py-1 px-2.5 text-right font-semibold text-amber-400">目前在庫</th>
+                   </tr>
+                 </thead>
+                 <tbody class="divide-y divide-slate-800">
+                   ${itemEntries.map(i => {
+                     const bal = Math.max(0, i.balance);
+                     const hasDiff = bal !== i.checkInQty;
+                     return `
+                       <tr class="hover:bg-slate-800/40 cursor-pointer" onclick="quickSelectPinForAssetTx('${card.pin_location.replace(/'/g, "\'")}', '${i.name.replace(/'/g, "\'")}')">
+                         <td class="py-1.5 px-2.5 font-bold text-slate-100">${i.name}</td>
+                         <td class="py-1.5 px-2 text-right font-mono text-emerald-400">${i.checkInQty}</td>
+                         <td class="py-1.5 px-2.5 text-right font-mono font-bold ${hasDiff ? 'text-rose-400 underline' : 'text-amber-400'}">${bal}</td>
+                       </tr>
+                     `;
+                   }).join('')}
+                 </tbody>
+               </table>
+             </div>`
+          : `<div class="mt-2 text-[11px] text-slate-500 bg-slate-900/50 rounded-lg px-2.5 py-2">尚未配置品項</div>`;
 
         const retainControlHtml = isCheckOutStage
           ? `<label class="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-300 cursor-pointer select-none">
-               <input type="checkbox" ${isRetained ? 'checked' : ''} onchange="togglePinRetention('${selectedActivity.replace(/'/g, "\\'")}', '${card.pin_location.replace(/'/g, "\\'")}', this.checked)" class="w-4 h-4 accent-amber-500 rounded cursor-pointer">
+               <input type="checkbox" ${isRetained ? 'checked' : ''} onchange="togglePinRetention('${selectedActivity.replace(/'/g, "\'")}', '${card.pin_location.replace(/'/g, "\'")}', this.checked)" class="w-4 h-4 accent-amber-500 rounded cursor-pointer">
                <span>留用下一檔（${nextActivityName}）</span>
              </label>`
           : `<span class="text-[11px] ${isRetained ? 'text-purple-300 font-bold' : 'text-slate-400'}">
@@ -2267,19 +2329,25 @@ function renderAssetPinsPreview() {
              </span>`;
 
         return `
-          <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex flex-col justify-between gap-2.5">
-            <div class="flex items-start gap-3">
-              ${hasThumb
-                ? `<img src="${card.images[0]}" class="w-14 h-14 object-cover rounded-lg border border-slate-600 shrink-0">`
-                : `<div class="w-14 h-14 bg-slate-900 rounded-lg border border-slate-700 flex items-center justify-center text-[10px] text-slate-500 shrink-0">無照片</div>`
-              }
-              <div class="min-w-0 flex-1">
-                <div class="font-bold text-white text-xs truncate">${card.pin_location}</div>
-                <div class="mt-1.5 flex flex-wrap">${itemsText}</div>
+          <div class="bg-slate-800/85 border ${isRetained ? 'border-purple-500/50' : 'border-slate-700'} rounded-xl p-3 flex flex-col justify-between gap-2.5 shadow-sm">
+            <div>
+              <div class="flex items-start gap-2.5">
+                ${hasThumb
+                  ? `<img src="${card.images[0]}" class="w-12 h-12 object-cover rounded-lg border border-slate-600 shrink-0">`
+                  : `<div class="w-12 h-12 bg-slate-900 rounded-lg border border-slate-700 flex items-center justify-center text-[10px] text-slate-500 shrink-0">無照片</div>`
+                }
+                <div class="min-w-0 flex-1">
+                  <div class="font-bold text-indigo-300 text-xs leading-snug break-words">${card.pin_location}</div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">點擊下方品項列可快速帶入上方數量調整</div>
+                </div>
               </div>
+              ${itemsTableHtml}
             </div>
             <div class="pt-2 border-t border-slate-700/80 flex items-center justify-between gap-2">
-              ${retainControlHtml}
+              <div class="min-w-0 flex-1">${retainControlHtml}</div>
+              <button type="button" onclick="quickSelectPinForAssetTx('${card.pin_location.replace(/'/g, "\'")}', '${firstAssetName.replace(/'/g, "\'")}')" class="px-2.5 py-1 bg-purple-600/30 hover:bg-purple-600 text-purple-200 hover:text-white border border-purple-500/40 rounded-lg text-[11px] font-bold transition shrink-0">
+                <i class="fa-solid fa-pen-to-square mr-1"></i>調整
+              </button>
             </div>
           </div>
         `;
@@ -2364,42 +2432,74 @@ function renderAssetPinsPreview() {
       );
 
       const locationGroupMap = {};
+      const pinTitleToLocationKey = {};
 
-(window.pins || [])
-  .filter(p => p.pin_type === 'asset')
-  .forEach(pin => {
+      (window.pins || [])
+        .filter(p => p.pin_type === 'asset')
+        .forEach(pin => {
+          const mapName = window.MAPS[pin.map_id || pin.mapId]?.name || '圖資';
+          const locationName = `${pin.title} (${mapName})`;
+          pinTitleToLocationKey[pin.title] = locationName;
+          pinTitleToLocationKey[locationName] = locationName;
 
-    const mapName =
-      window.MAPS[
-        pin.map_id || pin.mapId
-      ]?.name || '圖資';
+          locationGroupMap[locationName] = {
+            pin_location: locationName,
+            origin_activity: selectedActivity,
+            path_history: selectedActivity,
+            items: {}
+          };
 
-    const locationName =
-      `${pin.title} (${mapName})`;
+          (pin.asset_list || []).forEach(item => {
+            if (!item.name) return;
+            const latestPinQty = parseInt(item.qty || 0);
+            locationGroupMap[locationName].items[item.name] = {
+              asset_name: item.name,
+              latestPinQty,
+              lockedCheckInQty: null,
+              hasCheckInRecord: false,
+              checkOutDeltaSum: 0,
+              hasCheckOutRecord: false
+            };
+          });
+        });
 
-    locationGroupMap[locationName] = {
-      pin_location: locationName,
-      origin_activity: selectedActivity,
-      path_history: selectedActivity,
-      items: {}
-    };
+      (window.assetTransactions || []).forEach(tx => {
+        if (!tx || tx.activity_name !== selectedActivity) return;
+        const rawLoc = tx.pin_location || '未指定位置';
+        const locName = pinTitleToLocationKey[rawLoc] || rawLoc;
+        const assetName = tx.asset_name || '未命名器材';
+        if (!locationGroupMap[locName] || !locationGroupMap[locName].items[assetName]) return;
 
-    (pin.asset_list || []).forEach(item => {
+        const entry = locationGroupMap[locName].items[assetName];
+        if (tx.origin_activity) locationGroupMap[locName].origin_activity = tx.origin_activity;
+        if (tx.path_history) locationGroupMap[locName].path_history = tx.path_history;
 
-      locationGroupMap[locationName]
-        .items[item.name] = {
+        if (tx.transaction_type === 'check_in') {
+          const recordedQty = parseInt(tx.initial_check_in_qty ?? tx.change_qty ?? 0);
+          if (!entry.hasCheckInRecord) {
+            entry.lockedCheckInQty = recordedQty;
+            entry.hasCheckInRecord = true;
+          } else {
+            entry.lockedCheckInQty += recordedQty;
+          }
+        } else if (tx.transaction_type === 'check_out') {
+          entry.checkOutDeltaSum += parseInt(tx.change_qty || 0);
+          entry.hasCheckOutRecord = true;
+        }
+      });
 
-        asset_name: item.name,
-        totalIn: parseInt(item.qty || 0),
-        totalOut: 0,
-        balance: parseInt(item.qty || 0),
-        hasCheckOut: false
+      // 若沒有明確的 check_in 紀錄但有 check_out 異動，依「目前點退數量 - 點退差額」還原原始點交數
+      Object.values(locationGroupMap).forEach(group => {
+        Object.values(group.items).forEach(entry => {
+          if (!entry.hasCheckInRecord && entry.hasCheckOutRecord) {
+            entry.lockedCheckInQty = Math.max(0, entry.latestPinQty - entry.checkOutDeltaSum);
+            entry.hasCheckInRecord = true;
+          }
+        });
+      });
 
-      };
 
-    });
 
-  });
 
       document.getElementById('assetRptActivityName').innerText = selectedActivity;
       document.getElementById('assetRptRenterUnit').innerText = headerData.unit || '未指定單位';
@@ -2440,14 +2540,18 @@ function renderAssetPinsPreview() {
 
         // 點交階段只列出有「點交數量 > 0」的品項，且只顯示點交數量，不顯示點退與差異字樣
         if (!isCheckOutStage) {
-          const checkInItems = itemList.filter(item => {
-            const checkInQty = Math.max(0, item.totalIn > 0 ? item.totalIn : item.balance);
-            return checkInQty > 0;
-          });
+          const getLockedCheckInQty = (item) => {
+            const latestPinQty = Math.max(0, parseInt(item.latestPinQty || 0));
+            return item.hasCheckInRecord
+              ? Math.max(0, parseInt(item.lockedCheckInQty || 0))
+              : latestPinQty;
+          };
+
+          const checkInItems = itemList.filter(item => getLockedCheckInQty(item) > 0);
 
           const checkInItemsHtml = checkInItems.length > 0
             ? checkInItems.map(item => {
-                const checkInQty = Math.max(0, item.totalIn > 0 ? item.totalIn : item.balance);
+                const checkInQty = getLockedCheckInQty(item);
                 return `
                   <div class="flex items-center justify-start py-1 border-b border-gray-300 last:border-b-0 text-[11px]">
                     <span class="font-bold text-black">${item.asset_name}</span>
@@ -2458,6 +2562,7 @@ function renderAssetPinsPreview() {
                 `;
               }).join('')
             : `<div class="py-1 text-[11px] text-gray-400">無點交器材</div>`;
+
 
           // 檢查是否有「來自前面檔期」的留用資訊
           const prevHeader = currentIndex > 0 ? list[currentIndex - 1] : null;
@@ -2508,11 +2613,11 @@ function renderAssetPinsPreview() {
 
 
         const itemsHtml = itemList.map(item => {
-          const checkInQty = Math.max(0, item.totalIn > 0 ? item.totalIn : Math.max(0, item.balance + item.totalOut));
-          const diffQty = item.hasCheckOut ? (item.balance - checkInQty) : 0;
-          const stockAfterCheckOut = diffQty === 0
-            ? checkInQty
-            : Math.max(0, checkInQty + diffQty);
+          const latestPinQty = Math.max(0, parseInt(item.latestPinQty || 0));
+          const checkInQty = item.hasCheckInRecord
+            ? Math.max(0, parseInt(item.lockedCheckInQty || 0))
+            : latestPinQty;
+          const diffQty = latestPinQty - checkInQty;
           const diffDisplay = diffQty === 0 ? '0' : (diffQty > 0 ? `+${diffQty}` : `${diffQty}`);
 
           return `
@@ -2520,28 +2625,52 @@ function renderAssetPinsPreview() {
               <span class="font-bold text-black">${item.asset_name}</span>
               <span class="font-mono whitespace-nowrap ml-2">
                 點交:<strong class="text-emerald-700">${checkInQty}</strong> ｜ 
-                點退:<strong class="${diffQty === 0 ? 'text-gray-700' : (diffQty > 0 ? 'text-blue-700' : 'text-rose-700')}">${diffDisplay}</strong> ｜ 
-                差異:<strong class="text-black text-xs underline">${stockAfterCheckOut}</strong>
+                點退:<strong class="text-blue-700">${latestPinQty}</strong> ｜ 
+                差異:<strong class="${diffQty === 0 ? 'text-gray-700' : (diffQty > 0 ? 'text-emerald-700' : 'text-rose-700')} text-xs underline">${diffDisplay}</strong>
               </span>
             </div>
           `;
         }).join('');
 
-        const lineageText = `📥 <strong>【留用軌跡】</strong>：起始於 <span class="text-blue-700 font-bold">[ ${originAct} ]</span> ｜ 歷經檔期：<span class="text-indigo-700 font-semibold">[ ${fullChain} ]</span> ｜ 結算檔期：<span class="text-gray-900 font-bold">[ ${isRetainedAtPin ? nextActivityName + '（續用中）' : selectedActivity + '（本檔結算）'} ]</span>`;
+        const prevHeader = currentIndex > 0 ? list[currentIndex - 1] : null;
+        const prevActivityName = prevHeader ? prevHeader.activity : '';
+        const retainedFromPrevByFlag = !!(
+          prevActivityName &&
+          window.pinRetentionMap &&
+          window.pinRetentionMap[prevActivityName] &&
+          window.pinRetentionMap[prevActivityName][group.pin_location]
+        );
 
-        const outboundText = isRetainedAtPin
-          ? `🔄 <strong>【跨檔期保留】</strong>：本點位已勾選留用，不撤場歸還，直接轉移至 <strong>[ ${nextActivityName} ]</strong> 續用。`
-          : `📤 <strong>【本檔結算歸還】</strong>：本點位未勾選跨檔留用，已觸發結算，依規辦理點退歸還。`;
+        const carryOverTx = (window.assetTransactions || []).find(tx => {
+          if (!tx || (tx.pin_location || '未指定位置') !== group.pin_location) return false;
+          const belongsToCurrent = tx.activity_name === selectedActivity;
+          const hasCarryFlag = !!tx.is_carried_over;
+          const hasPrevOrigin = !!(tx.origin_activity && tx.origin_activity !== selectedActivity);
+          const hasPrevPath = !!(tx.path_history && tx.path_history !== selectedActivity && tx.path_history.includes(selectedActivity));
+          return (belongsToCurrent && (hasCarryFlag || hasPrevOrigin || hasPrevPath)) ||
+                 (prevActivityName && tx.activity_name === prevActivityName && hasCarryFlag);
+        });
+
+        const hasIncomingCarryOver = retainedFromPrevByFlag || !!carryOverTx;
+        const hasOutgoingCarryOver = !!isRetainedAtPin;
+
+        const statusBlocks = [];
+        if (hasIncomingCarryOver) {
+          const fromAct = (carryOverTx && carryOverTx.origin_activity) || prevActivityName || '前一檔或更早檔期';
+          statusBlocks.push(`<div>📥 前一檔或更早之前的檔期留給到目前這一檔（來源：<strong>${fromAct}</strong>）</div>`);
+        }
+        if (hasOutgoingCarryOver) {
+          statusBlocks.push(`<div>🔄 這一檔不點退，留用給下一檔（轉移至：<strong>${nextActivityName}</strong>）</div>`);
+        }
+
+        const trackCellHtml = statusBlocks.join('<div class="border-t border-gray-300 my-1"></div>');
 
         return `
           <tr class="align-top print-keep-together">
             <td class="border border-black p-2 text-center font-bold">${idx + 1}</td>
             <td class="border border-black p-2 font-bold text-gray-900"><i class="fa-solid fa-location-dot mr-1"></i>${group.pin_location}</td>
             <td class="border border-black px-2 py-1">${itemsHtml}</td>
-            <td class="border border-black p-2 text-[11px] space-y-1">
-              <div>${lineageText}</div>
-              <div class="border-t border-gray-300 pt-1">${outboundText}</div>
-            </td>
+            <td class="border border-black p-2 text-[11px]">${trackCellHtml}</td>
           </tr>
         `;
       }).join('');
