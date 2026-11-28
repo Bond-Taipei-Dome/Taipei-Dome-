@@ -2178,6 +2178,74 @@ window.quickSelectPinForAssetTx = function(pinLocation, firstAssetName = '') {
       showToast(`已帶入點位：${pinLocation}`, 'info');
     };
 
+    function parseSpaceCode(locationText) {
+
+  const match = locationText.match(/\(([^)]+)\)/);
+
+  if (!match) {
+    return {
+      floorOrder: 999,
+      zoneOrder: 999,
+      funcOrder: 999
+    };
+  }
+
+  const code = match[1];
+
+  // 樓層排序
+  const floorMap = {
+    'B2': 1,
+    'B1': 2,
+    'L1': 3,
+    'L2': 4,
+    'L3': 5,
+    'L4': 6,
+    'L5': 7,
+    'L6': 8,
+    'RF': 9
+  };
+
+  const floorCode = code.substring(0,2);
+
+  let remain = code.substring(2);
+
+  let zoneCode = '';
+  let funcCode = '';
+
+  if (remain.startsWith('X')) {
+    zoneCode = remain.substring(0,2);
+    funcCode = remain.substring(2,3);
+  } else {
+    zoneCode = remain.substring(0,1);
+    funcCode = remain.substring(1,2);
+  }
+
+  const zoneMap = {
+    '0':1,
+    '1':2,
+    '2':3,
+    '3':4,
+    'X0':5,
+    'X1':6,
+    'X2':7,
+    'X3':8
+  };
+
+  const suffix =
+  code.includes('-')
+  ? code.split('-')[1]
+  : '';
+
+return {
+  floorOrder : floorMap[floorCode] || 999,
+  zoneOrder  : zoneMap[zoneCode] || 999,
+  funcOrder  : funcCode.charCodeAt(0) || 999,
+  suffix     : suffix
+};
+}
+
+
+
     function renderAssetPinsPreview() {
       const container = document.getElementById('assetPinsPreviewGrid');
       if (!container) return;
@@ -2273,6 +2341,31 @@ window.quickSelectPinForAssetTx = function(pinLocation, firstAssetName = '') {
       });
 
       let cards = Object.values(pinCardMap);
+      cards.sort((a,b)=>{
+
+  const aa = parseSpaceCode(a.pin_location);
+  const bb = parseSpaceCode(b.pin_location);
+
+  if(aa.floorOrder !== bb.floorOrder){
+    return aa.floorOrder - bb.floorOrder;
+  }
+
+  if(aa.zoneOrder !== bb.zoneOrder){
+    return aa.zoneOrder - bb.zoneOrder;
+  }
+
+  if(aa.funcOrder !== bb.funcOrder){
+  return aa.funcOrder - bb.funcOrder;
+}
+
+return aa.suffix.localeCompare(
+  bb.suffix,
+  'zh-Hant',
+  { numeric:true }
+);
+
+});
+     
       if (filterKeyword) {
         cards = cards.filter(card => {
           const locMatch = card.pin_location.toLowerCase().includes(filterKeyword);
@@ -2530,7 +2623,33 @@ window.quickSelectPinForAssetTx = function(pinLocation, firstAssetName = '') {
       }
 
       const tbody = document.getElementById('assetRptTableBody');
-      const locationGroups = Object.values(locationGroupMap);
+      const locationGroups =
+Object.values(locationGroupMap);
+
+locationGroups.sort((a,b)=>{
+
+  const aa = parseSpaceCode(a.pin_location);
+  const bb = parseSpaceCode(b.pin_location);
+
+  if(aa.floorOrder !== bb.floorOrder){
+    return aa.floorOrder - bb.floorOrder;
+  }
+
+  if(aa.zoneOrder !== bb.zoneOrder){
+    return aa.zoneOrder - bb.zoneOrder;
+  }
+
+  if(aa.funcOrder !== bb.funcOrder){
+  return aa.funcOrder - bb.funcOrder;
+}
+
+return aa.suffix.localeCompare(
+  bb.suffix,
+  'zh-Hant',
+  { numeric:true }
+);
+
+});
 
       tbody.innerHTML = locationGroups.map((group, idx) => {
         const isRetainedAtPin = getPinRetentionState(selectedActivity, group.pin_location);
@@ -3529,11 +3648,6 @@ function drawDataUrlToCanvas(pad, dataUrl) {
     };
 
     window.confirmAndPrintAppendix24 = async function() {
-      if (window.currentRole === window.ROLES.VISITOR) {
-        showToast('目前為訪客唯讀模式，無法儲存簽名與列印正式報表！', 'error');
-        openModal('loginModal');
-        return;
-      }
       const headerData = window.currentExportHeader || {};
       
       const imgA = sigPadAppendixA ? sigPadAppendixA.canvas.toDataURL('image/png') : '';
@@ -3676,11 +3790,6 @@ function drawDataUrlToCanvas(pad, dataUrl) {
     };
 
     window.confirmAndPrintAllVenueReport = function() {
-      if (window.currentRole === window.ROLES.VISITOR) {
-        showToast('目前為訪客唯讀模式，無法儲存簽名與列印正式總表！', 'error');
-        openModal('loginModal');
-        return;
-      }
       const imgA = sigPadAllVenueA ? sigPadAllVenueA.canvas.toDataURL('image/png') : '';
       const imgB = sigPadAllVenueB ? sigPadAllVenueB.canvas.toDataURL('image/png') : '';
 
