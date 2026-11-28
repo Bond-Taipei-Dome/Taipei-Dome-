@@ -3529,6 +3529,11 @@ function drawDataUrlToCanvas(pad, dataUrl) {
     };
 
     window.confirmAndPrintAppendix24 = async function() {
+      if (window.currentRole === window.ROLES.VISITOR) {
+        showToast('目前為訪客唯讀模式，無法儲存簽名與列印正式報表！', 'error');
+        openModal('loginModal');
+        return;
+      }
       const headerData = window.currentExportHeader || {};
       
       const imgA = sigPadAppendixA ? sigPadAppendixA.canvas.toDataURL('image/png') : '';
@@ -3671,6 +3676,11 @@ function drawDataUrlToCanvas(pad, dataUrl) {
     };
 
     window.confirmAndPrintAllVenueReport = function() {
+      if (window.currentRole === window.ROLES.VISITOR) {
+        showToast('目前為訪客唯讀模式，無法儲存簽名與列印正式總表！', 'error');
+        openModal('loginModal');
+        return;
+      }
       const imgA = sigPadAllVenueA ? sigPadAllVenueA.canvas.toDataURL('image/png') : '';
       const imgB = sigPadAllVenueB ? sigPadAllVenueB.canvas.toDataURL('image/png') : '';
 
